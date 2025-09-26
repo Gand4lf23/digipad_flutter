@@ -29,17 +29,20 @@ A Flutter-based recreation of the DigiPad application with modern cross-platform
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/josephchipock/digipad.git
 cd digipad
 ```
 
 2. Install dependencies:
+
 ```bash
 flutter pub get
 ```
 
 3. Run the app:
+
 ```bash
 flutter run
 ```
@@ -58,14 +61,17 @@ flutter run
 ## Configuration
 
 ### App Icons
+
 App icons are automatically generated using `flutter_launcher_icons` package.
 
 ### Splash Screens
+
 Native splash screens are generated using `flutter_native_splash` package.
 
 ## Dependencies
 
 Key dependencies include:
+
 - `camera` - Camera functionality
 - `geolocator` - Location services
 - `permission_handler` - Permission management

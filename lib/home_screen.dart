@@ -1,123 +1,80 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:digipad_flutter/common/components/d_image.dart';
+import 'package:digipad_flutter/common/components/d_svg.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  @override
-  void initState() {
-    super.initState();
-    // Force landscape orientation like the original app
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: const Text(
-          'DigiPad 3D Premium',
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.black87,
-        elevation: 0,
-      ),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.black87, Colors.black54],
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: const DImage(
+              imageName: 'background',
+            ).provider,
+            fit: BoxFit.fill,
           ),
         ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+        child: SafeArea(
+          child: Stack(
             children: [
-              // Main logo/icon
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.blue, width: 2),
-                ),
-                child: const Icon(
-                  Icons.camera_alt,
-                  size: 60,
-                  color: Colors.blue,
-                ),
+              _buildArchMenuItem(
+                context: context,
+                title: 'Virtual Mirror',
+                svgName: 'virtual_mirror',
+                iconColor: const Color(0xFFa0a0a0),
+                top: screenHeight * 0.17,
+                left: 60,
+                onTap: () => _navigateToModule(context, 'Virtual Mirror'),
               ),
-              const SizedBox(height: 30),
-              
-              // Welcome text
-              const Text(
-                'Welcome to DigiPad 3D Premium',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
+              _buildArchMenuItem(
+                context: context,
+                title: 'Simulations',
+                svgName: 'simulations',
+                iconColor: const Color(0xFF4CAF50),
+                top: screenHeight * 0.30,
+                left: 35,
+                onTap: () => _navigateToModule(context, 'Simulations'),
               ),
-              const SizedBox(height: 10),
-              const Text(
-                'Professional Optical Measurement & Simulation',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 16,
-                ),
-                textAlign: TextAlign.center,
+              _buildArchMenuItem(
+                context: context,
+                title: 'Lenses 3D',
+                svgName: 'lenses_3d',
+                iconColor: const Color(0xFF3b3b3b),
+                top: screenHeight * 0.43,
+                left: 20,
+                onTap: () => _navigateToModule(context, 'Lenses 3D'),
               ),
-              const SizedBox(height: 50),
-              
-              // Action buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildActionButton(
-                    icon: Icons.camera,
-                    label: 'Camera',
-                    onTap: () {
-                      // TODO: Implement camera functionality
-                      _showFeatureDialog('Camera');
-                    },
-                  ),
-                  _buildActionButton(
-                    icon: Icons.bluetooth,
-                    label: 'Devices',
-                    onTap: () {
-                      // TODO: Implement device list functionality
-                      _showFeatureDialog('Device List');
-                    },
-                  ),
-                  _buildActionButton(
-                    icon: Icons.settings,
-                    label: 'Settings',
-                    onTap: () {
-                      // TODO: Implement settings functionality
-                      _showFeatureDialog('Settings');
-                    },
-                  ),
-                  _buildActionButton(
-                    icon: Icons.help,
-                    label: 'Manual',
-                    onTap: () {
-                      // TODO: Implement manual functionality
-                      _showFeatureDialog('Manual');
-                    },
-                  ),
-                ],
+              _buildArchMenuItem(
+                context: context,
+                title: 'Cosmetic Lenses',
+                svgName: 'cosmetic_lenses',
+                iconColor: const Color(0xFF2196F3),
+                top: screenHeight * 0.55,
+                left: 30,
+                onTap: () => _navigateToModule(context, 'Cosmetic Lenses'),
+              ),
+              _buildArchMenuItem(
+                context: context,
+                title: 'Measurements',
+                svgName: 'measurements',
+                iconColor: const Color(0xFFFB8C00),
+                top: screenHeight * 0.67,
+                left: 45,
+                onTap: () => _navigateToModule(context, 'Measurements'),
+              ),
+              _buildArchMenuItem(
+                context: context,
+                title: 'Visual Health',
+                svgName: 'visual_health',
+                iconColor: const Color(0xFFFFD600),
+                top: screenHeight * 0.80,
+                left: 70,
+                onTap: () => _navigateToModule(context, 'Visual Health'),
               ),
             ],
           ),
@@ -126,56 +83,85 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
+  Widget _buildArchMenuItem({
+    required BuildContext context,
+    required String title,
+    required String svgName,
+    required Color iconColor,
+    required double top,
+    required double left,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 100,
-        height: 100,
-        decoration: BoxDecoration(
-          color: Colors.blue.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: Colors.blue.withOpacity(0.3)),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 40,
-              color: Colors.blue,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+    return Positioned(
+      top: top,
+      left: left,
+
+      child: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.5,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(30),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: iconColor,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.35),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: DSvg(
+                    svgName: svgName,
+                    colorFilter: const ColorFilter.mode(
+                      Colors.white,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(width: 18),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w400,
+                    shadows: [
+                      Shadow(
+                        blurRadius: 4.0,
+                        color: Colors.black54,
+                        offset: Offset(1.0, 1.0),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  void _showFeatureDialog(String feature) {
+  void _navigateToModule(BuildContext context, String moduleName) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Colors.grey[900],
-          title: Text(
-            feature,
-            style: const TextStyle(color: Colors.white),
-          ),
+          backgroundColor: const Color(0xFF2c2c2c),
+          title: Text(moduleName, style: const TextStyle(color: Colors.white)),
           content: Text(
-            '$feature functionality will be implemented here.',
+            'Navigating to the $moduleName module.',
             style: const TextStyle(color: Colors.white70),
           ),
           actions: [
@@ -183,24 +169,12 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () => Navigator.of(context).pop(),
               child: const Text(
                 'OK',
-                style: TextStyle(color: Colors.blue),
+                style: TextStyle(color: Colors.cyanAccent),
               ),
             ),
           ],
         );
       },
     );
-  }
-
-  @override
-  void dispose() {
-    // Reset orientation when leaving the screen
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
-    super.dispose();
   }
 }

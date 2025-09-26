@@ -48,10 +48,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 // Subtitle
                 const Text(
                   'Professional Optical Measurement',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
                 ),
                 const SizedBox(height: 30),
                 // Loading indicator

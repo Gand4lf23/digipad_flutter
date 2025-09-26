@@ -23,29 +23,36 @@
 		<key>CFBundleVersion</key>
 		<string>$(FLUTTER_BUILD_NUMBER)</string>
 		<key>LSRequiresIPhoneOS</key>
-		<true/>
+		<true />
+
 		<!-- Camera Permission -->
 		<key>NSCameraUsageDescription</key>
 		<string>This app needs camera access for optical measurement and AR functionality</string>
+
 		<!-- Location Permission -->
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>This app needs location access for measurement accuracy</string>
 		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 		<string>This app needs location access for measurement accuracy</string>
+
 		<!-- Microphone Permission -->
 		<key>NSMicrophoneUsageDescription</key>
 		<string>This app needs microphone access for audio recording functionality</string>
+
 		<!-- Bluetooth Permission -->
 		<key>NSBluetoothAlwaysUsageDescription</key>
 		<string>This app needs Bluetooth access to connect to measurement devices</string>
 		<key>NSBluetoothPeripheralUsageDescription</key>
 		<string>This app needs Bluetooth access to connect to measurement devices</string>
+
 		<!-- Photo Library Permission -->
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>This app needs photo library access to save measurement images</string>
+
 		<!-- File Access Permission -->
 		<key>NSDocumentsFolderUsageDescription</key>
 		<string>This app needs document access to save measurement data</string>
+
 		<key>UILaunchStoryboardName</key>
 		<string>LaunchScreen</string>
 		<key>UIMainStoryboardFile</key>
@@ -64,10 +71,8 @@
 			<string>UIInterfaceOrientationLandscapeRight</string>
 		</array>
 		<key>CADisableMinimumFrameDurationOnPhone</key>
-		<true/>
+		<true />
 		<key>UIApplicationSupportsIndirectInputEvents</key>
-		<true/>
-		<key>UIStatusBarHidden</key>
-		<false/>
+		<true />
 	</dict>
 </plist>
