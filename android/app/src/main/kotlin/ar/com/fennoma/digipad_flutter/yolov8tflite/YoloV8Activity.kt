@@ -11,11 +11,17 @@ import android.graphics.Matrix
 import android.util.AttributeSet
 import android.util.Log
 import android.view.Gravity
+import android.os.Environment
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -42,6 +48,11 @@ class YoloV8View @JvmOverloads constructor(
     private val cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private var cameraProvider: ProcessCameraProvider? = null
     private var imageAnalyzer: ImageAnalysis? = null
+    private var imageCapture: ImageCapture? = null
+    private var camera: Camera? = null
+    private var cameraSelector: CameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+    private var isFrontCamera: Boolean = false
+    var onDetections: ((List<BoundingBox>, Long) -> Unit)? = null
 
     // Lifecycle and State Management
     private var lifecycleOwner: LifecycleOwner? = null
@@ -154,7 +165,6 @@ class YoloV8View @JvmOverloads constructor(
                 setSurfaceProvider(previewView.surfaceProvider)
             }
             
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
             
             imageAnalyzer = ImageAnalysis.Builder()
                 .setTargetAspectRatio(AspectRatio.RATIO_4_3)
@@ -181,8 +191,13 @@ class YoloV8View @JvmOverloads constructor(
             }
 
             // Unbind all before rebinding
+            imageCapture = ImageCapture.Builder()
+                .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                .setTargetRotation(display.rotation)
+                .build()
+
             provider.unbindAll()
-            provider.bindToLifecycle(activity, cameraSelector, preview, imageAnalyzer)
+            camera = provider.bindToLifecycle(activity, cameraSelector, preview, imageAnalyzer, imageCapture)
             isCameraBound.set(true)
             Log.d("YoloV8View", "Camera use cases bound successfully.")
             
@@ -201,6 +216,7 @@ class YoloV8View @JvmOverloads constructor(
             // Unbind all use cases
             cameraProvider?.unbindAll()
             isCameraBound.set(false)
+            camera = null
             
             Log.d("YoloV8View", "Camera unbound successfully.")
         } catch (e: Exception) {
@@ -227,6 +243,7 @@ class YoloV8View @JvmOverloads constructor(
             
             // Clear analyzer reference
             imageAnalyzer = null
+            imageCapture = null
             
             // Shutdown executor and wait for tasks to complete
             cameraExecutor.shutdown()
@@ -274,9 +291,29 @@ class YoloV8View @JvmOverloads constructor(
         if (isDisposed.get()) return
         post {
             if (!isDisposed.get()) {
+                // Mirror boxes horizontally when using the front camera so overlay aligns with preview
+                val adjustedBoxes = if (isFrontCamera) {
+                    boundingBoxes.map { b ->
+                        BoundingBox(
+                            x1 = 1f - b.x2,
+                            y1 = b.y1,
+                            x2 = 1f - b.x1,
+                            y2 = b.y2,
+                            cx = 1f - b.cx,
+                            cy = b.cy,
+                            w = b.w,
+                            h = b.h,
+                            cnf = b.cnf,
+                            cls = b.cls,
+                            clsName = b.clsName
+                        )
+                    }
+                } else boundingBoxes
+
                 inferenceTimeTextView.text = "${inferenceTime}ms"
-                overlayView.setResults(boundingBoxes)
+                overlayView.setResults(adjustedBoxes)
                 overlayView.invalidate()
+                onDetections?.invoke(adjustedBoxes, inferenceTime)
             }
         }
     }
@@ -288,5 +325,61 @@ class YoloV8View @JvmOverloads constructor(
             currentContext = currentContext.baseContext
         }
         return null
+    }
+
+    // region: Flutter control API
+    fun setTorch(enabled: Boolean) {
+        try {
+            camera?.cameraControl?.enableTorch(enabled)
+        } catch (_: Exception) {}
+    }
+
+    fun switchCamera(front: Boolean) {
+        isFrontCamera = front
+        cameraSelector = if (front) CameraSelector.DEFAULT_FRONT_CAMERA else CameraSelector.DEFAULT_BACK_CAMERA
+        unbindCamera()
+        bindCameraUseCases()
+    }
+
+    fun setDetectionEnabled(enabled: Boolean) {
+        if (enabled) {
+            imageAnalyzer?.setAnalyzer(cameraExecutor) { imageProxy ->
+                if (isDisposed.get()) { imageProxy.close(); return@setAnalyzer }
+                try {
+                    val bitmapBuffer = Bitmap.createBitmap(imageProxy.width, imageProxy.height, Bitmap.Config.ARGB_8888)
+                    imageProxy.planes[0].buffer.rewind()
+                    bitmapBuffer.copyPixelsFromBuffer(imageProxy.planes[0].buffer)
+                    val matrix = Matrix().apply { postRotate(imageProxy.imageInfo.rotationDegrees.toFloat()) }
+                    val rotatedBitmap = Bitmap.createBitmap(bitmapBuffer, 0, 0, bitmapBuffer.width, bitmapBuffer.height, matrix, true)
+                    detector.detect(rotatedBitmap)
+                } finally { imageProxy.close() }
+            }
+        } else {
+            imageAnalyzer?.clearAnalyzer()
+        }
+    }
+
+    fun setOverlayVisible(visible: Boolean) {
+        overlayView.visibility = if (visible) VISIBLE else GONE
+    }
+
+    fun capturePhoto(callback: (path: String?, error: String?) -> Unit) {
+        val capture = imageCapture ?: run { callback(null, "ImageCapture not initialized"); return }
+        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+        val outputDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES) ?: context.filesDir
+        val photoFile = File(outputDir, "IMG_${timeStamp}.jpg")
+        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+        try {
+            capture.takePicture(outputOptions, cameraExecutor, object : ImageCapture.OnImageSavedCallback {
+                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                    callback(photoFile.absolutePath, null)
+                }
+                override fun onError(exception: ImageCaptureException) {
+                    callback(null, exception.message ?: "Capture failed")
+                }
+            })
+        } catch (e: Exception) {
+            callback(null, e.message ?: "Capture error")
+        }
     }
 }

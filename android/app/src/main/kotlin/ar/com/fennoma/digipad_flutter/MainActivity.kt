@@ -9,6 +9,9 @@ class MainActivity : FlutterActivity() {
         flutterEngine
             .platformViewsController
             .registry
-            .registerViewFactory("native-left-view", NativeYoloViewFactory())
+            .registerViewFactory(
+                "native-left-view",
+                NativeYoloViewFactory(flutterEngine.dartExecutor.binaryMessenger)
+            )
     }
 }
