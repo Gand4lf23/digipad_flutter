@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class NativeSplitScreen extends StatefulWidget {
   const NativeSplitScreen({super.key});
@@ -16,6 +17,83 @@ class _NativeSplitScreenState extends State<NativeSplitScreen> {
   bool _frontCamera = false;
   bool _overlayVisible = true;
   String? _lastPhotoPath;
+  bool _hasPermission = false;
+  bool _isCheckingPermission = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkCameraPermission();
+  }
+
+  Future<void> _checkCameraPermission() async {
+    try {
+      final status = await Permission.camera.status;
+      setState(() {
+        _hasPermission = status.isGranted;
+        _isCheckingPermission = false;
+      });
+
+      if (!_hasPermission) {
+        await _requestCameraPermission();
+      }
+    } catch (e) {
+      debugPrint('Error checking permission: $e');
+      setState(() => _isCheckingPermission = false);
+    }
+  }
+
+  Future<void> _requestCameraPermission() async {
+    try {
+      final status = await Permission.camera.request();
+      setState(() => _hasPermission = status.isGranted);
+
+      if (status.isPermanentlyDenied) {
+        // Show dialog to open app settings
+        if (mounted) {
+          _showPermissionDeniedDialog();
+        }
+      } else if (status.isDenied) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Camera permission is required to use this feature',
+              ),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error requesting permission: $e');
+    }
+  }
+
+  void _showPermissionDeniedDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Camera Permission Required'),
+        content: const Text(
+          'Camera access has been permanently denied. Please enable it in app settings to use this feature.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              openAppSettings();
+            },
+            child: const Text('Open Settings'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -24,6 +102,61 @@ class _NativeSplitScreenState extends State<NativeSplitScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isCheckingPermission) {
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(child: CircularProgressIndicator(color: Colors.white)),
+      );
+    }
+
+    if (!_hasPermission) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.camera_alt, size: 80, color: Colors.white54),
+              const SizedBox(height: 24),
+              const Text(
+                'Camera Permission Required',
+                style: TextStyle(color: Colors.white, fontSize: 20),
+              ),
+              const SizedBox(height: 12),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 32),
+                child: Text(
+                  'This app needs camera access to detect objects',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white70),
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: _requestCameraPermission,
+                icon: const Icon(Icons.check),
+                label: const Text('Grant Permission'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () => openAppSettings(),
+                child: const Text(
+                  'Open App Settings',
+                  style: TextStyle(color: Colors.white70),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     const viewType = 'native-left-view';
 
     return Scaffold(
@@ -124,7 +257,10 @@ class _NativeSplitScreenState extends State<NativeSplitScreen> {
                       const SizedBox(height: 8),
                       Text(
                         'Last photo: $_lastPhotoPath',
-                        style: const TextStyle(color: Colors.white70),
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 10,
+                        ),
                       ),
                     ],
                     const Divider(color: Colors.white24),
@@ -193,14 +329,6 @@ class _NativeSplitScreenState extends State<NativeSplitScreen> {
       ),
     );
   }
-}
-
-void navigatorPushImage(BuildContext context, String imagePath) {
-  Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (_) => CapturedImageScreen(imagePath: imagePath),
-    ),
-  );
 }
 
 class CapturedImageScreen extends StatelessWidget {
