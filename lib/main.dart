@@ -1,10 +1,9 @@
 import 'package:digipad_flutter/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:digipad_flutter/screens/tflite/detector_widget.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -14,8 +13,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     // Force landscape orientation
     SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
     ]);
 
     return MaterialApp(

@@ -1,8 +1,12 @@
+import 'package:digipad_flutter/data/local/gallery_storage.dart';
+import 'package:digipad_flutter/screens/features/virtual_mirror/cubit/virtual_mirror_cubit.dart';
+import 'package:digipad_flutter/screens/features/virtual_mirror/presentation/virtual_mirror_screen.dart';
 import 'package:digipad_flutter/screens/native_impl/split_screen.dart';
 import 'package:digipad_flutter/screens/tflite/detector_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:digipad_flutter/common/components/d_image.dart';
 import 'package:digipad_flutter/common/components/d_svg.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -92,33 +96,46 @@ class HomeScreen extends StatelessWidget {
     required double left,
     required VoidCallback onTap,
   }) {
+    final buttonWidth = MediaQuery.of(context).size.width * 0.3;
+    final buttonHeight = MediaQuery.of(context).size.width * 0.075;
+
     return Positioned(
       top: top,
       left: left,
-
       child: SizedBox(
-        width: MediaQuery.of(context).size.width * 0.5,
+        width: buttonWidth,
+        height: buttonHeight,
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(30),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: iconColor,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.35),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  iconColor.withOpacity(0.7),
+                  iconColor.withOpacity(1),
+                  iconColor.withOpacity(0.7),
+                ],
+                stops: [0.0, 0.5, 1.0],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.35),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(10.0),
+              ],
+            ),
+
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 40,
+                  height: 40,
                   child: DSvg(
                     svgName: svgName,
                     colorFilter: const ColorFilter.mode(
@@ -127,26 +144,26 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 18),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w400,
-                    shadows: [
-                      Shadow(
-                        blurRadius: 4.0,
-                        color: Colors.black54,
-                        offset: Offset(1.0, 1.0),
-                      ),
-                    ],
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      shadows: [
+                        Shadow(
+                          blurRadius: 4.0,
+                          color: Colors.black54,
+                          offset: Offset(1.0, 1.0),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -154,7 +171,17 @@ class HomeScreen extends StatelessWidget {
   }
 
   void _navigateToModule(BuildContext context, String moduleName) {
-    if (moduleName == 'Measurements') {
+    if (moduleName == 'Virtual Mirror') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BlocProvider(
+            create: (_) => VirtualMirrorCubit(GalleryStorage()..init()),
+            child: const VirtualMirrorScreen(),
+          ),
+        ),
+      );
+    } else if (moduleName == 'Measurements') {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const NativeSplitScreen()),
