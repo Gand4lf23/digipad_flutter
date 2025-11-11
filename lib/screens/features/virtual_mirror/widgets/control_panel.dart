@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:digipad_flutter/screens/features/virtual_mirror/cubit/virtual_mirror_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,55 +11,51 @@ class ControlPanel extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      color: Colors.grey.shade900,
+      decoration: BoxDecoration(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        border: Border(
+          top: BorderSide(color: Colors.grey.shade400),
+          left: BorderSide.none,
+          right: BorderSide.none,
+          bottom: BorderSide.none,
+        ),
+      ),
+
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          // Take photo button
+          // GO BACK
+          _CircleIconButton(
+            icon: Icons.arrow_back_ios_new,
+            onPressed: () => Navigator.of(context).pop(),
+            size: 32,
+          ),
+          // PICK FROM GALLERY
           _CircleIconButton(
             icon: Icons.photo_library,
-            onPressed: () =>
-                context.read<VirtualMirrorCubit>().pickFromGallery(),
+            onPressed: () => cubit.pickFromGallery(),
+            size: 32,
           ),
+          // TAKE PHOTO (bigger)
           _CircleIconButton(
             icon: Icons.camera_alt,
-            onPressed: () => context.read<VirtualMirrorCubit>().capturePhoto(),
+            onPressed: () => cubit.capturePhoto(),
+            size: 60,
+            containerSize: 96,
           ),
-
-          // Take video button
+          // TAKE VIDEO
           _CircleIconButton(
             icon: Icons.videocam,
-            onPressed: () {
-              // TODO: trigger video capture
-            },
+            onPressed: () => cubit.captureVideo(),
+            size: 32,
           ),
-
-          // Reset button
-          _CircleIconButton(icon: Icons.refresh, onPressed: cubit.clearImages),
+          // RESET BOTH DROPZONES
+          _CircleIconButton(
+            icon: Icons.refresh,
+            onPressed: cubit.clearImages,
+            size: 32,
+          ),
         ],
-      ),
-    );
-  }
-}
-
-class _ThumbnailPreview extends StatelessWidget {
-  final File file;
-
-  const _ThumbnailPreview({required this.file});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.white24),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.file(file, fit: BoxFit.cover),
       ),
     );
   }
@@ -69,9 +63,16 @@ class _ThumbnailPreview extends StatelessWidget {
 
 class _CircleIconButton extends StatelessWidget {
   final IconData icon;
+  final double size;
+  final double containerSize;
   final VoidCallback onPressed;
 
-  const _CircleIconButton({required this.icon, required this.onPressed});
+  const _CircleIconButton({
+    required this.icon,
+    required this.onPressed,
+    required this.size,
+    this.containerSize = 64,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -79,24 +80,20 @@ class _CircleIconButton extends StatelessWidget {
       onTap: onPressed,
       borderRadius: BorderRadius.circular(40),
       child: Container(
-        width: 64,
-        height: 64,
+        width: containerSize,
+        height: containerSize,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: const LinearGradient(
-            colors: [Colors.deepPurple, Colors.blueAccent],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color: Colors.grey.shade800,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.4),
+              color: Colors.black.withAlpha(30),
               blurRadius: 6,
               offset: const Offset(0, 3),
             ),
           ],
         ),
-        child: Icon(icon, color: Colors.white, size: 28),
+        child: Icon(icon, color: Colors.white, size: size),
       ),
     );
   }

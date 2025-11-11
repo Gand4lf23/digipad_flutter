@@ -14,8 +14,8 @@ configurations.all {
 
 android {
     namespace = "ar.com.fennoma.digipad_flutter"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    compileSdk = 36
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8

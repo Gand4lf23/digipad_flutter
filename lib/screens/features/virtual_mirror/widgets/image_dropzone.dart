@@ -5,7 +5,7 @@ import 'package:digipad_flutter/screens/features/virtual_mirror/presentation/vir
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class ImageDropZone extends StatelessWidget {
+class ImageDropZone extends StatefulWidget {
   final DropSide side;
   final bool showEmptyMessage;
 
@@ -16,53 +16,83 @@ class ImageDropZone extends StatelessWidget {
   });
 
   @override
+  State<ImageDropZone> createState() => _ImageDropZoneState();
+}
+
+class _ImageDropZoneState extends State<ImageDropZone> {
+  late TransformationController _controller;
+  File? _lastImage;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TransformationController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final image = side == DropSide.left
+    final image = widget.side == DropSide.left
         ? context.watch<VirtualMirrorCubit>().state.leftImage
         : context.watch<VirtualMirrorCubit>().state.rightImage;
 
     final isEmpty = image == null;
+    if (image != _lastImage) {
+      _lastImage = image;
+      _controller.value = Matrix4.identity();
+    }
 
     return DragTarget<File>(
       onAccept: (file) =>
-          context.read<VirtualMirrorCubit>().setImage(side, file),
+          context.read<VirtualMirrorCubit>().setImage(widget.side, file),
       builder: (context, candidateData, rejectedData) {
         return Container(
           margin: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.grey.shade900,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.black),
+            color: Colors.black,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade400),
           ),
           child: SizedBox(
             width: double.infinity,
-            height:
-                MediaQuery.of(context).size.height *
-                0.5, // Fixed height for consistency
+            height: MediaQuery.of(context).size.height * 0.5,
             child: Padding(
               padding: const EdgeInsets.all(12),
-              child: isEmpty && showEmptyMessage
+              child: isEmpty && widget.showEmptyMessage
                   ? const Center(
                       child: Text(
                         'Please pick a photo from your gallery or take a new one',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white54, fontSize: 16),
+                        style: TextStyle(color: Colors.white54, fontSize: 22),
                       ),
                     )
                   : image != null
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.file(
-                        image,
-                        fit: BoxFit.contain,
-                        width: double.infinity,
-                        height: double.infinity,
+                      child: InteractiveViewer(
+                        transformationController: _controller,
+                        panEnabled: true,
+                        scaleEnabled: true,
+                        minScale: 1.0,
+                        maxScale: 5.0,
+                        clipBehavior: Clip.none,
+                        child: Image.file(
+                          image,
+                          fit: BoxFit.contain,
+                          width: double.infinity,
+                          height: double.infinity,
+                        ),
                       ),
                     )
                   : const Center(
                       child: Text(
                         'Drop image here',
-                        style: TextStyle(color: Colors.white54, fontSize: 16),
+                        style: TextStyle(color: Colors.white54, fontSize: 22),
                       ),
                     ),
             ),

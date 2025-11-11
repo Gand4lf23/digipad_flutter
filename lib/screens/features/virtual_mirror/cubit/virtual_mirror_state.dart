@@ -12,14 +12,18 @@ class VirtualMirrorState {
   });
 
   VirtualMirrorState copyWith({
-    File? leftImage,
-    File? rightImage,
+    Object? leftImage = _sentinel,
+    Object? rightImage = _sentinel,
     List<File>? galleryImages,
   }) {
     return VirtualMirrorState(
-      leftImage: leftImage ?? this.leftImage,
-      rightImage: rightImage ?? this.rightImage,
+      leftImage: leftImage == _sentinel ? this.leftImage : leftImage as File?,
+      rightImage: rightImage == _sentinel
+          ? this.rightImage
+          : rightImage as File?,
       galleryImages: galleryImages ?? this.galleryImages,
     );
   }
+
+  static const _sentinel = Object();
 }
