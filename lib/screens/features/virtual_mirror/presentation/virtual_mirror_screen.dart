@@ -1,0 +1,100 @@
+import 'package:digipad_flutter/screens/features/virtual_mirror/cubit/virtual_mirror_cubit.dart';
+import 'package:digipad_flutter/screens/features/virtual_mirror/cubit/virtual_mirror_state.dart';
+import 'package:digipad_flutter/screens/features/virtual_mirror/widgets/control_panel.dart';
+import 'package:digipad_flutter/screens/features/virtual_mirror/widgets/gallery_section.dart';
+import 'package:digipad_flutter/screens/features/virtual_mirror/widgets/image_dropzone.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+class VirtualMirrorScreen extends StatefulWidget {
+  const VirtualMirrorScreen({super.key});
+
+  @override
+  State<VirtualMirrorScreen> createState() => _VirtualMirrorScreenState();
+}
+
+class _VirtualMirrorScreenState extends State<VirtualMirrorScreen> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<VirtualMirrorCubit>().initGallery();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey.shade900,
+      body: SafeArea(
+        child: Column(
+          children: [
+            BlocBuilder<VirtualMirrorCubit, VirtualMirrorState>(
+              builder: (context, state) {
+                if (state.galleryImages.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    child: Card(
+                      color: Colors.grey.shade900,
+                      elevation: 1,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(color: Colors.grey.shade600, width: 1),
+                      ),
+                      child: SizedBox(
+                        height: 250,
+                        child: Center(
+                          child: Text(
+                            textAlign: TextAlign.center,
+                            'No images loaded yet. \nCapture one or select from your gallery to get started!',
+                            style: TextStyle(color: Colors.white, fontSize: 24),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                return GallerySection(gallery: state.galleryImages);
+              },
+            ),
+            Text(
+              'Drag and drop photos',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white, fontSize: 38),
+            ),
+            Expanded(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ImageDropZone(
+                      side: DropSide.left,
+                      showEmptyMessage: true,
+                    ),
+                  ),
+                  VerticalDivider(
+                    indent: 100,
+                    endIndent: 100,
+                    width: 8,
+                    color: Colors.grey.shade400,
+                    thickness: 3,
+                  ),
+                  Expanded(
+                    child: ImageDropZone(
+                      side: DropSide.right,
+                      showEmptyMessage: true,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const ControlPanel(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+enum DropSide { left, right }
