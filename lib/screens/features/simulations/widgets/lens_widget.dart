@@ -45,10 +45,10 @@ class LensWidget extends StatelessWidget {
       case VisionProblem.none:
         // no processing, maybe add subtle lens sheen
         return ClipOval(child: corrected);
-      case VisionProblem.miopia:
+      case VisionProblem.myopia:
         // inside lens: remove blur (draw original), optionally sharpen
         return ClipOval(child: corrected);
-      case VisionProblem.astigmatismo:
+      case VisionProblem.astigmatism:
         // inside lens: remove directional blur
         return ClipOval(child: corrected);
       case VisionProblem.glare:
@@ -61,6 +61,9 @@ class LensWidget extends StatelessWidget {
             ],
           ),
         );
+      case VisionProblem.presbyopia:
+        // TODO: Handle this case.
+        throw UnimplementedError();
     }
   }
 }

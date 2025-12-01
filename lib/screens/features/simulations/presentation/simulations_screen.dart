@@ -1,13 +1,21 @@
 import 'dart:ui' as ui;
 
+import 'package:digipad_flutter/screens/features/simulations/cubit/simulations_cubit.dart';
+import 'package:digipad_flutter/screens/features/simulations/cubit/simulations_state.dart';
 import 'package:digipad_flutter/screens/features/simulations/widgets/problem_filter_widget.dart';
+import 'package:digipad_flutter/screens/features/simulations/widgets/simulations_control_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class SimulationsScreen extends StatefulWidget {
   final String problemName;
-
-  const SimulationsScreen({super.key, required this.problemName});
+  final String sceneAsset;
+  const SimulationsScreen({
+    super.key,
+    required this.problemName,
+    required this.sceneAsset,
+  });
 
   @override
   State<SimulationsScreen> createState() => _SimulationScreenState();
@@ -15,13 +23,14 @@ class SimulationsScreen extends StatefulWidget {
 
 class _SimulationScreenState extends State<SimulationsScreen> {
   ui.Image? scene;
+  String? errorMessage;
 
-  // Control panel state
   double quality = 0.5;
-  double tintStrength = 0;
-  Color tint = Colors.transparent;
+  double tintStrength = 0.0;
+  Color tintColor = Colors.transparent;
 
-  String currentScene = "assets/images/scenes/TintePlaya.jpg";
+  // Lens dragging local state for smoothness
+  Offset? draggingPosition;
 
   @override
   void initState() {
@@ -30,43 +39,44 @@ class _SimulationScreenState extends State<SimulationsScreen> {
   }
 
   Future<void> _loadScene() async {
-    final data = await rootBundle.load(currentScene);
-    final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
-    final frame = await codec.getNextFrame();
-    setState(() => scene = frame.image);
-  }
-
-  Map<String, dynamic> get filterForProblem {
-    switch (widget.problemName) {
-      case "Miopía":
-        return {"blur": 4.0, "aberration": 0.5};
-      case "Presbicia":
-        return {"blur": 6.0, "aberration": 0.2};
-      case "Antirreflejo":
-        return {
-          "blur": 0,
-          "aberration": 0,
-          "tint": Colors.blue,
-          "tintStrength": 0.15,
-        };
-      case "Polarizado":
-        return {"tint": Colors.blueGrey, "tintStrength": 0.35};
-      case "Solar":
-        return {"tint": Colors.brown, "tintStrength": 0.4};
-      default:
-        return {"blur": 0, "aberration": 0};
+    try {
+      final data = await rootBundle.load(widget.sceneAsset);
+      final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+      final frame = await codec.getNextFrame();
+      if (mounted) {
+        setState(() => scene = frame.image);
+      }
+    } catch (e) {
+      if (mounted) setState(() => errorMessage = e.toString());
     }
   }
 
-  final List<String> sceneItems = [
-    "assets/images/scenes/TintePlaya.jpg",
-    "assets/images/scenes/PresbiciaSuper.jpg",
-    "assets/images/scenes/PresbiciaTienda.jpg",
-    "assets/images/scenes/solar_con_ar_auto.jpg",
-  ];
+  Map<String, dynamic> get filterForProblem {
+    switch (widget.problemName.toLowerCase()) {
+      case "myopia":
+        return {"blur": 4.0, "aberration": 0.5};
+      case "presbyopia":
+        return {"blur": 6.0, "aberration": 0.2};
+      case "anti-reflective":
+        return {"tint": Colors.blue, "tintStrength": 0.15};
+      case "polarized":
+        return {"tint": Colors.blueGrey, "tintStrength": 0.35};
+      case "sun":
+        return {"tint": Colors.brown, "tintStrength": 0.4};
+      default:
+        return {};
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (errorMessage != null) {
+      return Scaffold(
+        appBar: AppBar(title: Text(widget.problemName)),
+        body: Center(child: Text(errorMessage!)),
+      );
+    }
+
     if (scene == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -74,71 +84,76 @@ class _SimulationScreenState extends State<SimulationsScreen> {
     final config = filterForProblem;
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.problemName)),
-      body: Column(
-        children: [
-          Expanded(
-            child: ProblemFilterWidget(
-              image: scene!,
-              blur: (config["blur"] ?? 0) * quality,
-              aberration: (config["aberration"] ?? 0) * quality,
-              tint: config["tint"] ?? tint,
-              tintStrength: config["tintStrength"] != null
-                  ? (config["tintStrength"] * quality)
-                  : tintStrength,
+      appBar: AppBar(
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: Icon(Icons.arrow_back_ios_new),
+        ),
+        title: Text(widget.problemName),
+      ),
+
+      body: BlocProvider(
+        create: (_) => SimulationsCubit(),
+        child: Column(
+          children: [
+            Expanded(
+              child: BlocBuilder<SimulationsCubit, SimulationsState>(
+                builder: (context, state) {
+                  final lensPos = draggingPosition ?? state.lensPosition;
+                  final lensRadius = state.lensRadius;
+
+                  return GestureDetector(
+                    onPanStart: (_) {
+                      setState(() {
+                        draggingPosition = lensPos;
+                      });
+                    },
+                    onPanUpdate: (details) {
+                      final size = MediaQuery.of(context).size;
+                      final currentPos = draggingPosition ?? lensPos;
+                      final dx = (currentPos.dx + details.delta.dx).clamp(
+                        lensRadius,
+                        size.width - lensRadius,
+                      );
+                      final dy = (currentPos.dy + details.delta.dy).clamp(
+                        lensRadius,
+                        size.height - lensRadius,
+                      );
+                      setState(() {
+                        draggingPosition = Offset(dx, dy);
+                      });
+                    },
+                    onPanEnd: (_) {
+                      context.read<SimulationsCubit>().moveLens(
+                        draggingPosition!,
+                      );
+                      setState(() {
+                        draggingPosition = null;
+                      });
+                    },
+                    child: RepaintBoundary(
+                      child: CustomPaint(
+                        size: Size.infinite,
+                        painter: ScenePainter(
+                          image: scene!,
+                          problem: state.problem,
+                          blur: (config["blur"] ?? 0) * quality,
+                          aberration: (config["aberration"] ?? 0) * quality,
+                          tint: config["tint"] ?? tintColor,
+                          tintStrength: config["tintStrength"] ?? tintStrength,
+                          lensCenter: lensPos,
+                          lensRadius: lensRadius,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-
-          // CONTROL PANEL
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.black12,
-            child: Column(
-              children: [
-                const Text("Quality"),
-                Slider(
-                  value: quality,
-                  onChanged: (v) => setState(() => quality = v),
-                ),
-
-                const SizedBox(height: 8),
-                const Text("Tint Strength"),
-                Slider(
-                  value: tintStrength,
-                  onChanged: (v) => setState(() => tintStrength = v),
-                ),
-
-                DropdownButton<String>(
-                  value: currentScene,
-                  items: const [
-                    DropdownMenuItem(
-                      value: "assets/images/scenes/TintePlaya.jpg",
-                      child: Text("Playa"),
-                    ),
-                    DropdownMenuItem(
-                      value: "assets/images/scenes/PresbiciaSuper.jpg",
-                      child: Text("Super"),
-                    ),
-                    DropdownMenuItem(
-                      value: "assets/images/scenes/PresbiciaTienda.jpg",
-                      child: Text("Tienda"),
-                    ),
-                    DropdownMenuItem(
-                      value: "assets/images/scenes/solar_con_ar_auto.jpg",
-                      child: Text("Auto"),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => currentScene = value);
-                      _loadScene();
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
+            // CONTROL PANEL
+            SimulationsControlPanel(),
+          ],
+        ),
       ),
     );
   }

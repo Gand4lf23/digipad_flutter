@@ -1,53 +1,63 @@
+import 'package:digipad_flutter/screens/features/simulations/cubit/simulations_cubit.dart';
 import 'package:digipad_flutter/screens/features/simulations/presentation/simulations_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class MainSimulationsGridScreen extends StatelessWidget {
   const MainSimulationsGridScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final correction = [
-      _Problem("Miopía", Icons.remove_red_eye),
-      _Problem("Presbicia", Icons.visibility),
+    final corrections = [
+      _Problem("Myopia", Icons.remove_red_eye),
+      _Problem("Presbyopia", Icons.visibility),
       _Problem("Monofocal", Icons.circle_outlined),
       _Problem("Bifocal", Icons.center_focus_weak),
-      _Problem("Progresivos", Icons.view_stream),
-      _Problem("Asférico", Icons.blur_circular),
+      _Problem("Progressive", Icons.view_stream),
+      _Problem("Aspheric", Icons.blur_circular),
     ];
 
     final treatments = [
-      _Problem("Antirreflejo", Icons.shield),
-      _Problem("Polarizado", Icons.filter_hdr),
-      _Problem("Fotocromático", Icons.brightness_5),
+      _Problem("Anti-reflective", Icons.shield),
+      _Problem("Polarized", Icons.filter_hdr),
+      _Problem("Photochromic", Icons.brightness_5),
     ];
 
-    final outdoor = [_Problem("Solar", Icons.wb_sunny)];
+    final outdoor = [_Problem("Sun", Icons.wb_sunny)];
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Simulador de lentes")),
+      appBar: AppBar(title: const Text("Lens Simulator")),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _CategoryTitle("Corrección de la vista"),
-          _ProblemGrid(correction, onSelected: _navigateToSim),
+          _CategoryTitle("Vision Correction"),
+          _ProblemGrid(corrections, onSelected: _navigateToSimulation),
 
           const SizedBox(height: 24),
-          _CategoryTitle("Tratamientos del lente"),
-          _ProblemGrid(treatments, onSelected: _navigateToSim),
+          _CategoryTitle("Lens Treatments"),
+          _ProblemGrid(treatments, onSelected: _navigateToSimulation),
 
           const SizedBox(height: 24),
-          _CategoryTitle("Uso exterior / protección solar"),
-          _ProblemGrid(outdoor, onSelected: _navigateToSim),
+          _CategoryTitle("Outdoor / Sun Protection"),
+          _ProblemGrid(outdoor, onSelected: _navigateToSimulation),
         ],
       ),
     );
   }
 
-  static void _navigateToSim(BuildContext context, String problemName) {
+  static void _navigateToSimulation(BuildContext context, String problemName) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => SimulationsScreen(problemName: problemName),
+        builder: (_) => BlocProvider(
+          create: (_) => SimulationsCubit(),
+          child: const MaterialApp(
+            home: SimulationsScreen(
+              problemName: "Myopia",
+              sceneAsset: "assets/images/scenes/TintePlaya.jpg",
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -83,7 +93,7 @@ class _ProblemGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       itemCount: problems.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
+        crossAxisCount: 3,
         childAspectRatio: 1.05,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,

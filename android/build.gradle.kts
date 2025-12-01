@@ -4,7 +4,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:8.7.0")
+        classpath("com.android.tools.build:gradle:8.7.3")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.25")
     }
 }
@@ -26,6 +26,24 @@ subprojects {
 
 subprojects {
     project.evaluationDependsOn(":app")
+    
+    configurations.all {
+        resolutionStrategy {
+            force("androidx.concurrent:concurrent-futures:1.1.0")
+        }
+    }
+
+    plugins.withId("com.android.library") {
+        dependencies {
+            add("implementation", "androidx.concurrent:concurrent-futures:1.1.0")
+        }
+    }
+    
+    plugins.withId("com.android.application") {
+        dependencies {
+            add("implementation", "androidx.concurrent:concurrent-futures:1.1.0")
+        }
+    }
 }
 
 tasks.register<Delete>("clean") {

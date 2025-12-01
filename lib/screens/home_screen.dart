@@ -203,6 +203,11 @@ class HomeScreen extends StatelessWidget {
         context,
         MaterialPageRoute(builder: (context) => DetectorWidget()),
       );
+    } else if (moduleName == 'Visual Health') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const NativeSplitScreen()),
+      );
     } else {
       showDialog(
         context: context,

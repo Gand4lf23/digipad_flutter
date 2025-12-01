@@ -1,13 +1,14 @@
-import 'dart:ui';
-
 import 'package:digipad_flutter/screens/features/simulations/cubit/simulations_state.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+// ------------------ CUBIT & STATE ------------------
 
 class SimulationsCubit extends Cubit<SimulationsState> {
   SimulationsCubit()
     : super(
         SimulationsState(
-          problem: VisionProblem.miopia,
+          problem: VisionProblem.myopia,
           quality: SimulationQuality.good,
           lensPosition: const Offset(150, 300),
           lensRadius: 120,

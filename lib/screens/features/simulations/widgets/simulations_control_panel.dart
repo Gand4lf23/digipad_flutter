@@ -12,13 +12,13 @@ class SimulationsControlPanel extends StatelessWidget {
       builder: (context, state) {
         return Container(
           color: Colors.black.withOpacity(0.05),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.all(12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 children: [
-                  const Text('Problema:'),
+                  const Text('Problem:'),
                   const SizedBox(width: 8),
                   DropdownButton<VisionProblem>(
                     value: state.problem,
@@ -28,12 +28,11 @@ class SimulationsControlPanel extends StatelessWidget {
                               DropdownMenuItem(value: p, child: Text(p.name)),
                         )
                         .toList(),
-                    onChanged: (p) => context
-                        .read<SimulationsCubit>()
-                        .setProblem(p ?? VisionProblem.none),
+                    onChanged: (p) =>
+                        context.read<SimulationsCubit>().setProblem(p!),
                   ),
                   const SizedBox(width: 16),
-                  const Text('Calidad:'),
+                  const Text('Quality:'),
                   const SizedBox(width: 8),
                   DropdownButton<SimulationQuality>(
                     value: state.quality,
@@ -43,12 +42,11 @@ class SimulationsControlPanel extends StatelessWidget {
                               DropdownMenuItem(value: q, child: Text(q.name)),
                         )
                         .toList(),
-                    onChanged: (q) => context
-                        .read<SimulationsCubit>()
-                        .setQuality(q ?? SimulationQuality.good),
+                    onChanged: (q) =>
+                        context.read<SimulationsCubit>().setQuality(q!),
                   ),
                   const Spacer(),
-                  const Text('Radio'),
+                  const Text('Lens Radius'),
                   Slider(
                     value: state.lensRadius,
                     min: 60,
@@ -59,15 +57,7 @@ class SimulationsControlPanel extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 6),
-              Row(
-                children: const [
-                  Expanded(
-                    child: Text(
-                      'Arrastra con el dedo/cursor para mover el lente',
-                    ),
-                  ),
-                ],
-              ),
+              const Text('Drag the lens to see the corrected area'),
             ],
           ),
         );

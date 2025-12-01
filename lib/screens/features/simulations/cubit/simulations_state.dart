@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-enum VisionProblem { none, miopia, astigmatismo, glare }
+enum VisionProblem { none, myopia, presbyopia, glare, astigmatism }
 
 enum SimulationQuality { standard, good, premium }
 
