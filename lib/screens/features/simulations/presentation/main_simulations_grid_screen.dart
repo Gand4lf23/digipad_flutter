@@ -51,11 +51,9 @@ class MainSimulationsGridScreen extends StatelessWidget {
       MaterialPageRoute(
         builder: (_) => BlocProvider(
           create: (_) => SimulationsCubit(),
-          child: const MaterialApp(
-            home: SimulationsScreen(
-              problemName: "Myopia",
-              sceneAsset: "assets/images/scenes/TintePlaya.jpg",
-            ),
+          child: SimulationsScreen(
+            problemName: problemName,
+            sceneAsset: "assets/images/scenes/TintePlaya.jpg",
           ),
         ),
       ),
