@@ -67,7 +67,7 @@ dependencies {
     implementation("org.tensorflow:tensorflow-lite-gpu:2.14.0")
     
     // CameraX dependencies for YOLOv8Activity
-    val cameraxVersion = "1.4.0-alpha03"
+    val cameraxVersion = "1.3.1"
     implementation("androidx.camera:camera-camera2:${cameraxVersion}")
     implementation("androidx.camera:camera-lifecycle:${cameraxVersion}")
     implementation("androidx.camera:camera-view:${cameraxVersion}")
@@ -80,4 +80,7 @@ dependencies {
     
     // Guava for ListenableFuture (required by CameraX)
     implementation("com.google.guava:guava:31.1-android")
+    
+    // Fix for CallbackToFutureAdapter not found
+    implementation("androidx.concurrent:concurrent-futures:1.1.0")
 }

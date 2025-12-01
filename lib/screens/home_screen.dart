@@ -1,4 +1,6 @@
 import 'package:digipad_flutter/data/local/gallery_storage.dart';
+import 'package:digipad_flutter/screens/features/simulations/cubit/simulations_cubit.dart';
+import 'package:digipad_flutter/screens/features/simulations/presentation/main_simulations_grid_screen.dart';
 import 'package:digipad_flutter/screens/features/virtual_mirror/cubit/virtual_mirror_cubit.dart';
 import 'package:digipad_flutter/screens/features/virtual_mirror/presentation/virtual_mirror_screen.dart';
 import 'package:digipad_flutter/screens/native_impl/split_screen.dart';
@@ -181,6 +183,16 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
       );
+    } else if (moduleName == 'Simulations') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BlocProvider(
+            create: (_) => SimulationsCubit(),
+            child: const MainSimulationsGridScreen(),
+          ),
+        ),
+      );
     } else if (moduleName == 'Measurements') {
       Navigator.push(
         context,
@@ -190,6 +202,11 @@ class HomeScreen extends StatelessWidget {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => DetectorWidget()),
+      );
+    } else if (moduleName == 'Visual Health') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const NativeSplitScreen()),
       );
     } else {
       showDialog(
