@@ -3,6 +3,10 @@ import 'package:digipad_flutter/screens/features/simulations/cubit/simulations_c
 import 'package:digipad_flutter/screens/features/simulations/presentation/main_simulations_grid_screen.dart';
 import 'package:digipad_flutter/screens/features/virtual_mirror/cubit/virtual_mirror_cubit.dart';
 import 'package:digipad_flutter/screens/features/virtual_mirror/presentation/virtual_mirror_screen.dart';
+import 'package:digipad_flutter/screens/features/visual_health/cubit/visual_health_cubit.dart';
+import 'package:digipad_flutter/screens/features/visual_health/presentation/visual_health_screen.dart';
+import 'package:digipad_flutter/screens/features/cosmetic_lenses/cubit/cosmetic_lenses_cubit.dart';
+import 'package:digipad_flutter/screens/features/cosmetic_lenses/presentation/cosmetic_lenses_screen.dart';
 import 'package:digipad_flutter/screens/native_impl/split_screen.dart';
 import 'package:digipad_flutter/screens/tflite/detector_widget.dart';
 import 'package:flutter/material.dart';
@@ -203,10 +207,25 @@ class HomeScreen extends StatelessWidget {
         context,
         MaterialPageRoute(builder: (context) => DetectorWidget()),
       );
+    } else if (moduleName == 'Cosmetic Lenses') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BlocProvider(
+            create: (_) => CosmeticLensesCubit(GalleryStorage()..init()),
+            child: const CosmeticLensesScreen(),
+          ),
+        ),
+      );
     } else if (moduleName == 'Visual Health') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const NativeSplitScreen()),
+        MaterialPageRoute(
+          builder: (context) => BlocProvider(
+            create: (_) => VisualHealthCubit(),
+            child: const VisualHealthScreen(),
+          ),
+        ),
       );
     } else {
       showDialog(
