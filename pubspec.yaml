@@ -83,6 +83,26 @@ flutter:
 
   assets:
     - assets/images/scenes/
+    - assets/images/visual_health/
+    - assets/images/cosmetic_lenses/acuvue/
+    - assets/images/cosmetic_lenses/devlyn/
+    - assets/images/cosmetic_lenses/durasoft/
+    - assets/images/cosmetic_lenses/fresh_look/
+    - assets/images/cosmetic_lenses/normal/
+    - assets/images/cosmetic_lenses/optima/
+    - assets/images/cosmetic_lenses/star_colors/
+    - assets/images/cosmetic_lenses/tricolor/
+    - assets/images/simulations/
+    - assets/images/simulations/anti_reflex/
+    - assets/images/simulations/bifocal/
+    - assets/images/simulations/drive/
+    - assets/images/simulations/myopia/
+    - assets/images/simulations/multifocal/
+    - assets/images/simulations/photochromic/
+    - assets/images/simulations/polarized/
+    - assets/images/simulations/presbicia/
+    - assets/images/simulations/solar/
+    - assets/images/simulations/tint/
     - assets/images/
     - assets/svgs/
     - assets/models/

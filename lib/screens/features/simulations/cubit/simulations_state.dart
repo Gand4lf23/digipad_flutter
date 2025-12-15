@@ -1,33 +1,99 @@
 import 'dart:ui';
 
-enum VisionProblem { none, myopia, presbyopia, glare, astigmatism }
+import '../models/simulation_scenario.dart';
 
-enum SimulationQuality { standard, good, premium }
-
+/// State for the simulations feature.
 class SimulationsState {
-  final VisionProblem problem;
-  final SimulationQuality quality;
+  /// Currently selected category.
+  final SimulationCategory? selectedCategory;
+
+  /// Currently selected scenario within the category.
+  final SimulationScenario? selectedScenario;
+
+  /// Currently selected correction lens (if any).
+  final CorrectionLens? selectedLens;
+
+  /// Position of the draggable lens on the screen.
   final Offset lensPosition;
-  final double lensRadius;
+
+  /// Size of the draggable lens (width/height of squared lens).
+  final double lensSize;
+
+  /// Opacity of the tint (0.0 to 1.0).
+  final double lensOpacity;
+
+  /// Whether the user is currently dragging the lens.
+  final bool isDragging;
+
+  /// Loading state for images.
+  final bool isLoading;
+
+  /// Error message if any.
+  final String? errorMessage;
 
   SimulationsState({
-    required this.problem,
-    required this.quality,
-    required this.lensPosition,
-    required this.lensRadius,
+    this.selectedCategory,
+    this.selectedScenario,
+    this.selectedLens,
+    this.lensPosition = const Offset(150, 300),
+    this.lensSize = 300.0,
+    this.lensOpacity = 0.5,
+    this.isDragging = false,
+    this.isLoading = false,
+    this.errorMessage,
   });
 
+  /// Initial state with all categories available.
+  factory SimulationsState.initial() {
+    return SimulationsState(
+      selectedCategory: null,
+      selectedScenario: null,
+      selectedLens: null,
+    );
+  }
+
+  /// Check if a lens is selected and ready for demonstration.
+  bool get hasLensSelected => selectedLens != null;
+
+  /// Check if a scenario is selected.
+  bool get hasScenarioSelected => selectedScenario != null;
+
+  /// Get the path to the problem image (how the user sees without correction).
+  String? get problemImagePath => selectedScenario?.problemImagePath;
+
+  /// Get the path to the corrected image (how the user sees with the lens).
+  String? get correctedImagePath => selectedLens?.correctedImagePath;
+
+  /// Get available lenses for current scenario.
+  List<CorrectionLens> get availableLenses =>
+      selectedScenario?.correctionLenses ?? [];
+
   SimulationsState copyWith({
-    VisionProblem? problem,
-    SimulationQuality? quality,
+    SimulationCategory? selectedCategory,
+    SimulationScenario? selectedScenario,
+    CorrectionLens? selectedLens,
     Offset? lensPosition,
-    double? lensRadius,
+    double? lensSize,
+    double? lensOpacity,
+    bool? isDragging,
+    bool? isLoading,
+    String? errorMessage,
+    bool clearLens = false,
+    bool clearScenario = false,
+    bool clearError = false,
   }) {
     return SimulationsState(
-      problem: problem ?? this.problem,
-      quality: quality ?? this.quality,
+      selectedCategory: selectedCategory ?? this.selectedCategory,
+      selectedScenario: clearScenario
+          ? null
+          : (selectedScenario ?? this.selectedScenario),
+      selectedLens: clearLens ? null : (selectedLens ?? this.selectedLens),
       lensPosition: lensPosition ?? this.lensPosition,
-      lensRadius: lensRadius ?? this.lensRadius,
+      lensSize: lensSize ?? this.lensSize,
+      lensOpacity: lensOpacity ?? this.lensOpacity,
+      isDragging: isDragging ?? this.isDragging,
+      isLoading: isLoading ?? this.isLoading,
+      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
   }
 }
