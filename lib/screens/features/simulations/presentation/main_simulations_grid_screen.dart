@@ -1,60 +1,323 @@
-import 'package:digipad_flutter/screens/features/simulations/cubit/simulations_cubit.dart';
-import 'package:digipad_flutter/screens/features/simulations/presentation/simulations_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../cubit/simulations_cubit.dart';
+import '../cubit/simulations_state.dart';
+import '../data/simulation_data.dart';
+import '../models/simulation_scenario.dart';
+import 'simulation_viewer_screen.dart';
+
+/// Main grid screen for selecting visual problems and scenarios.
 class MainSimulationsGridScreen extends StatelessWidget {
   const MainSimulationsGridScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final corrections = [
-      _Problem("Myopia", Icons.remove_red_eye),
-      _Problem("Presbyopia", Icons.visibility),
-      _Problem("Monofocal", Icons.circle_outlined),
-      _Problem("Bifocal", Icons.center_focus_weak),
-      _Problem("Progressive", Icons.view_stream),
-      _Problem("Aspheric", Icons.blur_circular),
-    ];
+    return BlocProvider(
+      create: (_) => SimulationsCubit(),
+      child: const _SimulationsGridView(),
+    );
+  }
+}
 
-    final treatments = [
-      _Problem("Anti-reflective", Icons.shield),
-      _Problem("Polarized", Icons.filter_hdr),
-      _Problem("Photochromic", Icons.brightness_5),
-    ];
+class _SimulationsGridView extends StatelessWidget {
+  const _SimulationsGridView();
 
-    final outdoor = [_Problem("Sun", Icons.wb_sunny)];
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<SimulationsCubit, SimulationsState>(
+      builder: (context, state) {
+        return Scaffold(
+          body: CustomScrollView(
+            slivers: [
+              _buildAppBar(context, state),
+              if (state.selectedCategory == null)
+                _buildCategoryGrid(context)
+              else
+                _buildScenarioGrid(context, state.selectedCategory!),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text("Lens Simulator")),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _CategoryTitle("Vision Correction"),
-          _ProblemGrid(corrections, onSelected: _navigateToSimulation),
-
-          const SizedBox(height: 24),
-          _CategoryTitle("Lens Treatments"),
-          _ProblemGrid(treatments, onSelected: _navigateToSimulation),
-
-          const SizedBox(height: 24),
-          _CategoryTitle("Outdoor / Sun Protection"),
-          _ProblemGrid(outdoor, onSelected: _navigateToSimulation),
-        ],
+  Widget _buildAppBar(BuildContext context, SimulationsState state) {
+    return SliverAppBar(
+      expandedHeight: 180,
+      floating: false,
+      pinned: true,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new),
+        onPressed: () {
+          if (state.selectedCategory != null) {
+            context.read<SimulationsCubit>().goToCategories();
+          } else {
+            Navigator.pop(context);
+          }
+        },
+      ),
+      flexibleSpace: FlexibleSpaceBar(
+        title: Text(
+          state.selectedCategory?.displayName ?? 'Lens Simulator',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            shadows: [Shadow(blurRadius: 8, color: Colors.black54)],
+          ),
+        ),
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Theme.of(context).primaryColor,
+                Theme.of(context).primaryColor.withOpacity(0.7),
+                Colors.deepPurple.shade700,
+              ],
+            ),
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                right: -30,
+                top: 20,
+                child: Icon(
+                  Icons.visibility_outlined,
+                  size: 150,
+                  color: Colors.white.withOpacity(0.1),
+                ),
+              ),
+              if (state.selectedCategory != null)
+                Positioned(
+                  left: 20,
+                  bottom: 60,
+                  right: 20,
+                  child: Text(
+                    state.selectedCategory!.description,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  static void _navigateToSimulation(BuildContext context, String problemName) {
+  Widget _buildCategoryGrid(BuildContext context) {
+    final allCategories = SimulationData.categories;
+    final visionProblems = ['myopia', 'presbyopia', 'multifocal', 'bifocal'];
+
+    final problemCategories = allCategories
+        .where((c) => visionProblems.contains(c.id))
+        .toList();
+    final treatmentCategories = allCategories
+        .where((c) => !visionProblems.contains(c.id))
+        .toList();
+
+    return SliverList(
+      delegate: SliverChildListDelegate([
+        _buildSectionHeader('Refractive conditions'),
+        _buildGridSection(context, problemCategories),
+        const SizedBox(height: 24),
+        _buildSectionHeader('Lens Treatments'),
+        _buildGridSection(context, treatmentCategories),
+        const SizedBox(height: 32),
+      ]),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGridSection(
+    BuildContext context,
+    List<SimulationCategory> categories,
+  ) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3, // 3 options per row
+        childAspectRatio: 0.85, // Taller to fit large text
+        crossAxisSpacing: 16, // Increased spacing
+        mainAxisSpacing: 16,
+      ),
+      itemCount: categories.length,
+      itemBuilder: (context, index) {
+        final category = categories[index];
+        return _CategoryCard(
+          category: category,
+          onTap: () {
+            context.read<SimulationsCubit>().selectCategory(category);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildScenarioGrid(BuildContext context, SimulationCategory category) {
+    return SliverPadding(
+      padding: const EdgeInsets.all(16),
+      sliver: SliverGrid(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.75, // Taller
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final scenario = category.scenarios[index];
+          return _ScenarioCard(
+            scenario: scenario,
+            category: category,
+            onTap: () => _navigateToViewer(context, category, scenario),
+          );
+        }, childCount: category.scenarios.length),
+      ),
+    );
+  }
+
+  void _navigateToViewer(
+    BuildContext context,
+    SimulationCategory category,
+    SimulationScenario scenario,
+  ) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => BlocProvider(
-          create: (_) => SimulationsCubit(),
-          child: const MaterialApp(
-            home: SimulationsScreen(
-              problemName: "Myopia",
-              sceneAsset: "assets/images/scenes/TintePlaya.jpg",
+        builder: (_) =>
+            SimulationViewerScreen(category: category, scenario: scenario),
+      ),
+    );
+  }
+}
+
+/// Card widget for displaying a category.
+class _CategoryCard extends StatelessWidget {
+  final SimulationCategory category;
+  final VoidCallback onTap;
+
+  const _CategoryCard({required this.category, required this.onTap});
+
+  IconData get _icon {
+    switch (category.id) {
+      case 'myopia':
+        return Icons.remove_red_eye_outlined;
+      case 'presbyopia':
+        return Icons.visibility_outlined;
+      case 'multifocal':
+        return Icons.view_stream_outlined;
+      case 'bifocal':
+        return Icons.center_focus_weak_outlined;
+      case 'polarized':
+        return Icons.filter_hdr_outlined;
+      case 'anti_reflex':
+        return Icons.shield_outlined;
+      case 'drive':
+        return Icons.directions_car_outlined;
+      case 'photochromic':
+        return Icons.brightness_5_outlined;
+      case 'solar':
+        return Icons.wb_sunny_outlined;
+      case 'tint':
+        return Icons.color_lens_outlined;
+      default:
+        return Icons.lens_outlined;
+    }
+  }
+
+  Color get _iconColor {
+    switch (category.id) {
+      case 'myopia':
+        return Colors.blue;
+      case 'presbyopia':
+        return Colors.purple;
+      case 'multifocal':
+        return Colors.teal;
+      case 'bifocal':
+        return Colors.indigo;
+      case 'polarized':
+        return Colors.cyan;
+      case 'anti_reflex':
+        return Colors.green;
+      case 'drive':
+        return Colors.orange;
+      case 'photochromic':
+        return Colors.amber;
+      case 'solar':
+        return Colors.amber.shade700;
+      case 'tint':
+        return Colors.indigoAccent;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      elevation: 4,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Colors.white, _iconColor.withOpacity(0.1)],
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: _iconColor.withOpacity(0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(_icon, size: 60, color: _iconColor),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  category.displayName,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${category.scenarios.length} scenes',
+                  style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
+                ),
+              ],
             ),
           ),
         ),
@@ -63,71 +326,166 @@ class MainSimulationsGridScreen extends StatelessWidget {
   }
 }
 
-class _CategoryTitle extends StatelessWidget {
-  final String title;
-  const _CategoryTitle(this.title);
+/// Card widget for displaying a scenario with preview.
+class _ScenarioCard extends StatelessWidget {
+  final SimulationScenario scenario;
+  final SimulationCategory category;
+  final VoidCallback onTap;
+
+  const _ScenarioCard({
+    required this.scenario,
+    required this.category,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        title,
-        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-}
-
-class _ProblemGrid extends StatelessWidget {
-  final List<_Problem> problems;
-  final void Function(BuildContext, String) onSelected;
-
-  const _ProblemGrid(this.problems, {required this.onSelected});
-
-  @override
-  Widget build(BuildContext context) {
-    return GridView.builder(
-      padding: const EdgeInsets.only(top: 12),
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: problems.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        childAspectRatio: 1.05,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-      ),
-      itemBuilder: (_, i) {
-        final item = problems[i];
-        return GestureDetector(
-          onTap: () => onSelected(context, item.label),
-          child: Card(
-            elevation: 2,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(item.icon, size: 48),
-                const SizedBox(height: 12),
-                Text(
-                  item.label,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+    return Material(
+      elevation: 4,
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              flex: 3,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.asset(
+                    scenario.problemImagePath,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: Colors.grey.shade200,
+                      child: const Icon(
+                        Icons.image_not_supported_outlined,
+                        size: 48,
+                        color: Colors.grey,
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                  // Gradient overlay
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      height: 40,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(0.5),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Blur effect indicator
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'Without lens',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
-      },
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      scenario.displayName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 28,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '${scenario.correctionLenses.length} lenses available',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: scenario.correctionLenses
+                          .take(3)
+                          .map(
+                            (lens) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _getLensColor(
+                                  lens.quality,
+                                ).withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                lens.displayName,
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  color: _getLensColor(lens.quality),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
-}
 
-class _Problem {
-  final String label;
-  final IconData icon;
-  _Problem(this.label, this.icon);
+  Color _getLensColor(LensQuality quality) {
+    switch (quality) {
+      case LensQuality.economy:
+        return Colors.grey.shade600;
+      case LensQuality.standard:
+        return Colors.blue;
+      case LensQuality.good:
+        return Colors.green;
+      case LensQuality.premium:
+        return Colors.amber.shade700;
+    }
+  }
 }

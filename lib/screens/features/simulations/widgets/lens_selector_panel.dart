@@ -1,0 +1,179 @@
+import 'package:flutter/material.dart';
+
+import '../models/simulation_scenario.dart';
+
+/// Panel for selecting correction lenses.
+class LensSelectorPanel extends StatelessWidget {
+  final List<CorrectionLens> lenses;
+  final CorrectionLens? selectedLens;
+  final void Function(CorrectionLens) onLensSelected;
+
+  const LensSelectorPanel({
+    super.key,
+    required this.lenses,
+    required this.selectedLens,
+    required this.onLensSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (lenses.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          'No lenses available for this scene',
+          style: TextStyle(color: Colors.white.withOpacity(0.7)),
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: lenses.map((lens) {
+          final isSelected = selectedLens?.id == lens.id;
+          return Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: _LensCard(
+              lens: lens,
+              isSelected: isSelected,
+              onTap: () => onLensSelected(lens),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+/// Individual lens card widget.
+class _LensCard extends StatelessWidget {
+  final CorrectionLens lens;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _LensCard({
+    required this.lens,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  Color get _qualityColor {
+    switch (lens.quality) {
+      case LensQuality.economy:
+        return Colors.grey;
+      case LensQuality.standard:
+        return Colors.blue;
+      case LensQuality.good:
+        return Colors.green;
+      case LensQuality.premium:
+        return Colors.amber;
+    }
+  }
+
+  IconData get _qualityIcon {
+    switch (lens.quality) {
+      case LensQuality.economy:
+        return Icons.star_border_outlined;
+      case LensQuality.standard:
+        return Icons.star_half_outlined;
+      case LensQuality.good:
+        return Icons.star_outlined;
+      case LensQuality.premium:
+        return Icons.auto_awesome;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? _qualityColor.withOpacity(0.25)
+                  : Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isSelected
+                    ? _qualityColor
+                    : Colors.white.withOpacity(0.2),
+                width: isSelected ? 2 : 1,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: _qualityColor.withOpacity(0.3),
+                        blurRadius: 8,
+                        spreadRadius: 0,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _qualityIcon,
+                      color: isSelected
+                          ? _qualityColor
+                          : Colors.white.withOpacity(0.7),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      lens.displayName,
+                      style: TextStyle(
+                        color: isSelected
+                            ? Colors.white
+                            : Colors.white.withOpacity(0.8),
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.w500,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _qualityColor.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    lens.quality.displayName,
+                    style: TextStyle(
+                      color: _qualityColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
