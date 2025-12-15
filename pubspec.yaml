@@ -1,8 +1,8 @@
 name: digipad_flutter
-description: "DigiPad 3D Premium - Professional optical measurement and simulation app"
+description: 'DigiPad 3D Premium - Professional optical measurement and simulation app'
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: "none" # Remove this line if you wish to publish to pub.dev
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -65,6 +65,7 @@ dependencies:
   exif: ^3.3.0
   # ultralytics_yolo: ^0.1.39
   image_picker: ^1.2.0
+  screenshot: ^3.0.0
 
 dev_dependencies:
   flutter_test:
@@ -87,7 +88,7 @@ flutter:
     - assets/svgs/
     - assets/models/
     - assets/labels.txt
-    - assets/model.tflite
+    - assets/model2.tflite
 
   # plugin:
   #   platforms:
@@ -99,9 +100,9 @@ flutter:
 
 # Flutter Native Splash Configuration
 flutter_native_splash:
-  color: "#000000"
+  color: '#000000'
   image: assets/images/splash_image.png
-  color_dark: "#000000"
+  color_dark: '#000000'
   image_dark: assets/images/splash_image.png
 
   # Ensure proper scaling for landscape mode
@@ -111,9 +112,9 @@ flutter_native_splash:
   android_gravity: center
   android_12:
     image: assets/images/splash_image.png
-    color: "#000000"
+    color: '#000000'
     image_dark: assets/images/splash_image.png
-    color_dark: "#000000"
+    color_dark: '#000000'
 
   # iOS specific settings - fill width completely
   ios_content_mode: scaleAspectFill
@@ -122,9 +123,9 @@ flutter_native_splash:
 
 # Flutter Launcher Icons Configuration
 flutter_launcher_icons:
-  android: "launcher_icon"
+  android: 'launcher_icon'
   ios: true
-  image_path: "assets/images/ic_launcher.png"
+  image_path: 'assets/images/ic_launcher.png'
   min_sdk_android: 21
   web:
     generate: false

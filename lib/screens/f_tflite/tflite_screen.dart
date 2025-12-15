@@ -48,12 +48,12 @@
 //       case mobilenet:
 //       case ssd:
 //         res = await Tflite.loadModel(
-//           model: "assets/models/model.tflite",
+//           model: "assets/models/model2.tflite",
 //           labels: "assets/models/labels.txt",
 //         );
 //         break;
 //       case posenet:
-//         res = await Tflite.loadModel(model: "assets/models/model.tflite");
+//         res = await Tflite.loadModel(model: "assets/models/model2.tflite");
 //         break;
 //       default:
 //         res = "Modelo no reconocido";

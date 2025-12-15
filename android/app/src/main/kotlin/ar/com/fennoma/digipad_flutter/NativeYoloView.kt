@@ -6,6 +6,7 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.platform.PlatformView
+import kotlin.math.max
 
 class NativeYoloView(
     context: Context,
@@ -19,23 +20,45 @@ class NativeYoloView(
 
     init {
         channel.setMethodCallHandler(this)
-        yoloV8View.onDetections = { boxes, time ->
-            val list = boxes.map { b ->
-                mapOf(
-                    "x1" to b.x1,
-                    "y1" to b.y1,
-                    "x2" to b.x2,
-                    "y2" to b.y2,
-                    "cx" to b.cx,
-                    "cy" to b.cy,
-                    "w" to b.w,
-                    "h" to b.h,
-                    "cnf" to b.cnf,
-                    "cls" to b.cls,
-                    "clsName" to b.clsName
+        
+        yoloV8View.onDetections = { boxes, _ ->
+            val vWidth = yoloV8View.width.toFloat()
+            val vHeight = yoloV8View.height.toFloat()
+
+            if (vWidth > 0 && vHeight > 0 && boxes.isNotEmpty()) {
+                
+                // 1. SMART CHECK: Are coordinates already normalized?
+                // We check the maximum X value in the batch. 
+                // If the max X is <= 1.0, it's normalized. If it's > 1.0 (e.g. 500), it's pixels.
+                val maxVal = boxes.maxOfOrNull { it.cx } ?: 0f
+                val isAlreadyNormalized = maxVal <= 1.0f
+
+                val circlesList = ArrayList<Map<String, Float>>()
+                val eyesList = ArrayList<Map<String, Float>>()
+
+                for (b in boxes) {
+                    // 2. Normalize if needed
+                    val normX = if (isAlreadyNormalized) b.cx else (b.cx / vWidth)
+                    val normY = if (isAlreadyNormalized) b.cy else (b.cy / vHeight)
+                    
+                    val point = mapOf("x" to normX, "y" to normY)
+
+                    val name = b.clsName ?: ""
+                    if (name.contains("circle", ignoreCase = true)) {
+                        circlesList.add(point)
+                    } else if (name.contains("eye", ignoreCase = true)) {
+                        eyesList.add(point)
+                    }
+                }
+
+                val resultData = mapOf(
+                    "circles" to circlesList,
+                    "eyes" to eyesList,
+                    "isNormalized" to isAlreadyNormalized // Optional debug info
                 )
+
+                channel.invokeMethod("onDetections", resultData)
             }
-            channel.invokeMethod("onDetections", mapOf("boxes" to list, "time" to time))
         }
     }
 

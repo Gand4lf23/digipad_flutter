@@ -51,26 +51,11 @@ class OverlayView(context: Context?, attrs: AttributeSet?) : View(context, attrs
         super.draw(canvas)
 
         results.forEach {
-            val left = it.x1 * width
-            val top = it.y1 * height
-            val right = it.x2 * width
-            val bottom = it.y2 * height
+            val cx = (it.cx * width).toFloat()
+            val cy = (it.cy * height).toFloat()
+            val radius = max((it.w * width) / 2, (it.h * height) / 2)
 
-            canvas.drawRect(left, top, right, bottom, boxPaint)
-            val drawableText = it.clsName
-
-            textBackgroundPaint.getTextBounds(drawableText, 0, drawableText.length, bounds)
-            val textWidth = bounds.width()
-            val textHeight = bounds.height()
-            canvas.drawRect(
-                left,
-                top,
-                left + textWidth + BOUNDING_RECT_TEXT_PADDING,
-                top + textHeight + BOUNDING_RECT_TEXT_PADDING,
-                textBackgroundPaint
-            )
-            canvas.drawText(drawableText, left, top + bounds.height(), textPaint)
-
+            canvas.drawCircle(cx, cy, radius, boxPaint)
         }
     }
 

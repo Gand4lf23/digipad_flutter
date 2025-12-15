@@ -7,7 +7,7 @@
 //   /// Loads a TensorFlow Lite model (and optional labels) from assets.
 //   /// Defaults to your custom model path under `assets/models/`.
 //   static Future<String?> loadModel({
-//     String model = 'assets/models/model.tflite',
+//     String model = 'assets/models/model2.tflite',
 //     String? labels,
 //     int numThreads = 1,
 //     bool isAsset = true,
