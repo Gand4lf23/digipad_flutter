@@ -1,4 +1,4 @@
-package ar.com.fennoma.digipad_flutter.yolov8tflite
+package ar.com.digipad.yolov8tflite
 
 data class BoundingBox(
     val x1: Float,

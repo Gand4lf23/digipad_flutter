@@ -1,5 +1,7 @@
-package ar.com.fennoma.digipad_flutter
+package ar.com.digipad
 
+import android.graphics.BitmapFactory
+import androidx.exifinterface.media.ExifInterface
 import android.Manifest
 import android.app.Activity
 import android.content.Context
@@ -25,14 +27,15 @@ import androidx.camera.core.ImageCaptureException
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
-import ar.com.fennoma.digipad_flutter.yolov8tflite.BoundingBox
-import ar.com.fennoma.digipad_flutter.yolov8tflite.Constants
-import ar.com.fennoma.digipad_flutter.yolov8tflite.Detector
-import ar.com.fennoma.digipad_flutter.yolov8tflite.OverlayView
+import ar.com.digipad.yolov8tflite.BoundingBox
+import ar.com.digipad.yolov8tflite.Constants
+import ar.com.digipad.yolov8tflite.Detector
+import ar.com.digipad.yolov8tflite.OverlayView
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+
 
 class YoloV8View @JvmOverloads constructor(
     context: Context,
@@ -53,8 +56,6 @@ class YoloV8View @JvmOverloads constructor(
     private var cameraSelector: CameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
     private var isFrontCamera: Boolean = false
     var onDetections: ((List<BoundingBox>, Long) -> Unit)? = null
-
-    // Lifecycle and State Management
     private var lifecycleOwner: LifecycleOwner? = null
     private val isDisposed = AtomicBoolean(false)
     private val isCameraBound = AtomicBoolean(false)
@@ -76,6 +77,10 @@ class YoloV8View @JvmOverloads constructor(
                 unbindCamera()
             }
         }
+    }
+
+    fun detectImageSync(bitmap: Bitmap): List<BoundingBox> {
+        return detector.detectSync(bitmap)
     }
 
     init {
@@ -380,6 +385,103 @@ class YoloV8View @JvmOverloads constructor(
             })
         } catch (e: Exception) {
             callback(null, e.message ?: "Capture error")
+        }
+    }
+
+    fun detectFromFile(path: String): Map<String, Any> {
+        val file = File(path)
+        if (!file.exists()) return emptyMap()
+
+        var originalBitmap: Bitmap? = null
+        var rotatedBitmap: Bitmap? = null
+
+        try {
+            // 1. Calculate optimal sample size
+            // We target ~2560px for better detection quality (1024 was too small)
+            val options = BitmapFactory.Options()
+            options.inJustDecodeBounds = true
+            BitmapFactory.decodeFile(path, options)
+
+            val reqSize = 2560
+            var inSampleSize = 1
+            if (options.outHeight > reqSize || options.outWidth > reqSize) {
+                val halfHeight = options.outHeight / 2
+                val halfWidth = options.outWidth / 2
+                while ((halfHeight / inSampleSize) >= reqSize && (halfWidth / inSampleSize) >= reqSize) {
+                    inSampleSize *= 2
+                }
+            }
+
+            // 2. Decode with sample size
+            options.inJustDecodeBounds = false
+            options.inSampleSize = inSampleSize
+            options.inPreferredConfig = Bitmap.Config.ARGB_8888
+            
+            originalBitmap = BitmapFactory.decodeFile(path, options) ?: return emptyMap()
+
+            // 3. Handle Rotation (Exif)
+            val exif = ExifInterface(path)
+            val orientation = exif.getAttributeInt(
+                ExifInterface.TAG_ORIENTATION,
+                ExifInterface.ORIENTATION_NORMAL
+            )
+
+            val matrix = Matrix()
+            when (orientation) {
+                ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+                ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+                ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+            }
+
+            rotatedBitmap = Bitmap.createBitmap(
+                originalBitmap, 0, 0, originalBitmap.width, originalBitmap.height, matrix, true
+            )
+
+            // 4. Run Detection
+            val boxes = detector.detectSync(rotatedBitmap)
+
+            // 5. Format for Flutter (Always 4 Circles, Always 2 Eyes)
+            
+            // --- CIRCLES (Target: 4 items / 8 coordinates) ---
+            val circlesList = boxes.filter { it.clsName.contains("circle", ignoreCase = true) }
+                .sortedByDescending { it.cnf } // Select highest match
+                .take(4)                       // Limit to top 4
+                .flatMap { listOf(it.cx.toDouble(), it.cy.toDouble()) }
+                .toMutableList()
+
+            // Pad with 0.0 if we found fewer than 4 circles
+            while (circlesList.size < 8) {
+                circlesList.add(0.0)
+            }
+
+            // --- EYES (Target: 2 items / 4 coordinates) ---
+            val eyesList = boxes.filter { it.clsName.contains("eye", ignoreCase = true) }
+                .sortedByDescending { it.cnf } // Select highest match
+                .take(2)                       // Limit to top 2
+                .flatMap { listOf(it.cx.toDouble(), it.cy.toDouble()) }
+                .toMutableList()
+
+            // Pad with 0.0 if we found fewer than 2 eyes
+            while (eyesList.size < 4) {
+                eyesList.add(0.0)
+            }
+
+            return mapOf(
+                "circles" to circlesList,
+                "eyes" to eyesList
+            )
+
+        } catch (e: Exception) {
+            Log.e("YoloV8View", "Error in detectFromFile", e)
+            return emptyMap()
+        } finally {
+            // Safe cleanup
+            try {
+                if (originalBitmap != rotatedBitmap) originalBitmap?.recycle()
+                rotatedBitmap?.recycle()
+            } catch (e: Exception) {
+                Log.e("YoloV8View", "Error cleaning up bitmaps", e)
+            }
         }
     }
 }

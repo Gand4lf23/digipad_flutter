@@ -10,7 +10,6 @@ import 'package:digipad_flutter/screens/features/visual_health/cubit/visual_heal
 import 'package:digipad_flutter/screens/features/visual_health/presentation/visual_health_screen.dart';
 import 'package:digipad_flutter/screens/features/cosmetic_lenses/cubit/cosmetic_lenses_cubit.dart';
 import 'package:digipad_flutter/screens/features/cosmetic_lenses/presentation/cosmetic_lenses_screen.dart';
-import 'package:digipad_flutter/screens/tflite/detector_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -203,11 +202,6 @@ class HomeScreen extends StatelessWidget {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const Lenses3DScreen()),
-      );
-    } else if (moduleName == 'AR Camera') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => DetectorWidget()),
       );
     } else if (moduleName == 'Cosmetic Lenses') {
       Navigator.push(

@@ -66,6 +66,8 @@ dependencies:
   # ultralytics_yolo: ^0.1.39
   image_picker: ^1.2.0
   screenshot: ^3.0.0
+  widget_zoom: ^0.0.4
+  provider: ^6.1.5+1
 
 dev_dependencies:
   flutter_test:
@@ -108,15 +110,7 @@ flutter:
     - assets/svgs/
     - assets/models/
     - assets/labels.txt
-    - assets/model2.tflite
-
-  # plugin:
-  #   platforms:
-  #     android:
-  #       package: com.ultralytics.yolo
-  #       pluginClass: YOLOPlugin
-  #     ios:
-  #       pluginClass: YOLOPlugin
+    - assets/model3.tflite
 
 # Flutter Native Splash Configuration
 flutter_native_splash:

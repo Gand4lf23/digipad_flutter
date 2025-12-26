@@ -1,70 +1,75 @@
-package ar.com.fennoma.digipad_flutter.yolov8tflite
+package ar.com.digipad.yolov8tflite
 
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.Rect
-import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
-import androidx.core.content.ContextCompat
-import java.util.LinkedList
 import kotlin.math.max
 
 class OverlayView(context: Context?, attrs: AttributeSet?) : View(context, attrs) {
 
     private var results = listOf<BoundingBox>()
-    private var boxPaint = Paint()
-    private var textBackgroundPaint = Paint()
-    private var textPaint = Paint()
-
-    private var bounds = Rect()
+    
+    // Only one paint needed now for the main circle
+    private var circlePaint = Paint()
 
     init {
         initPaints()
     }
 
     fun clear() {
-        textPaint.reset()
-        textBackgroundPaint.reset()
-        boxPaint.reset()
-        invalidate()
         initPaints()
+        invalidate()
     }
 
     private fun initPaints() {
-        textBackgroundPaint.color = Color.BLACK
-        textBackgroundPaint.style = Paint.Style.FILL
-        textBackgroundPaint.textSize = 50f
-
-        textPaint.color = Color.WHITE
-        textPaint.style = Paint.Style.FILL
-        textPaint.textSize = 50f
-
-        boxPaint.color = ContextCompat.getColor(context!!, ar.com.fennoma.digipad_flutter.R.color.bounding_box_color)
-        boxPaint.strokeWidth = 8F
-        boxPaint.style = Paint.Style.STROKE
+        // Change to Green Opaque (Filled)
+        circlePaint.color = Color.GREEN 
+        circlePaint.style = Paint.Style.FILL // FILL makes it an "opaque" solid circle
+        circlePaint.isAntiAlias = true
+        
+        // Optional: If you want it slightly transparent (like a lens), uncomment below:
+        circlePaint.alpha = 150 
     }
 
     override fun draw(canvas: Canvas) {
         super.draw(canvas)
 
+        // 1. Calcular tamaño promedio para los ojos para que sean iguales
+        val eyes = results.filter { 
+            it.clsName.contains("eye", ignoreCase = true) || 
+            it.clsName.contains("pupil", ignoreCase = true) 
+        }
+
+        var avgEyeRadius = 0f
+        if (eyes.isNotEmpty()) {
+            val sumRadius = eyes.sumOf { 
+                max((it.w * width) / 2, (it.h * height) / 2).toDouble() 
+            }
+            avgEyeRadius = (sumRadius / eyes.size).toFloat()
+        }
+
         results.forEach {
             val cx = (it.cx * width).toFloat()
             val cy = (it.cy * height).toFloat()
-            val radius = max((it.w * width) / 2, (it.h * height) / 2)
+            val isEye = it.clsName.contains("eye", ignoreCase = true) || 
+                        it.clsName.contains("pupil", ignoreCase = true)
 
-            canvas.drawCircle(cx, cy, radius, boxPaint)
+            // Si es ojo, usa el promedio. Si no (referencia), usa su tamaño real.
+            val radius = if (isEye && avgEyeRadius > 0) avgEyeRadius 
+                         else max((it.w * width) / 2, (it.h * height) / 2)
+
+            // Draw the green filled circle
+            canvas.drawCircle(cx, cy, radius, circlePaint)
+            
+            // Middle dot code removed here
         }
     }
 
     fun setResults(boundingBoxes: List<BoundingBox>) {
         results = boundingBoxes
         invalidate()
-    }
-
-    companion object {
-        private const val BOUNDING_RECT_TEXT_PADDING = 8
     }
 }

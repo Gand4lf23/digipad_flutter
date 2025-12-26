@@ -9,7 +9,6 @@ class OpticalPainter extends CustomPainter {
   final String? selectedLensSide;
   final Size imageSize;
 
-  // Added these to sync with the Gesture Detector in the parent widget
   final double scale;
   final Offset offset;
 
@@ -26,21 +25,18 @@ class OpticalPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // 1. Apply Transformation
-    // We use the scale/offset passed from the parent to ensure
-    // the visual rendering matches the touch hit-boxes exactly.
     canvas.save();
     canvas.translate(offset.dx, offset.dy);
     canvas.scale(scale);
 
-    // 2. Draw "Mask" (Green lines connecting reference markers)
+    // 1. Draw Mask
     _drawMask(canvas, 2.0 / scale);
 
-    // 3. Draw Lenses (Rectangles)
+    // 2. Draw Lenses
     final Paint lensPaint = Paint()
       ..color = Colors.cyanAccent.withOpacity(0.5)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0 / scale; // Keep stroke constant regardless of zoom
+      ..strokeWidth = 3.0 / scale;
 
     final Paint selectedLensPaint = Paint()
       ..color = Colors.yellow
@@ -56,41 +52,36 @@ class OpticalPainter extends CustomPainter {
       selectedLensSide == 'right' ? selectedLensPaint : lensPaint,
     );
 
-    // 4. Draw Points (Pupils & Markers)
+    // 3. Draw Points
     for (var p in points) {
-      bool isSelected =
-          (p.id == selectedPoint?.id); // Compare by ID if possible, else Object
+      bool isSelected = (p.id == selectedPoint?.id);
 
-      Color color = Colors.green;
-      if (p.type == DetectionType.pupilLeft ||
-          p.type == DetectionType.pupilRight) {
-        color = Colors.redAccent;
+      Color crossColor = isSelected ? Colors.yellow : Colors.green;
+      if (!isSelected &&
+          (p.type == DetectionType.pupilLeft ||
+              p.type == DetectionType.pupilRight)) {
+        crossColor = Colors.redAccent;
+      } else if (!isSelected) {
+        crossColor = Colors.green;
       }
 
-      Paint pointPaint = Paint()..color = isSelected ? Colors.yellow : color;
-
-      // Dynamic radius based on zoom
-      double radius = isSelected ? 15.0 / scale : 10.0 / scale;
-
-      // Draw outer circle
-      canvas.drawCircle(p.position, radius, pointPaint);
-
-      // Draw Crosshair inside point for precision alignment
       Paint crossPaint = Paint()
-        ..color = Colors.black.withOpacity(0.6)
-        ..strokeWidth = 1.5 / scale
+        ..color = crossColor
+        ..strokeWidth = (isSelected ? 3.0 : 2.0) / scale
+        ..strokeCap = StrokeCap.round
         ..style = PaintingStyle.stroke;
 
-      double crossSize = radius * 0.6;
+      double radius = isSelected ? 15.0 / scale : 10.0 / scale;
 
       canvas.drawLine(
-        p.position - Offset(crossSize, 0),
-        p.position + Offset(crossSize, 0),
+        p.position - Offset(radius, 0),
+        p.position + Offset(radius, 0),
         crossPaint,
       );
+
       canvas.drawLine(
-        p.position - Offset(0, crossSize),
-        p.position + Offset(0, crossSize),
+        p.position - Offset(0, radius),
+        p.position + Offset(0, radius),
         crossPaint,
       );
     }
@@ -99,7 +90,6 @@ class OpticalPainter extends CustomPainter {
   }
 
   void _drawMask(Canvas canvas, double strokeWidth) {
-    // Safe lookup helper
     Offset? getPos(DetectionType t) {
       try {
         return points.firstWhere((p) => p.type == t).position;
@@ -113,7 +103,6 @@ class OpticalPainter extends CustomPainter {
     final bl = getPos(DetectionType.maskBottomLeft);
     final br = getPos(DetectionType.maskBottomRight);
 
-    // Only draw if all 4 mask points exist
     if (tl != null && tr != null && bl != null && br != null) {
       final paint = Paint()
         ..color = Colors.greenAccent.withOpacity(0.4)
@@ -136,7 +125,7 @@ class OpticalPainter extends CustomPainter {
     return oldDelegate.selectedPoint != selectedPoint ||
         oldDelegate.points != points ||
         oldDelegate.leftLens != leftLens ||
-        oldDelegate.scale != scale || // Repaint if zoom changes
+        oldDelegate.scale != scale ||
         oldDelegate.selectedLensSide != selectedLensSide;
   }
 }

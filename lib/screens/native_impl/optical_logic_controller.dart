@@ -3,18 +3,15 @@ import 'package:flutter/material.dart';
 import 'optical_models.dart';
 
 class OpticalController extends ChangeNotifier {
-  // --- State ---
   List<DetectionPoint> points = [];
   Rect leftLensRect = Rect.zero;
   Rect rightLensRect = Rect.zero;
   MeasurementResults results = MeasurementResults();
 
-  // --- Constants from Native Code ---
   static const double ACCEPTABLE_BARREL_ERROR = 0.01;
   static const double UNACCEPTABLE_BARREL_ERROR = (130 / 21) * 0.1;
   static const double DI_CORRECTION_PARAM = 1.035;
 
-  // --- Internal Calculation Variables ---
   double _barrelStrength = 1.0;
   double _correctionRadius = 0.0;
   int _halfWidth = 0;
@@ -23,60 +20,37 @@ class OpticalController extends ChangeNotifier {
   Size? _imageSize;
   final DeviceConfig _config = DeviceConfig();
 
-  // --- Interaction State ---
   DetectionPoint? selectedPoint;
-  String? selectedLensSide; // 'left' or 'right'
+  String? selectedLensSide;
   bool isEditMode = true;
 
-  // ---------------------------------------------------------------------------
-  // 1. Initialization
-  // ---------------------------------------------------------------------------
-
-  /// Accepts the new Map structure: {circles: [{x,y}...], eyes: [{x,y}...]}
   void initialize(Map<String, dynamic> detections, Size imageSize) {
     _imageSize = imageSize;
     points.clear();
 
-    debugPrint("--- INITIALIZING CONTROLLER ---");
-    debugPrint("Image Size: $imageSize");
-    debugPrint("Raw Detections: $detections");
-
-    // Helper to de-normalize: Percentage -> Pixels
     Offset toPixel(dynamic item) {
       double nx = (item['x'] as num).toDouble();
       double ny = (item['y'] as num).toDouble();
-
-      // Safety check for bad data (infinite or NaN)
       if (!nx.isFinite) nx = 0.5;
       if (!ny.isFinite) ny = 0.5;
-
       return Offset(nx * imageSize.width, ny * imageSize.height);
     }
 
-    // 1. Process Reference Circles
     final List<dynamic> rawCircles = detections['circles'] ?? [];
     if (rawCircles.isNotEmpty) {
       List<Offset> circleOffsets = rawCircles.map((c) => toPixel(c)).toList();
-
-      // Sort by Y to separate Top Pair from Bottom Pair
       circleOffsets.sort((a, b) => a.dy.compareTo(b.dy));
 
       if (circleOffsets.length >= 4) {
-        // Take the top 2 and bottom 2
         var topPair = [circleOffsets[0], circleOffsets[1]];
-        var bottomPair = [
-          circleOffsets[2],
-          circleOffsets[3],
-        ]; // Should be 2 & 3
+        var bottomPair = [circleOffsets[2], circleOffsets[3]];
 
-        // Sort pairs by X to distinguish Left from Right
         topPair.sort((a, b) => a.dx.compareTo(b.dx));
         bottomPair.sort((a, b) => a.dx.compareTo(b.dx));
 
         _addPoint(topPair[0], DetectionType.maskTopLeft, "Ref TL");
         _addPoint(topPair[1], DetectionType.maskTopRight, "Ref TR");
 
-        // FIX: Ensure we use the second pair for bottom
         if (bottomPair.length >= 2) {
           _addPoint(bottomPair[0], DetectionType.maskBottomLeft, "Ref BL");
           _addPoint(bottomPair[1], DetectionType.maskBottomRight, "Ref BR");
@@ -84,12 +58,9 @@ class OpticalController extends ChangeNotifier {
       }
     }
 
-    // 2. Process Eyes
     final List<dynamic> rawEyes = detections['eyes'] ?? [];
     if (rawEyes.isNotEmpty) {
       List<Offset> eyeOffsets = rawEyes.map((e) => toPixel(e)).toList();
-
-      // Sort by X. Screen Left = Patient Right Eye.
       eyeOffsets.sort((a, b) => a.dx.compareTo(b.dx));
 
       if (eyeOffsets.length >= 2) {
@@ -121,11 +92,7 @@ class OpticalController extends ChangeNotifier {
   }
 
   void _ensurePointsExist(Size size) {
-    // If detection failed (or < 4 circles / < 2 eyes), create defaults
-    // placed roughly in standard positions to prevent crashes.
     final requiredTypes = DetectionType.values;
-
-    // Default positions logic
     final defaults = {
       DetectionType.maskTopLeft: Offset(size.width * 0.3, size.height * 0.3),
       DetectionType.maskTopRight: Offset(size.width * 0.7, size.height * 0.3),
@@ -134,14 +101,8 @@ class OpticalController extends ChangeNotifier {
         size.width * 0.7,
         size.height * 0.5,
       ),
-      DetectionType.pupilRight: Offset(
-        size.width * 0.4,
-        size.height * 0.4,
-      ), // Screen Left
-      DetectionType.pupilLeft: Offset(
-        size.width * 0.6,
-        size.height * 0.4,
-      ), // Screen Right
+      DetectionType.pupilRight: Offset(size.width * 0.4, size.height * 0.4),
+      DetectionType.pupilLeft: Offset(size.width * 0.6, size.height * 0.4),
     };
 
     for (var type in requiredTypes) {
@@ -156,38 +117,25 @@ class OpticalController extends ChangeNotifier {
   }
 
   void _initializeLensRects(Size size) {
-    // Default Lens Boxes (approx 15% width of image)
     double w = size.width * 0.15;
     double h = size.width * 0.10;
-
-    // We define centers based on the detected (or default) pupils
-    Offset pLeft = _pupil(true); // Screen Right
-    Offset pRight = _pupil(false); // Screen Left
-
+    Offset pLeft = _pupil(true);
+    Offset pRight = _pupil(false);
     leftLensRect = Rect.fromCenter(center: pLeft, width: w, height: h);
     rightLensRect = Rect.fromCenter(center: pRight, width: w, height: h);
   }
 
-  // ---------------------------------------------------------------------------
-  // 2. Interaction (Gestures)
-  // ---------------------------------------------------------------------------
-
   void handleTap(Offset localPosition, double scale, Offset translation) {
     if (!isEditMode) return;
-
-    // Convert screen pixel to image pixel
     final imgPos = (localPosition - translation) / scale;
-    final hitRadius = 40.0 / scale; // constant physical touch size
+    final hitRadius = 40.0 / scale;
 
-    // Priority 1: Points
-    // Sort by distance to select the closest one
     points.sort(
       (a, b) => (a.position - imgPos).distance.compareTo(
         (b.position - imgPos).distance,
       ),
     );
 
-    // Check closest point
     if (points.isNotEmpty &&
         (points.first.position - imgPos).distance < hitRadius) {
       selectedPoint = points.first;
@@ -196,7 +144,6 @@ class OpticalController extends ChangeNotifier {
       return;
     }
 
-    // Priority 2: Lenses (Check if inside rect)
     if (leftLensRect.contains(imgPos)) {
       selectedLensSide = 'left';
       selectedPoint = null;
@@ -229,9 +176,16 @@ class OpticalController extends ChangeNotifier {
     }
   }
 
+  void nudgeSelectedPoint(double dx, double dy) {
+    if (selectedPoint != null) {
+      selectedPoint!.position += Offset(dx, dy);
+      calculateMetrics();
+      notifyListeners();
+    }
+  }
+
   void resizeSelectedLens(double widthDelta, double heightDelta) {
     if (selectedLensSide == null) return;
-
     if (selectedLensSide == 'left') {
       leftLensRect = Rect.fromCenter(
         center: leftLensRect.center,
@@ -248,10 +202,6 @@ class OpticalController extends ChangeNotifier {
     calculateMetrics();
     notifyListeners();
   }
-
-  // ---------------------------------------------------------------------------
-  // 3. Core Math & Barrel Distortion
-  // ---------------------------------------------------------------------------
 
   void calculateMetrics() {
     try {
@@ -272,29 +222,20 @@ class OpticalController extends ChangeNotifier {
       );
     } catch (e) {
       debugPrint("Calculation Warning: $e");
-      // Don't invalidate immediately, allows user to drag points to fix it
       results = MeasurementResults(isValid: false);
     }
     notifyListeners();
   }
 
   void _computeBarrelStrength() {
-    // If missing crucial mask points, we can't compute barrel
     if (!_hasAllMaskPoints()) return;
 
     final tr = _getPoint(DetectionType.maskTopRight);
-
-    // Native: halfWidth = round(getMask().getTopRightTargetCenter().x * 1.45)
     _halfWidth = (tr.dx * 1.45).round();
     _halfHeight = _halfWidth;
 
     _correctionRadius = sqrt(pow(_halfWidth, 2) * 4 + pow(_halfHeight, 2) * 4);
     _barrelStrength = _binSearchStrength();
-
-    // Check sanity of barrel correction
-    if (_computeError(_barrelStrength) > UNACCEPTABLE_BARREL_ERROR) {
-      // Ideally throw error or mark invalid, but we allow partial calculation
-    }
   }
 
   bool _hasAllMaskPoints() {
@@ -365,11 +306,6 @@ class OpticalController extends ChangeNotifier {
     return Offset(_halfWidth + theta * newX, _halfHeight + theta * newY);
   }
 
-  // ---------------------------------------------------------------------------
-  // 4. Optical Formulas
-  // ---------------------------------------------------------------------------
-
-  // Java: distanceBetweenPointsDistortionCorrected
   double _distCorrected(Offset p1, Offset p2) {
     Offset a = _getSourcePoint(p1, _barrelStrength);
     Offset b = _getSourcePoint(p2, _barrelStrength);
@@ -382,37 +318,30 @@ class OpticalController extends ChangeNotifier {
     Offset bl = _getPoint(DetectionType.maskBottomLeft);
     Offset br = _getPoint(DetectionType.maskBottomRight);
 
-    // Average top and bottom widths
     double pxDist = (_distCorrected(bl, br) + _distCorrected(tl, tr)) / 2;
-    if (pxDist == 0) return 0.1; // avoid div by zero
-    return _config.maskRealWidthMm / pxDist; // mm per pixel
+    if (pxDist == 0) return 0.1;
+    return _config.maskRealWidthMm / pxDist;
   }
 
   double _getPixelClosest() => _getPixel() * _config.adjustmentFactor;
   double _getPixelFurthest() => _getPixelClosest() * DI_CORRECTION_PARAM;
 
-  // DI (Distance Interpupillary)
   double _getDI() {
     return _distCorrected(_pupil(true), _pupil(false)) * _getPixelFurthest();
   }
 
-  // DNP (Nasopupillary Distance)
   double _getDNP({required bool isLeft}) {
     double centerX = (leftLensRect.center.dx + rightLensRect.center.dx) / 2;
-    // We project the center X onto the pupil's Y plane
     Offset center = Offset(centerX, _pupil(isLeft).dy);
     return _distCorrected(_pupil(isLeft), center) * _getPixelFurthest();
   }
 
-  // Alt (Fitting Height)
   double _getAlt({required bool isLeft}) {
     Rect lens = isLeft ? leftLensRect : rightLensRect;
-    // Bottom of the lens rect at pupil's X
     Offset bottom = Offset(_pupil(isLeft).dx, lens.bottom);
     return _distCorrected(_pupil(isLeft), bottom) * _getPixelClosest();
   }
 
-  // Puente (Bridge)
   double _getPuente() {
     double neutralY =
         (_getPoint(DetectionType.maskTopLeft).dy +
@@ -423,7 +352,6 @@ class OpticalController extends ChangeNotifier {
     return _distCorrected(lRight, rLeft) * _getPixelClosest();
   }
 
-  // Aro (Lens Dimensions)
   double _getAroAnch() {
     double w1 = _distCorrected(
       leftLensRect.bottomLeft,
@@ -442,33 +370,10 @@ class OpticalController extends ChangeNotifier {
     return ((h1 + h2) / 2) * _getPixelClosest();
   }
 
-  // Effective Diameter
   double _getDiametro({required bool isLeft}) {
     Offset p = _pupil(isLeft);
     Rect lens = isLeft ? leftLensRect : rightLensRect;
 
-    // Calc geometric center of lens
-    Offset lensCenter = lens.center;
-
-    // Simplification of finding max distance from pupil to any lens corner/edge
-    // Native logic often checks corners to find Effective Diameter (ED)
-    List<Offset> corners = [
-      lens.topLeft,
-      lens.topRight,
-      lens.bottomLeft,
-      lens.bottomRight,
-    ];
-
-    double maxDist = 0;
-    for (var c in corners) {
-      double d = _distCorrected(p, c);
-      if (d > maxDist) maxDist = d;
-    }
-
-    // Multiply by 2 for diameter (radius * 2) if using pupil as center,
-    // but typically ED is longest dimension of lens * 2 from optical center?
-    // Based on provided logic: "distLeft / distRight max"
-    // Let's stick to the previous implementation logic:
     double distLeft = (p.dx - lens.left).abs();
     double distRight = (p.dx - lens.right).abs();
     double radiusPx = max(distLeft, distRight);
@@ -479,7 +384,6 @@ class OpticalController extends ChangeNotifier {
     return _distCorrected(pMinus, pPlus) * _getPixelClosest() + 1.0;
   }
 
-  // Helpers
   Offset _getPoint(DetectionType type) {
     try {
       return points.firstWhere((p) => p.type == type).position;

@@ -1,4 +1,4 @@
-package ar.com.fennoma.digipad_flutter
+package ar.com.digipad
 
 import android.content.Context
 import io.flutter.plugin.common.BinaryMessenger

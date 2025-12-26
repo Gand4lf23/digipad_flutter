@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:digipad_flutter/screens/native_impl/optical_editor_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class NativeSplitScreen extends StatefulWidget {
@@ -12,32 +13,51 @@ class NativeSplitScreen extends StatefulWidget {
   State<NativeSplitScreen> createState() => _NativeSplitScreenState();
 }
 
-class _NativeSplitScreenState extends State<NativeSplitScreen> {
+class _NativeSplitScreenState extends State<NativeSplitScreen>
+    with WidgetsBindingObserver {
   MethodChannel? _channel;
+  final ImagePicker _picker = ImagePicker();
 
-  // State variables
   bool _detectionEnabled = true;
   bool _torchEnabled = false;
   bool _frontCamera = false;
   bool _overlayVisible = true;
+
+  bool _streamDetections = false;
+
   String? _lastPhotoPath;
+  bool _lastPhotoWasFront = false;
+  // Store detections specifically for the last captured/picked photo
+  Map<String, dynamic>? _lastPhotoDetections; // Make it nullable
+
   bool _hasPermission = false;
   bool _isCheckingPermission = true;
   bool _isCapturing = false;
 
-  // Store the latest detections received from Native side
-  // Format: { circles: [{x,y}...], eyes: [{x,y}...] }
-  Map<String, dynamic> _latestDetections = {'circles': [], 'eyes': []};
+  // This will hold detections from the live camera feed, if you need it elsewhere
+  Map<String, dynamic> _liveDetections = {'circles': [], 'eyes': []};
 
-  // UI constants
   static const Color _backgroundColor = Color(0xFF121212);
   static const Color _accentColor = Colors.deepPurpleAccent;
-  static const Color _controlPanelColor = Color(0xFF1C1C1E);
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _checkCameraPermission();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkCameraPermission();
+    }
   }
 
   Future<void> _checkCameraPermission() async {
@@ -48,7 +68,8 @@ class _NativeSplitScreenState extends State<NativeSplitScreen> {
           _hasPermission = status.isGranted;
           _isCheckingPermission = false;
         });
-        if (!_hasPermission) {
+
+        if (status.isDenied) {
           await _requestCameraPermission();
         }
       }
@@ -61,53 +82,46 @@ class _NativeSplitScreenState extends State<NativeSplitScreen> {
   Future<void> _requestCameraPermission() async {
     try {
       final status = await Permission.camera.request();
-      if (!mounted) return;
-      setState(() => _hasPermission = status.isGranted);
 
-      if (status.isPermanentlyDenied) {
-        _showPermissionDeniedDialog();
-      } else if (status.isDenied) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Camera permission is required to use this feature.'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
+      if (mounted) {
+        setState(() => _hasPermission = status.isGranted);
+
+        if (status.isPermanentlyDenied) {
+          _showSettingsDialog();
+        }
       }
     } catch (e) {
       debugPrint('Error requesting permission: $e');
     }
   }
 
-  void _showPermissionDeniedDialog() {
+  void _showSettingsDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: _controlPanelColor,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.grey[900],
         title: const Text(
-          'Camera Permission Required',
+          'Camera Required',
           style: TextStyle(color: Colors.white),
         ),
         content: const Text(
-          'Camera access has been permanently denied. Please enable it in the app settings to use this feature.',
+          'Camera access has been permanently denied. Please enable it in your system settings to use this feature.',
           style: TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: Colors.white70),
-            ),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
           ),
-          TextButton(
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: _accentColor),
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(ctx);
               openAppSettings();
             },
             child: const Text(
               'Open Settings',
-              style: TextStyle(color: _accentColor),
+              style: TextStyle(color: Colors.white),
             ),
           ),
         ],
@@ -130,6 +144,11 @@ class _NativeSplitScreenState extends State<NativeSplitScreen> {
 
     const viewType = 'native-left-view';
 
+    final Map<String, dynamic> creationParams = <String, dynamic>{
+      'modelPath': 'assets/model3.tflite',
+      'labelPath': 'assets/labels.txt',
+    };
+
     return Scaffold(
       backgroundColor: _backgroundColor,
       body: SafeArea(
@@ -144,11 +163,33 @@ class _NativeSplitScreenState extends State<NativeSplitScreen> {
                       bottomLeft: Radius.circular(24),
                       bottomRight: Radius.circular(24),
                     ),
-                    // Removed Screenshot widget wrapper
-                    child: AndroidView(
-                      viewType: viewType,
-                      onPlatformViewCreated: _onPlatformViewCreated,
-                      creationParamsCodec: const StandardMessageCodec(),
+                    child: Stack(
+                      children: [
+                        if (Platform.isAndroid)
+                          AndroidView(
+                            viewType: viewType,
+                            layoutDirection: TextDirection.ltr,
+                            creationParams: creationParams,
+                            creationParamsCodec: const StandardMessageCodec(),
+                            onPlatformViewCreated: _onPlatformViewCreated,
+                          )
+                        else if (Platform.isIOS)
+                          UiKitView(
+                            viewType: viewType,
+                            layoutDirection: TextDirection.ltr,
+                            creationParams: creationParams,
+                            creationParamsCodec: const StandardMessageCodec(),
+                            onPlatformViewCreated: _onPlatformViewCreated,
+                          )
+                        else
+                          const Center(
+                            child: Text(
+                              "Platform not supported",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        _buildGuideBox(),
+                      ],
                     ),
                   ),
                 ),
@@ -156,7 +197,48 @@ class _NativeSplitScreenState extends State<NativeSplitScreen> {
               ],
             ),
             _buildBackButton(context),
+            if (_isCapturing)
+              Container(
+                color: Colors.black54,
+                child: const Center(child: CircularProgressIndicator()),
+              ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGuideBox() {
+    final width = (MediaQuery.of(context).size.width * 0.57);
+
+    return Positioned(
+      top: (MediaQuery.of(context).size.height) * 0.25,
+      left: (MediaQuery.of(context).size.width) / 5,
+      child: IgnorePointer(
+        child: Container(
+          width: width,
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: Colors.white.withOpacity(0.5),
+              width: 2.0,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.add, color: Colors.white.withOpacity(0.3), size: 40),
+              const SizedBox(height: 8),
+              Text(
+                "Coloque la referencia aquí",
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.5),
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -198,21 +280,23 @@ class _NativeSplitScreenState extends State<NativeSplitScreen> {
   void _onPlatformViewCreated(int id) async {
     _channel = MethodChannel('native-left-view/$id');
 
-    // Listen for callbacks from Kotlin
     _channel!.setMethodCallHandler((call) async {
       if (call.method == 'onDetections') {
-        // Update the latest detections without calling setState to avoid lag
-        // The data comes as { circles: [], eyes: [] }
         try {
           final data = Map<String, dynamic>.from(call.arguments);
-          _latestDetections = data;
+          // Update the live detections
+          setState(() {
+            _liveDetections = {
+              'circles': _inflateDetections(data['circles']),
+              'eyes': _inflateDetections(data['eyes']),
+            };
+          });
         } catch (e) {
           debugPrint("Error parsing detection data: $e");
         }
       }
     });
 
-    // Initialize Native View Settings
     await Future.wait([
       _channel!.invokeMethod('setDetectionEnabled', {
         'enabled': _detectionEnabled,
@@ -220,18 +304,37 @@ class _NativeSplitScreenState extends State<NativeSplitScreen> {
       _channel!.invokeMethod('setTorch', {'enabled': _torchEnabled}),
       _channel!.invokeMethod('setFrontCamera', {'front': _frontCamera}),
       _channel!.invokeMethod('setOverlayVisible', {'visible': _overlayVisible}),
+      _channel!.invokeMethod('setStreamDetections', {
+        'enabled': _streamDetections,
+        'throttleMs': 50,
+      }),
     ]);
+  }
+
+  List<Map<String, double>> _inflateDetections(dynamic rawList) {
+    if (rawList == null) return [];
+
+    final List<double> list = (rawList is List)
+        ? rawList.map((e) => (e as num).toDouble()).toList()
+        : (rawList as List<double>);
+
+    List<Map<String, double>> result = [];
+    for (int i = 0; i < list.length; i += 2) {
+      if (i + 1 < list.length) {
+        result.add({'x': list[i], 'y': list[i + 1]});
+      }
+    }
+    return result;
   }
 
   Widget _buildPermissionRequestUI() {
     return Scaffold(
       backgroundColor: _backgroundColor,
-      body: SafeArea(
+      body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Icon(Icons.camera_alt, size: 100, color: Colors.white24),
               const SizedBox(height: 24),
@@ -246,30 +349,17 @@ class _NativeSplitScreenState extends State<NativeSplitScreen> {
               ),
               const SizedBox(height: 12),
               const Text(
-                'This feature requires access to your camera to capture images and perform detections.',
+                'We need camera access to detect faces and reference markers.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white70, fontSize: 16),
+                style: TextStyle(color: Colors.white70),
               ),
               const SizedBox(height: 32),
-              ElevatedButton.icon(
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: _accentColor),
                 onPressed: _requestCameraPermission,
-                icon: const Icon(Icons.security),
-                label: const Text('Grant Permission'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _accentColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextButton(
-                onPressed: openAppSettings,
                 child: const Text(
-                  'Open App Settings',
-                  style: TextStyle(color: Colors.white54),
+                  'Grant Permission',
+                  style: TextStyle(color: Colors.white),
                 ),
               ),
             ],
@@ -315,13 +405,8 @@ class _NativeSplitScreenState extends State<NativeSplitScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     _buildIconButton(
-                      icon: _torchEnabled ? Icons.flash_on : Icons.flash_off,
-                      onPressed: () {
-                        setState(() => _torchEnabled = !_torchEnabled);
-                        _channel?.invokeMethod('setTorch', {
-                          'enabled': _torchEnabled,
-                        });
-                      },
+                      icon: Icons.photo_library,
+                      onPressed: _pickFromGallery,
                     ),
                     const SizedBox(width: 24),
                     _buildPhotoButton(),
@@ -409,16 +494,18 @@ class _NativeSplitScreenState extends State<NativeSplitScreen> {
   }
 
   Widget _buildLastPhotoThumbnail() {
-    if (_lastPhotoPath == null) {
+    // Only show thumbnail if a photo path is set AND its detections are available
+    if (_lastPhotoPath == null || _lastPhotoDetections == null) {
       return const SizedBox(width: 48, height: 48);
     }
     return GestureDetector(
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => OpticalEditorScreen(
+            builder: (context) => OpticalEditorScreen(
               imagePath: _lastPhotoPath!,
-              detections: _latestDetections, // Pass existing detections
+              detections: _lastPhotoDetections!,
+              isFrontCamera: _lastPhotoWasFront,
             ),
           ),
         );
@@ -442,86 +529,131 @@ class _NativeSplitScreenState extends State<NativeSplitScreen> {
     );
   }
 
-  Future<void> _capturePhoto() async {
+  Future<void> _pickFromGallery() async {
     if (_isCapturing) return;
-
-    setState(() => _isCapturing = true);
-
     try {
-      // 1. Trigger Native Capture
-      // The Kotlin code saves the file and returns the absolute path string
-      final String? nativePath = await _channel?.invokeMethod<String>(
-        'capturePhoto',
-      );
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      if (image == null) return;
 
-      if (nativePath != null) {
-        // 2. Capture the current detections at this moment
-        final Map<String, dynamic> detectionsSnapshot = Map.from(
-          _latestDetections,
-        );
+      // Show loading
+      setState(() => _isCapturing = true);
+
+      final String path = image.path;
+      final result = await _channel?.invokeMethod('detectFromImage', {
+        'path': path,
+      });
+
+      if (result != null) {
+        final Map<String, dynamic> rawMap = Map<String, dynamic>.from(result);
+
+        final Map<String, dynamic> detections = {
+          'circles': _inflateDetections(rawMap['circles']),
+          'eyes': _inflateDetections(rawMap['eyes']),
+        };
 
         if (mounted) {
           setState(() {
-            _lastPhotoPath = nativePath;
+            _lastPhotoPath = path;
+            _lastPhotoWasFront = false;
+            _lastPhotoDetections = detections; // Store specific detections
+            _isCapturing = false;
           });
 
-          print("Detections at capture: $detectionsSnapshot");
+          final List circles = detections['circles'] as List;
 
-          // 3. Navigate to preview
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => OpticalEditorScreen(
-                imagePath: nativePath,
-                detections: detectionsSnapshot,
+          // With the threshold lowered in Android, we should find 4 circles more often
+          if (circles.length == 4) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => OpticalEditorScreen(
+                  imagePath: path,
+                  detections: detections,
+                  isFrontCamera: false,
+                ),
               ),
-            ),
-          );
+            );
+          } else {
+            // Helpful error message for debugging
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  "Detection incomplete. Found ${circles.length}/4 circles. Please try a clearer image.",
+                ),
+                backgroundColor: Colors.orange,
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          }
+        }
+      } else {
+        if (mounted) setState(() => _isCapturing = false);
+      }
+    } catch (e) {
+      debugPrint("Error picking image: $e");
+      if (mounted) setState(() => _isCapturing = false);
+    }
+  }
+
+  Future<void> _capturePhoto() async {
+    if (_isCapturing) return;
+    setState(() => _isCapturing = true);
+
+    try {
+      final result = await _channel?.invokeMethod('capturePhoto');
+
+      if (result != null && result is Map) {
+        final String? nativePath = result['path'] as String?;
+        final Map<String, dynamic> rawDetections = Map.from(
+          result['detections'],
+        );
+
+        if (nativePath != null) {
+          final Map<String, dynamic> detectionsSnapshot = {
+            'circles': _inflateDetections(rawDetections['circles']),
+            'eyes': _inflateDetections(rawDetections['eyes']),
+          };
+
+          final bool wasFront = _frontCamera;
+
+          if (mounted) {
+            setState(() {
+              _lastPhotoPath = nativePath;
+              _lastPhotoWasFront = wasFront;
+              // Store the detections for this captured image
+              _lastPhotoDetections = detectionsSnapshot;
+            });
+
+            // CHECK: Only navigate if exactly 4 circles are found
+            final List circles = detectionsSnapshot['circles'] as List;
+            if (circles.length == 4) {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => OpticalEditorScreen(
+                    imagePath: nativePath,
+                    detections: detectionsSnapshot, // This is already correct
+                    isFrontCamera: wasFront,
+                  ),
+                ),
+              );
+            } else {
+              // Show error if circles != 4
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    "Capture failed: Found ${circles.length} circles (4 required). Try adjusting lighting or distance.",
+                  ),
+                  backgroundColor: Colors.redAccent,
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+            }
+          }
         }
       }
     } catch (e) {
       debugPrint("Error capturing photo: $e");
     } finally {
-      if (mounted) {
-        setState(() => _isCapturing = false);
-      }
+      if (mounted) setState(() => _isCapturing = false);
     }
   }
 }
-
-// class CapturedImageScreen extends StatelessWidget {
-//   final String imagePath;
-//   final Map<String, dynamic> detections;
-
-//   const CapturedImageScreen({
-//     super.key,
-//     required this.imagePath,
-//     required this.detections,
-//   });
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: const Color(0xFF121212),
-//       appBar: AppBar(
-//         title: const Text('Captured Image'),
-//         backgroundColor: const Color(0xFF1C1C1E),
-//         elevation: 0,
-//       ),
-//       body: Column(
-//         children: [
-//           Expanded(
-//             child: InteractiveViewer(child: Image.file(File(imagePath))),
-//           ),
-//           Container(
-//             padding: const EdgeInsets.all(16),
-//             color: Colors.black54,
-//             child: Text(
-//               "Detected: ${detections['circles'].length} circles, ${detections['eyes'].length} eyes",
-//               style: const TextStyle(color: Colors.white),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
