@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import '../models/simulation_scenario.dart';
 
 /// State for the simulations feature.
@@ -13,16 +11,18 @@ class SimulationsState {
   /// Currently selected correction lens (if any).
   final CorrectionLens? selectedLens;
 
-  /// Position of the draggable lens on the screen.
-  final Offset lensPosition;
+  /// Position of the divider line (0.0 to 1.0).
+  /// For vertical divider: 0.0 = left edge, 1.0 = right edge
+  /// For horizontal divider: 0.0 = top edge, 1.0 = bottom edge
+  final double dividerPosition;
 
-  /// Size of the draggable lens (width/height of squared lens).
-  final double lensSize;
+  /// Whether the divider is vertical (true) or horizontal (false).
+  final bool isVerticalDivider;
 
   /// Opacity of the tint (0.0 to 1.0).
   final double lensOpacity;
 
-  /// Whether the user is currently dragging the lens.
+  /// Whether the user is currently dragging the divider.
   final bool isDragging;
 
   /// Loading state for images.
@@ -35,8 +35,8 @@ class SimulationsState {
     this.selectedCategory,
     this.selectedScenario,
     this.selectedLens,
-    this.lensPosition = const Offset(150, 300),
-    this.lensSize = 300.0,
+    this.dividerPosition = 0.5, // Start in the middle
+    this.isVerticalDivider = true, // Default to vertical divider
     this.lensOpacity = 0.5,
     this.isDragging = false,
     this.isLoading = false,
@@ -72,8 +72,8 @@ class SimulationsState {
     SimulationCategory? selectedCategory,
     SimulationScenario? selectedScenario,
     CorrectionLens? selectedLens,
-    Offset? lensPosition,
-    double? lensSize,
+    double? dividerPosition,
+    bool? isVerticalDivider,
     double? lensOpacity,
     bool? isDragging,
     bool? isLoading,
@@ -88,8 +88,8 @@ class SimulationsState {
           ? null
           : (selectedScenario ?? this.selectedScenario),
       selectedLens: clearLens ? null : (selectedLens ?? this.selectedLens),
-      lensPosition: lensPosition ?? this.lensPosition,
-      lensSize: lensSize ?? this.lensSize,
+      dividerPosition: dividerPosition ?? this.dividerPosition,
+      isVerticalDivider: isVerticalDivider ?? this.isVerticalDivider,
       lensOpacity: lensOpacity ?? this.lensOpacity,
       isDragging: isDragging ?? this.isDragging,
       isLoading: isLoading ?? this.isLoading,

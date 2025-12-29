@@ -28,12 +28,11 @@ class SimulationCanvas extends StatefulWidget {
 }
 
 class _SimulationCanvasState extends State<SimulationCanvas> {
-  Offset? _draggingPosition;
+  double? _draggingPosition;
 
   @override
   Widget build(BuildContext context) {
-    final lensPos = _draggingPosition ?? widget.state.lensPosition;
-    final lensSize = widget.state.lensSize;
+    final dividerPos = _draggingPosition ?? widget.state.dividerPosition;
     final isMultifocal = widget.category.id == 'multifocal';
 
     return GestureDetector(
@@ -41,32 +40,29 @@ class _SimulationCanvasState extends State<SimulationCanvas> {
           ? null
           : (details) {
               setState(() {
-                _draggingPosition = lensPos;
+                _draggingPosition = _calculateDividerPosition(
+                  details.localPosition,
+                );
               });
               context.read<SimulationsCubit>().setDragging(true);
             },
       onPanUpdate: isMultifocal
           ? null
           : (details) {
-              final size = MediaQuery.of(context).size;
-              final currentPos = _draggingPosition ?? lensPos;
-              final halfSize = lensSize / 2;
-              final dx = (currentPos.dx + details.delta.dx).clamp(
-                halfSize,
-                size.width - halfSize,
-              );
-              final dy = (currentPos.dy + details.delta.dy).clamp(
-                halfSize,
-                size.height - halfSize - 180,
-              );
               setState(() {
-                _draggingPosition = Offset(dx, dy);
+                _draggingPosition = _calculateDividerPosition(
+                  details.localPosition,
+                );
               });
             },
       onPanEnd: isMultifocal
           ? null
           : (_) {
-              context.read<SimulationsCubit>().moveLens(_draggingPosition!);
+              if (_draggingPosition != null) {
+                context.read<SimulationsCubit>().moveDivider(
+                  _draggingPosition!,
+                );
+              }
               context.read<SimulationsCubit>().setDragging(false);
               setState(() {
                 _draggingPosition = null;
@@ -78,15 +74,28 @@ class _SimulationCanvasState extends State<SimulationCanvas> {
           painter: SimulationPainter(
             problemImage: widget.problemImage,
             correctedImage: widget.correctedImage,
-            lensCenter: lensPos,
-            lensSize: lensSize,
+            dividerPosition: dividerPos,
+            isVerticalDivider: widget.state.isVerticalDivider,
             tintColor: widget.currentLens?.tintColor,
             lensOpacity: widget.state.lensOpacity,
             showFullCorrection: isMultifocal,
-            boxFit: BoxFit.contain, // Ensuring less zoomed-in
+            boxFit: BoxFit.contain,
           ),
         ),
       ),
     );
+  }
+
+  double _calculateDividerPosition(Offset localPosition) {
+    final size = context.size;
+    if (size == null) return widget.state.dividerPosition;
+
+    if (widget.state.isVerticalDivider) {
+      // Vertical divider - calculate X position
+      return (localPosition.dx / size.width).clamp(0.0, 1.0);
+    } else {
+      // Horizontal divider - calculate Y position
+      return (localPosition.dy / size.height).clamp(0.0, 1.0);
+    }
   }
 }

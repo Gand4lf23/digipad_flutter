@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../data/simulation_data.dart';
@@ -43,14 +42,19 @@ class SimulationsCubit extends Cubit<SimulationsState> {
     emit(state.copyWith(selectedLens: lens));
   }
 
-  /// Move the draggable lens to a new position.
-  void moveLens(Offset position) {
-    emit(state.copyWith(lensPosition: position));
+  /// Move the divider to a new position (0.0 to 1.0).
+  void moveDivider(double position) {
+    emit(state.copyWith(dividerPosition: position.clamp(0.0, 1.0)));
   }
 
-  /// Set the lens size.
-  void setLensSize(double size) {
-    emit(state.copyWith(lensSize: size.clamp(300.0, 550.0)));
+  /// Toggle the divider orientation between vertical and horizontal.
+  void toggleDividerOrientation() {
+    emit(state.copyWith(isVerticalDivider: !state.isVerticalDivider));
+  }
+
+  /// Set the divider orientation.
+  void setDividerOrientation(bool isVertical) {
+    emit(state.copyWith(isVerticalDivider: isVertical));
   }
 
   /// Set the lens opacity.
