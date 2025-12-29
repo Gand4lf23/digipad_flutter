@@ -1,46 +1,69 @@
-import 'dart:io';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:image_picker/image_picker.dart';
 import 'lenses_3d_state.dart';
 
 class Lenses3DCubit extends Cubit<Lenses3DState> {
-  final ImagePicker _picker = ImagePicker();
-
   Lenses3DCubit() : super(const Lenses3DState());
 
-  Future<void> pickImage(ImageSource source) async {
-    try {
-      emit(state.copyWith(isLoading: true));
-      final XFile? pickedFile = await _picker.pickImage(source: source);
-      if (pickedFile != null) {
-        emit(state.copyWith(image: File(pickedFile.path), isLoading: false));
-      } else {
-        emit(state.copyWith(isLoading: false));
-      }
-    } catch (e) {
-      emit(state.copyWith(isLoading: false));
-      // Handle error
+  /// Update the material index.
+  void updateMaterialIndex(LensMaterialIndex materialIndex) {
+    // Adjust prescription if out of range for new material
+    int newPrescription = state.prescription;
+    final newState = state.copyWith(materialIndex: materialIndex);
+
+    if (newPrescription < newState.minPrescription) {
+      newPrescription = newState.minPrescription;
+    } else if (newPrescription > newState.maxPrescription) {
+      newPrescription = newState.maxPrescription;
+    }
+
+    emit(
+      state.copyWith(
+        materialIndex: materialIndex,
+        prescription: newPrescription,
+      ),
+    );
+  }
+
+  /// Update the prescription (diopters).
+  void updatePrescription(int prescription) {
+    final clamped = prescription.clamp(
+      state.minPrescription,
+      state.maxPrescription,
+    );
+    emit(state.copyWith(prescription: clamped));
+  }
+
+  /// Increment prescription by 1.
+  void incrementPrescription() {
+    if (state.prescription < state.maxPrescription) {
+      emit(state.copyWith(prescription: state.prescription + 1));
     }
   }
 
-  void updateLeftGraduation(double value) {
-    emit(state.copyWith(leftGraduation: value));
+  /// Decrement prescription by 1.
+  void decrementPrescription() {
+    if (state.prescription > state.minPrescription) {
+      emit(state.copyWith(prescription: state.prescription - 1));
+    }
   }
 
-  void updateRightGraduation(double value) {
-    emit(state.copyWith(rightGraduation: value));
+  /// Update the frame type.
+  void updateFrameType(LensFrameType frameType) {
+    emit(state.copyWith(frameType: frameType));
   }
 
-  void updateLeftTint(Color color) {
-    emit(state.copyWith(leftTint: color));
+  /// Set loading state.
+  void setLoading(bool isLoading) {
+    emit(state.copyWith(isLoading: isLoading));
   }
 
-  void updateRightTint(Color color) {
-    emit(state.copyWith(rightTint: color));
+  /// Set error message.
+  void setError(String message) {
+    emit(state.copyWith(errorMessage: message, isLoading: false));
   }
 
-  void selectFrame(String frame) {
-    emit(state.copyWith(selectedFrame: frame));
+  /// Clear error.
+  void clearError() {
+    emit(state.copyWith(clearError: true));
   }
 }
