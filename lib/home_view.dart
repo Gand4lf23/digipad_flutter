@@ -1,6 +1,4 @@
 import 'package:digipad_flutter/screens/home_screen.dart';
-import 'package:digipad_flutter/screens/tflite/detector_widget.dart';
-import 'package:digipad_flutter/screens/tflite/models/screen_params.dart';
 import 'package:flutter/material.dart';
 
 /// [HomeView] stacks [DetectorWidget]
@@ -9,7 +7,6 @@ class HomeView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    ScreenParams.screenSize = MediaQuery.sizeOf(context);
     return Scaffold(
       key: GlobalKey(),
       backgroundColor: Colors.black,

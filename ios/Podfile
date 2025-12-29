@@ -26,6 +26,7 @@ end
 require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
 
 flutter_ios_podfile_setup
+pod 'TensorFlowLiteSwift'
 
 target 'Runner' do
   use_frameworks!
@@ -39,5 +40,25 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+
+    # --- PERMISSION HANDLER CONFIGURATION ---
+    target.build_configurations.each do |config|
+      # Check for both naming conventions (new and old versions of the plugin)
+      if target.name == 'permission_handler_apple' || target.name == 'permission_handler'
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
+          '$(inherited)',
+          # Enable Camera
+          'PERMISSION_CAMERA=1',
+          
+          # Enable Photos (Gallery)
+          'PERMISSION_PHOTOS=1',
+          
+          # Enable Bluetooth (Since it was in your Info.plist)
+          'PERMISSION_BLUETOOTH=1',
+        ]
+      end
+    end
+    # ----------------------------------------
+
   end
 end

@@ -8,7 +8,7 @@
 PRODUCT_NAME = digipad_flutter
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = ar.com.fennoma.digipadFlutter
+PRODUCT_BUNDLE_IDENTIFIER = ar.com.digipad
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2025 ar.com.fennoma. All rights reserved.

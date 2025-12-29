@@ -1,17 +1,16 @@
+import 'dart:ui';
+import 'package:digipad_flutter/common/components/d_image.dart';
 import 'package:digipad_flutter/data/local/gallery_storage.dart';
 import 'package:digipad_flutter/screens/features/lenses_3d/presentation/lenses_3d_screen.dart';
 import 'package:digipad_flutter/screens/features/simulations/presentation/main_simulations_grid_screen.dart';
 import 'package:digipad_flutter/screens/features/virtual_mirror/cubit/virtual_mirror_cubit.dart';
 import 'package:digipad_flutter/screens/features/virtual_mirror/presentation/virtual_mirror_screen.dart';
+import 'package:digipad_flutter/screens/native_impl/native_split_screen.dart';
 import 'package:digipad_flutter/screens/features/visual_health/cubit/visual_health_cubit.dart';
 import 'package:digipad_flutter/screens/features/visual_health/presentation/visual_health_screen.dart';
 import 'package:digipad_flutter/screens/features/cosmetic_lenses/cubit/cosmetic_lenses_cubit.dart';
 import 'package:digipad_flutter/screens/features/cosmetic_lenses/presentation/cosmetic_lenses_screen.dart';
-import 'package:digipad_flutter/screens/native_impl/split_screen.dart';
-import 'package:digipad_flutter/screens/tflite/detector_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:digipad_flutter/common/components/d_image.dart';
-import 'package:digipad_flutter/common/components/d_svg.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -25,8 +24,8 @@ class HomeScreen extends StatelessWidget {
       body: Container(
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: const DImage(imageName: 'background').provider,
-            fit: BoxFit.fill,
+            image: DImage(imageName: 'background').provider,
+            fit: BoxFit.cover,
           ),
         ),
         child: SafeArea(
@@ -35,8 +34,8 @@ class HomeScreen extends StatelessWidget {
               _buildArchMenuItem(
                 context: context,
                 title: 'Virtual Mirror',
-                svgName: 'virtual_mirror',
-                iconColor: const Color(0xFFa0a0a0),
+                icon: Icons.face_retouching_natural, // Face/Mirror icon
+                color: Colors.white,
                 top: screenHeight * 0.05,
                 left: 60,
                 onTap: () => _navigateToModule(context, 'Virtual Mirror'),
@@ -44,8 +43,8 @@ class HomeScreen extends StatelessWidget {
               _buildArchMenuItem(
                 context: context,
                 title: 'Simulations',
-                svgName: 'simulations',
-                iconColor: const Color(0xFF4CAF50),
+                icon: Icons.auto_fix_high, // Magic/Simulation icon
+                color: const Color(0xFF4CAF50),
                 top: screenHeight * 0.17,
                 left: 35,
                 onTap: () => _navigateToModule(context, 'Simulations'),
@@ -53,8 +52,8 @@ class HomeScreen extends StatelessWidget {
               _buildArchMenuItem(
                 context: context,
                 title: 'Lenses 3D',
-                svgName: 'lenses_3d',
-                iconColor: const Color(0xFF3b3b3b),
+                icon: Icons.view_in_ar, // 3D/AR icon
+                color: Colors.white,
                 top: screenHeight * 0.30,
                 left: 20,
                 onTap: () => _navigateToModule(context, 'Lenses 3D'),
@@ -62,8 +61,8 @@ class HomeScreen extends StatelessWidget {
               _buildArchMenuItem(
                 context: context,
                 title: 'Cosmetic Lenses',
-                svgName: 'cosmetic_lenses',
-                iconColor: const Color(0xFF2196F3),
+                icon: Icons.remove_red_eye_outlined, // Eye icon
+                color: const Color(0xFF2196F3),
                 top: screenHeight * 0.43,
                 left: 30,
                 onTap: () => _navigateToModule(context, 'Cosmetic Lenses'),
@@ -71,8 +70,8 @@ class HomeScreen extends StatelessWidget {
               _buildArchMenuItem(
                 context: context,
                 title: 'Measurements',
-                svgName: 'measurements',
-                iconColor: const Color(0xFFFB8C00),
+                icon: Icons.straighten, // Ruler/Measurement icon
+                color: const Color(0xFFFB8C00),
                 top: screenHeight * 0.55,
                 left: 45,
                 onTap: () => _navigateToModule(context, 'Measurements'),
@@ -80,8 +79,8 @@ class HomeScreen extends StatelessWidget {
               _buildArchMenuItem(
                 context: context,
                 title: 'Visual Health',
-                svgName: 'visual_health',
-                iconColor: const Color(0xFFFFD600),
+                icon: Icons.health_and_safety_outlined, // Health icon
+                color: const Color(0xFFFFD600),
                 top: screenHeight * 0.67,
                 left: 70,
                 onTap: () => _navigateToModule(context, 'Visual Health'),
@@ -96,79 +95,79 @@ class HomeScreen extends StatelessWidget {
   Widget _buildArchMenuItem({
     required BuildContext context,
     required String title,
-    required String svgName,
-    required Color iconColor,
+    required IconData icon, // Changed from svgName to IconData
+    required Color color,
     required double top,
     required double left,
     required VoidCallback onTap,
   }) {
-    final buttonWidth = MediaQuery.of(context).size.width * 0.3;
-    final buttonHeight = MediaQuery.of(context).size.width * 0.075;
+    final buttonWidth = MediaQuery.of(context).size.width * 0.42;
+    final buttonHeight = MediaQuery.of(context).size.height * 0.06;
+    // Use a dark color for the icon when the button color is white
+    final iconColor = color;
 
     return Positioned(
       top: top,
       left: left,
-      child: SizedBox(
-        width: buttonWidth,
-        height: buttonHeight,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(30),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  iconColor.withOpacity(0.7),
-                  iconColor.withOpacity(1),
-                  iconColor.withOpacity(0.7),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(50),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(50),
+            child: Container(
+              width: buttonWidth,
+              height: buttonHeight,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(50),
+                border: Border.all(color: color.withOpacity(0.4), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.25),
+                    spreadRadius: 2,
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
                 ],
-                stops: [0.0, 0.5, 1.0],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
               ),
-              borderRadius: BorderRadius.circular(30),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.35),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
+              padding: const EdgeInsets.only(left: 8, right: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    // Center the icon inside the circular container
+                    alignment: Alignment.center,
+                    decoration: const BoxDecoration(shape: BoxShape.circle),
+                    // Replaced DSvg with Icon
+                    child: Icon(icon, color: iconColor, size: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.95),
+                        fontSize: 16,
 
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: DSvg(
-                    svgName: svgName,
-                    colorFilter: const ColorFilter.mode(
-                      Colors.white,
-                      BlendMode.srcIn,
+                        fontWeight: FontWeight.bold,
+                        shadows: [
+                          const Shadow(
+                            blurRadius: 4.0,
+                            color: Colors.black87,
+                            offset: Offset(1.0, 1.0),
+                          ),
+                        ],
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
                     ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      shadows: [
-                        Shadow(
-                          blurRadius: 4.0,
-                          color: Colors.black54,
-                          offset: Offset(1.0, 1.0),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -203,11 +202,6 @@ class HomeScreen extends StatelessWidget {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const Lenses3DScreen()),
-      );
-    } else if (moduleName == 'AR Camera') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => DetectorWidget()),
       );
     } else if (moduleName == 'Cosmetic Lenses') {
       Navigator.push(

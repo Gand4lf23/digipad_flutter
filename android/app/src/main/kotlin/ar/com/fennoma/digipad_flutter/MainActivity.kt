@@ -1,4 +1,4 @@
-package ar.com.fennoma.digipad_flutter
+package ar.com.digipad
 
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
