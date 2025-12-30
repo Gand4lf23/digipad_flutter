@@ -1,28 +1,60 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'optical_models.dart';
+
+enum DetectionType {
+  refTL, // A1 (Arriba Izquierda)
+  refTR, // A2 (Arriba Derecha)
+  refBL, // Abajo Izquierda
+  refBR, // Abajo Derecha
+  pupilRight, // P_1 (Ojo Derecho Paciente)
+  pupilLeft, // P_2 (Ojo Izquierdo Paciente)
+}
+
+class DetectionPoint {
+  String id;
+  DetectionType type;
+  Offset position;
+  String label;
+
+  DetectionPoint({
+    required this.id,
+    required this.type,
+    required this.position,
+    required this.label,
+  });
+}
 
 class OpticalController extends ChangeNotifier {
   List<DetectionPoint> points = [];
+
+  // Usamos Rect para la posición, pero lo dibujaremos como Óvalo
   Rect leftLensRect = Rect.zero;
   Rect rightLensRect = Rect.zero;
-  MeasurementResults results = MeasurementResults();
 
-  static const double ACCEPTABLE_BARREL_ERROR = 0.01;
-  static const double UNACCEPTABLE_BARREL_ERROR = (130 / 21) * 0.1;
-  static const double DI_CORRECTION_PARAM = 1.035;
+  // Configuración
+  double ajuste = 1.0;
+  double circleDiameterMm = 60.0;
+  bool showCircles = false;
+  bool isBifocal = false;
+  double bifocalLineOffset = 0.0;
 
-  double _barrelStrength = 1.0;
-  double _correctionRadius = 0.0;
-  int _halfWidth = 0;
-  int _halfHeight = 0;
-
-  Size? _imageSize;
-  final DeviceConfig _config = DeviceConfig();
+  // Resultados
+  double pixelFactor = 0;
+  double di = 0;
+  double puente = 0;
+  double medio = 0;
+  double dnpRight = 0;
+  double dnpLeft = 0;
+  double altRight = 0;
+  double altLeft = 0;
+  double aroAlt = 0;
+  double aroAnc = 0;
+  double diametroRight = 0;
+  double diametroLeft = 0;
 
   DetectionPoint? selectedPoint;
   String? selectedLensSide;
-  bool isEditMode = true;
+  Size? _imageSize;
 
   void initialize(Map<String, dynamic> detections, Size imageSize) {
     _imageSize = imageSize;
@@ -31,124 +63,155 @@ class OpticalController extends ChangeNotifier {
     Offset toPixel(dynamic item) {
       double nx = (item['x'] as num).toDouble();
       double ny = (item['y'] as num).toDouble();
-      if (!nx.isFinite) nx = 0.5;
-      if (!ny.isFinite) ny = 0.5;
       return Offset(nx * imageSize.width, ny * imageSize.height);
     }
 
-    final List<dynamic> rawCircles = detections['circles'] ?? [];
-    if (rawCircles.isNotEmpty) {
-      List<Offset> circleOffsets = rawCircles.map((c) => toPixel(c)).toList();
+    // 1. Procesar Círculos (Calibración)
+    // Esperamos 4 círculos. Los ordenamos espacialmente.
+    List<dynamic> rawCircles = detections['circles'] ?? [];
+    List<Offset> circleOffsets = rawCircles.map((c) => toPixel(c)).toList();
+
+    // Lógica para asignar TL, TR, BL, BR
+    if (circleOffsets.isNotEmpty) {
+      // Ordenar por Y primero para separar arriba/abajo
       circleOffsets.sort((a, b) => a.dy.compareTo(b.dy));
 
+      // Si tenemos al menos 2, asumimos que son los de arriba (A1, A2)
+      // O si hay 4, tomamos los 2 primeros como arriba y los 2 últimos como abajo
+      List<Offset> topRow = [];
+      List<Offset> bottomRow = [];
+
       if (circleOffsets.length >= 4) {
-        var topPair = [circleOffsets[0], circleOffsets[1]];
-        var bottomPair = [circleOffsets[2], circleOffsets[3]];
-
-        topPair.sort((a, b) => a.dx.compareTo(b.dx));
-        bottomPair.sort((a, b) => a.dx.compareTo(b.dx));
-
-        _addPoint(topPair[0], DetectionType.maskTopLeft, "Ref TL");
-        _addPoint(topPair[1], DetectionType.maskTopRight, "Ref TR");
-
-        if (bottomPair.length >= 2) {
-          _addPoint(bottomPair[0], DetectionType.maskBottomLeft, "Ref BL");
-          _addPoint(bottomPair[1], DetectionType.maskBottomRight, "Ref BR");
-        }
+        topRow = [circleOffsets[0], circleOffsets[1]];
+        bottomRow = [circleOffsets[2], circleOffsets[3]];
+      } else if (circleOffsets.length >= 2) {
+        topRow = [circleOffsets[0], circleOffsets[1]];
+      } else {
+        // Fallback si solo hay 1 o 0
+        topRow = circleOffsets;
       }
+
+      // Ordenar filas por X para saber cual es Izq y cual Der
+      topRow.sort((a, b) => a.dx.compareTo(b.dx));
+      bottomRow.sort((a, b) => a.dx.compareTo(b.dx));
+
+      // Asignar Puntos
+      if (topRow.isNotEmpty) _addPoint(topRow.first, DetectionType.refTL, "A1");
+      if (topRow.length > 1) _addPoint(topRow.last, DetectionType.refTR, "A2");
+
+      if (bottomRow.isNotEmpty)
+        _addPoint(bottomRow.first, DetectionType.refBL, "BL");
+      if (bottomRow.length > 1)
+        _addPoint(bottomRow.last, DetectionType.refBR, "BR");
     }
 
-    final List<dynamic> rawEyes = detections['eyes'] ?? [];
-    if (rawEyes.isNotEmpty) {
-      List<Offset> eyeOffsets = rawEyes.map((e) => toPixel(e)).toList();
-      eyeOffsets.sort((a, b) => a.dx.compareTo(b.dx));
+    // Si no se detectaron, generar defaults
+    _ensureCalibrationPointsExist(imageSize);
 
-      if (eyeOffsets.length >= 2) {
-        _addPoint(eyeOffsets[0], DetectionType.pupilRight, "Pupila Der");
-        _addPoint(eyeOffsets[1], DetectionType.pupilLeft, "Pupila Izq");
-      } else if (eyeOffsets.length == 1) {
-        if (eyeOffsets[0].dx < imageSize.width / 2) {
-          _addPoint(eyeOffsets[0], DetectionType.pupilRight, "Pupila Der");
-        } else {
-          _addPoint(eyeOffsets[0], DetectionType.pupilLeft, "Pupila Izq");
-        }
-      }
+    // 2. Procesar Pupilas
+    List<dynamic> rawEyes = detections['eyes'] ?? [];
+    if (rawEyes.length >= 2) {
+      List<Offset> eyes = rawEyes.map((e) => toPixel(e)).toList()
+        ..sort((a, b) => a.dx.compareTo(b.dx));
+      _addPoint(eyes[0], DetectionType.pupilRight, "P_1");
+      _addPoint(eyes[1], DetectionType.pupilLeft, "P_2");
+    } else {
+      _addPoint(
+        Offset(imageSize.width * 0.4, imageSize.height * 0.45),
+        DetectionType.pupilRight,
+        "P_1",
+      );
+      _addPoint(
+        Offset(imageSize.width * 0.6, imageSize.height * 0.45),
+        DetectionType.pupilLeft,
+        "P_2",
+      );
     }
 
-    _ensurePointsExist(imageSize);
     _initializeLensRects(imageSize);
-    calculateMetrics();
+    calculateFormulas();
   }
 
   void _addPoint(Offset pos, DetectionType type, String label) {
-    points.add(
-      DetectionPoint(
-        id: "${type.index}_${pos.dx.toInt()}_${pos.dy.toInt()}",
-        type: type,
-        position: pos,
-        label: label,
-      ),
-    );
+    // Evitar duplicados del mismo tipo
+    if (!points.any((p) => p.type == type)) {
+      points.add(
+        DetectionPoint(
+          id: type.toString(),
+          type: type,
+          position: pos,
+          label: label,
+        ),
+      );
+    }
   }
 
-  void _ensurePointsExist(Size size) {
-    final requiredTypes = DetectionType.values;
-    final defaults = {
-      DetectionType.maskTopLeft: Offset(size.width * 0.3, size.height * 0.3),
-      DetectionType.maskTopRight: Offset(size.width * 0.7, size.height * 0.3),
-      DetectionType.maskBottomLeft: Offset(size.width * 0.3, size.height * 0.5),
-      DetectionType.maskBottomRight: Offset(
-        size.width * 0.7,
-        size.height * 0.5,
-      ),
-      DetectionType.pupilRight: Offset(size.width * 0.4, size.height * 0.4),
-      DetectionType.pupilLeft: Offset(size.width * 0.6, size.height * 0.4),
-    };
-
-    for (var type in requiredTypes) {
-      if (!points.any((p) => p.type == type)) {
-        _addPoint(
-          defaults[type] ?? Offset(size.width / 2, size.height / 2),
-          type,
-          type.toString().split('.').last,
-        );
-      }
+  void _ensureCalibrationPointsExist(Size size) {
+    // Si falta alguno, lo ponemos en una posición lógica
+    if (!points.any((p) => p.type == DetectionType.refTL)) {
+      _addPoint(
+        Offset(size.width * 0.2, size.height * 0.3),
+        DetectionType.refTL,
+        "A1",
+      );
+    }
+    if (!points.any((p) => p.type == DetectionType.refTR)) {
+      _addPoint(
+        Offset(size.width * 0.8, size.height * 0.3),
+        DetectionType.refTR,
+        "A2",
+      );
+    }
+    if (!points.any((p) => p.type == DetectionType.refBL)) {
+      _addPoint(
+        Offset(size.width * 0.2, size.height * 0.7),
+        DetectionType.refBL,
+        "BL",
+      );
+    }
+    if (!points.any((p) => p.type == DetectionType.refBR)) {
+      _addPoint(
+        Offset(size.width * 0.8, size.height * 0.7),
+        DetectionType.refBR,
+        "BR",
+      );
     }
   }
 
   void _initializeLensRects(Size size) {
-    double w = size.width * 0.15;
-    double h = size.width * 0.10;
-    Offset pLeft = _pupil(true);
-    Offset pRight = _pupil(false);
-    leftLensRect = Rect.fromCenter(center: pLeft, width: w, height: h);
-    rightLensRect = Rect.fromCenter(center: pRight, width: w, height: h);
+    // Inicializar aros como círculos (ancho = alto)
+    double dim = size.width * 0.18;
+    Offset p1 = getPoint(DetectionType.pupilRight);
+    Offset p2 = getPoint(DetectionType.pupilLeft);
+    rightLensRect = Rect.fromCenter(center: p1, width: dim, height: dim);
+    leftLensRect = Rect.fromCenter(center: p2, width: dim, height: dim);
   }
 
+  // --- INTERACCIÓN ---
+
   void handleTap(Offset localPosition, double scale, Offset translation) {
-    if (!isEditMode) return;
     final imgPos = (localPosition - translation) / scale;
-    final hitRadius = 40.0 / scale;
+    final hitRadius = 5 / scale;
 
-    points.sort(
-      (a, b) => (a.position - imgPos).distance.compareTo(
-        (b.position - imgPos).distance,
-      ),
-    );
-
-    if (points.isNotEmpty &&
-        (points.first.position - imgPos).distance < hitRadius) {
-      selectedPoint = points.first;
+    // Prioridad: Puntos > Lentes
+    try {
+      points.sort(
+        (a, b) => b.type.index.compareTo(a.type.index),
+      ); // Pupilas primero
+      final hitPoint = points.firstWhere(
+        (p) => (p.position - imgPos).distance < hitRadius,
+      );
+      selectedPoint = hitPoint;
       selectedLensSide = null;
       notifyListeners();
       return;
-    }
+    } catch (_) {}
 
-    if (leftLensRect.contains(imgPos)) {
-      selectedLensSide = 'left';
-      selectedPoint = null;
-    } else if (rightLensRect.contains(imgPos)) {
+    if (rightLensRect.contains(imgPos)) {
       selectedLensSide = 'right';
+      selectedPoint = null;
+    } else if (leftLensRect.contains(imgPos)) {
+      selectedLensSide = 'left';
       selectedPoint = null;
     } else {
       selectedPoint = null;
@@ -158,20 +221,18 @@ class OpticalController extends ChangeNotifier {
   }
 
   void handleDrag(Offset delta, double scale) {
-    if (!isEditMode) return;
     final imgDelta = delta / scale;
-
     if (selectedPoint != null) {
       selectedPoint!.position += imgDelta;
-      calculateMetrics();
+      calculateFormulas();
       notifyListeners();
     } else if (selectedLensSide != null) {
-      if (selectedLensSide == 'left') {
-        leftLensRect = leftLensRect.shift(imgDelta);
-      } else {
+      if (selectedLensSide == 'right') {
         rightLensRect = rightLensRect.shift(imgDelta);
+      } else {
+        leftLensRect = leftLensRect.shift(imgDelta);
       }
-      calculateMetrics();
+      calculateFormulas();
       notifyListeners();
     }
   }
@@ -179,219 +240,128 @@ class OpticalController extends ChangeNotifier {
   void nudgeSelectedPoint(double dx, double dy) {
     if (selectedPoint != null) {
       selectedPoint!.position += Offset(dx, dy);
-      calculateMetrics();
+      calculateFormulas();
+      notifyListeners();
+    } else if (selectedLensSide != null) {
+      Offset d = Offset(dx, dy);
+      if (selectedLensSide == 'right')
+        rightLensRect = rightLensRect.shift(d);
+      else
+        leftLensRect = leftLensRect.shift(d);
+      calculateFormulas();
       notifyListeners();
     }
   }
 
-  void resizeSelectedLens(double widthDelta, double heightDelta) {
+  // --- SLIDER LENTE ---
+  // Ahora seteamos el ancho explícitamente para que el slider se mueva
+  void setLensWidth(double newWidth) {
     if (selectedLensSide == null) return;
-    if (selectedLensSide == 'left') {
-      leftLensRect = Rect.fromCenter(
-        center: leftLensRect.center,
-        width: max(10, leftLensRect.width + widthDelta),
-        height: max(10, leftLensRect.height + heightDelta),
-      );
-    } else {
+
+    // Mantener proporción (cuadrado/círculo) o solo ancho?
+    // Asumiremos círculo: ancho = alto
+    double newSize = max(10, newWidth);
+
+    if (selectedLensSide == 'right') {
       rightLensRect = Rect.fromCenter(
         center: rightLensRect.center,
-        width: max(10, rightLensRect.width + widthDelta),
-        height: max(10, rightLensRect.height + heightDelta),
+        width: newSize,
+        height: newSize,
+      );
+    } else {
+      leftLensRect = Rect.fromCenter(
+        center: leftLensRect.center,
+        width: newSize,
+        height: newSize,
       );
     }
-    calculateMetrics();
+    calculateFormulas();
     notifyListeners();
   }
 
-  void calculateMetrics() {
-    try {
-      _computeBarrelStrength();
+  double getSelectedLensWidth() {
+    if (selectedLensSide == 'right') return rightLensRect.width;
+    if (selectedLensSide == 'left') return leftLensRect.width;
+    return 0;
+  }
 
-      results = MeasurementResults(
-        ipd: _getDI(),
-        dnpLeft: _getDNP(isLeft: true),
-        dnpRight: _getDNP(isLeft: false),
-        heightLeft: _getAlt(isLeft: true),
-        heightRight: _getAlt(isLeft: false),
-        bridge: _getPuente(),
-        lensWidth: _getAroAnch(),
-        lensHeight: _getAroAlt(),
-        diameterLeft: _getDiametro(isLeft: true),
-        diameterRight: _getDiametro(isLeft: false),
-        isValid: true,
-      );
-    } catch (e) {
-      debugPrint("Calculation Warning: $e");
-      results = MeasurementResults(isValid: false);
-    }
+  // --- VISUALIZACIÓN ---
+  void setCircleDiameter(double val) {
+    circleDiameterMm = val;
     notifyListeners();
   }
 
-  void _computeBarrelStrength() {
-    if (!_hasAllMaskPoints()) return;
-
-    final tr = _getPoint(DetectionType.maskTopRight);
-    _halfWidth = (tr.dx * 1.45).round();
-    _halfHeight = _halfWidth;
-
-    _correctionRadius = sqrt(pow(_halfWidth, 2) * 4 + pow(_halfHeight, 2) * 4);
-    _barrelStrength = _binSearchStrength();
+  void toggleCircles(bool val) {
+    showCircles = val;
+    notifyListeners();
   }
 
-  bool _hasAllMaskPoints() {
-    return points.any((p) => p.type == DetectionType.maskTopLeft) &&
-        points.any((p) => p.type == DetectionType.maskTopRight) &&
-        points.any((p) => p.type == DetectionType.maskBottomLeft) &&
-        points.any((p) => p.type == DetectionType.maskBottomRight);
+  void toggleBifocal(bool val) {
+    isBifocal = val;
+    notifyListeners();
   }
 
-  double _binSearchStrength() {
-    double minVal = 0.3;
-    double maxVal = 2.0;
-    double midVal = (minVal + maxVal) / 2;
-    double error = double.maxFinite;
-    int iterations = 0;
-
-    while (error > ACCEPTABLE_BARREL_ERROR && iterations < 20) {
-      double errMin = _computeError(minVal);
-      double errMax = _computeError(maxVal);
-
-      if (errMax > errMin) {
-        maxVal = midVal;
-        midVal = (minVal + maxVal) / 2;
-      } else {
-        minVal = midVal;
-        midVal = (minVal + maxVal) / 2;
-      }
-      error = _computeError(midVal);
-      iterations++;
-    }
-    return midVal;
+  void adjustBifocalLine(double delta) {
+    bifocalLineOffset += delta;
+    notifyListeners();
   }
 
-  double _computeError(double strength) {
-    Offset tl = _getPoint(DetectionType.maskTopLeft);
-    Offset tr = _getPoint(DetectionType.maskTopRight);
-    Offset bl = _getPoint(DetectionType.maskBottomLeft);
-    Offset br = _getPoint(DetectionType.maskBottomRight);
+  // --- MATEMÁTICAS ---
 
-    Offset a = _getSourcePoint(tl, strength);
-    Offset b = _getSourcePoint(tr, strength);
-    Offset c = _getSourcePoint(bl, strength);
-    Offset d = _getSourcePoint(br, strength);
-
-    double d1 = (a - b).distance / (a - c).distance;
-    double d2 = (c - d).distance / (b - d).distance;
-    double finalDist = (d1 + d2) / 2;
-
-    double targetRatio = _config.maskRealWidthMm / _config.maskRealHeightMm;
-
-    return (finalDist - targetRatio).abs();
-  }
-
-  Offset _getSourcePoint(Offset p, double strength) {
-    if (_correctionRadius == 0) return p;
-
-    double newX = p.dx - _halfWidth;
-    double newY = p.dy - _halfHeight;
-
-    double dist = sqrt(newX * newX + newY * newY);
-    double r = dist / _correctionRadius * strength;
-
-    double theta = 1.0;
-    if (r != 0) {
-      theta = atan(r) / r;
-    }
-
-    return Offset(_halfWidth + theta * newX, _halfHeight + theta * newY);
-  }
-
-  double _distCorrected(Offset p1, Offset p2) {
-    Offset a = _getSourcePoint(p1, _barrelStrength);
-    Offset b = _getSourcePoint(p2, _barrelStrength);
-    return (a - b).distance;
-  }
-
-  double _getPixel() {
-    Offset tl = _getPoint(DetectionType.maskTopLeft);
-    Offset tr = _getPoint(DetectionType.maskTopRight);
-    Offset bl = _getPoint(DetectionType.maskBottomLeft);
-    Offset br = _getPoint(DetectionType.maskBottomRight);
-
-    double pxDist = (_distCorrected(bl, br) + _distCorrected(tl, tr)) / 2;
-    if (pxDist == 0) return 0.1;
-    return _config.maskRealWidthMm / pxDist;
-  }
-
-  double _getPixelClosest() => _getPixel() * _config.adjustmentFactor;
-  double _getPixelFurthest() => _getPixelClosest() * DI_CORRECTION_PARAM;
-
-  double _getDI() {
-    return _distCorrected(_pupil(true), _pupil(false)) * _getPixelFurthest();
-  }
-
-  double _getDNP({required bool isLeft}) {
-    double centerX = (leftLensRect.center.dx + rightLensRect.center.dx) / 2;
-    Offset center = Offset(centerX, _pupil(isLeft).dy);
-    return _distCorrected(_pupil(isLeft), center) * _getPixelFurthest();
-  }
-
-  double _getAlt({required bool isLeft}) {
-    Rect lens = isLeft ? leftLensRect : rightLensRect;
-    Offset bottom = Offset(_pupil(isLeft).dx, lens.bottom);
-    return _distCorrected(_pupil(isLeft), bottom) * _getPixelClosest();
-  }
-
-  double _getPuente() {
-    double neutralY =
-        (_getPoint(DetectionType.maskTopLeft).dy +
-            _getPoint(DetectionType.maskTopRight).dy) /
-        2;
-    Offset lRight = Offset(leftLensRect.right, neutralY);
-    Offset rLeft = Offset(rightLensRect.left, neutralY);
-    return _distCorrected(lRight, rLeft) * _getPixelClosest();
-  }
-
-  double _getAroAnch() {
-    double w1 = _distCorrected(
-      leftLensRect.bottomLeft,
-      leftLensRect.bottomRight,
-    );
-    double w2 = _distCorrected(
-      rightLensRect.bottomLeft,
-      rightLensRect.bottomRight,
-    );
-    return ((w1 + w2) / 2) * _getPixelClosest();
-  }
-
-  double _getAroAlt() {
-    double h1 = _distCorrected(leftLensRect.topRight, leftLensRect.bottomRight);
-    double h2 = _distCorrected(rightLensRect.topLeft, rightLensRect.bottomLeft);
-    return ((h1 + h2) / 2) * _getPixelClosest();
-  }
-
-  double _getDiametro({required bool isLeft}) {
-    Offset p = _pupil(isLeft);
-    Rect lens = isLeft ? leftLensRect : rightLensRect;
-
-    double distLeft = (p.dx - lens.left).abs();
-    double distRight = (p.dx - lens.right).abs();
-    double radiusPx = max(distLeft, distRight);
-
-    Offset pMinus = Offset(p.dx - radiusPx, p.dy);
-    Offset pPlus = Offset(p.dx + radiusPx, p.dy);
-
-    return _distCorrected(pMinus, pPlus) * _getPixelClosest() + 1.0;
-  }
-
-  Offset _getPoint(DetectionType type) {
+  Offset getPoint(DetectionType type) {
     try {
       return points.firstWhere((p) => p.type == type).position;
-    } catch (e) {
+    } catch (_) {
       return Offset.zero;
     }
   }
 
-  Offset _pupil(bool isLeft) =>
-      _getPoint(isLeft ? DetectionType.pupilLeft : DetectionType.pupilRight);
+  void calculateFormulas() {
+    // Variables Puntos
+    Offset A1 = getPoint(DetectionType.refTL);
+    Offset A2 = getPoint(DetectionType.refTR);
+    // Nota: Aunque detectamos 4, la fórmula usa A1 y A2 para el ancho (130)
+    // Asumimos que A1 es TL y A2 es TR para el eje X.
+
+    Offset P_1 = getPoint(DetectionType.pupilRight);
+    Offset P_2 = getPoint(DetectionType.pupilLeft);
+
+    // Variables Lentes (Bordes)
+    double RE_1 = rightLensRect.left;
+    double RC_1 = rightLensRect.right;
+    double RS_1 = rightLensRect.top;
+    double RI_1 = rightLensRect.bottom;
+
+    double RC_2 = leftLensRect.left;
+    double RE_2 = leftLensRect.right;
+    double RS_2 = leftLensRect.top;
+    double RI_2 = leftLensRect.bottom;
+
+    // 1. Pixel = 130 / DeltaX
+    double distA = (A2.dx - A1.dx).abs();
+    if (distA == 0) distA = 1;
+    pixelFactor = (130.0 / distA) * ajuste;
+
+    // 2. Fórmulas Estándar
+    di = (P_2.dx - P_1.dx) * pixelFactor;
+    puente = (RC_2 - RC_1) * pixelFactor;
+
+    double puentePx = RC_2 - RC_1;
+    double medioPx = RC_1 + (puentePx / 2.0);
+    medio = medioPx;
+
+    dnpRight = (medioPx - P_1.dx) * pixelFactor;
+    dnpLeft = (P_2.dx - medioPx) * pixelFactor;
+
+    altRight = (RI_1 - P_1.dy) * pixelFactor;
+    altLeft = (RI_2 - P_2.dy) * pixelFactor;
+
+    aroAlt = ((RI_1 - RS_1 + RI_2 - RS_2) / 2.0) * pixelFactor;
+    aroAnc = ((RC_1 - RE_1 + RE_2 - RC_2) / 2.0) * pixelFactor;
+
+    diametroRight = ((P_1.dx - RE_1) * 2.0 * pixelFactor) + 1.0;
+    diametroLeft = ((RE_2 - P_2.dx) * 2.0 * pixelFactor) + 1.0;
+
+    notifyListeners();
+  }
 }

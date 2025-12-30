@@ -60,50 +60,11 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
             frame.image.width.toDouble(),
             frame.image.height.toDouble(),
           );
-          Map<String, dynamic> safeDetections = Map.from(widget.detections);
-          List<dynamic> rawEyes = safeDetections['eyes'] ?? [];
-          List<dynamic> rawCircles = safeDetections['circles'] ?? [];
-
-          if (rawEyes.length < 2) {
-            double centerY = 0.5;
-            double centerX = 0.5;
-
-            if (rawCircles.isNotEmpty) {
-              double sumX = 0;
-              double maxY = 0;
-
-              for (var c in rawCircles) {
-                final circle = Map<String, dynamic>.from(c);
-                double x = (circle['x'] as num).toDouble();
-                double y = (circle['y'] as num).toDouble();
-
-                sumX += x;
-                if (y > maxY) maxY = y;
-              }
-
-              centerX = sumX / rawCircles.length;
-
-              centerY = maxY + 0.10;
-
-              if (centerY > 0.9) centerY = 0.85;
-            }
-
-            final defaultRightEye = {'x': centerX - 0.08, 'y': centerY};
-
-            final defaultLeftEye = {'x': centerX + 0.08, 'y': centerY};
-
-            safeDetections['eyes'] = [defaultRightEye, defaultLeftEye];
-
-            debugPrint(
-              "⚠️ Eyes not detected. Generated defaults at Y=$centerY",
-            );
-          }
-
-          _controller.initialize(safeDetections, _imageSize!);
+          _controller.initialize(widget.detections, _imageSize!);
         });
       }
     } catch (e) {
-      debugPrint("Error loading image for editor: $e");
+      debugPrint("Error: $e");
     }
   }
 
@@ -121,47 +82,100 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
       child: Scaffold(
         backgroundColor: Colors.black,
         appBar: AppBar(
-          title: const Text("Adjust Measurements"),
+          title: const Text("Ajuste Medidas"),
           backgroundColor: const Color(0xFF1C1C1E),
-          leading: IconButton(
-            icon: const Icon(Icons.close, color: Colors.white),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
           actions: [
             IconButton(
               icon: Icon(
                 _isMoveMode ? Icons.pan_tool : Icons.zoom_in,
                 color: _isMoveMode ? Colors.greenAccent : Colors.white,
               ),
-              tooltip: _isMoveMode
-                  ? "Switch to Edit Mode"
-                  : "Switch to Zoom Mode",
-              onPressed: () {
-                setState(() {
-                  _isMoveMode = !_isMoveMode;
-                });
-              },
+              onPressed: () => setState(() => _isMoveMode = !_isMoveMode),
             ),
-            Consumer<OpticalController>(
-              builder: (context, controller, child) {
-                final bool hasSelection =
-                    controller.selectedPoint != null ||
-                    controller.selectedLensSide != null;
+            Builder(
+              builder: (context) {
+                if (_isMoveMode || _controller.selectedPoint != null) {
+                  return IconButton(
+                    icon: const Icon(Icons.check, color: Colors.cyanAccent),
+                    onPressed: () {
+                      setState(() {
+                        _isMoveMode = false;
+                      });
 
-                if (!hasSelection) return const SizedBox.shrink();
+                      _controller.handleTap(Offset.zero, 1, Offset.zero);
+                    },
+                  );
+                }
 
-                return IconButton(
-                  icon: const Icon(Icons.check, color: Colors.cyanAccent),
-                  onPressed: () {
-                    _controller.handleTap(Offset.zero, 1.0, Offset.zero);
-                  },
-                );
+                return const SizedBox.shrink();
               },
             ),
           ],
         ),
         body: Column(
           children: [
+            Container(
+              height: 50,
+              color: Colors.grey[900],
+              child: Consumer<OpticalController>(
+                builder: (context, ctrl, _) => Row(
+                  children: [
+                    Checkbox(
+                      value: ctrl.showCircles,
+                      activeColor: Colors.cyanAccent,
+                      onChanged: (v) => ctrl.toggleCircles(v!),
+                    ),
+                    if (!ctrl.showCircles)
+                      const Text(
+                        "Ver Diámetros",
+                        style: TextStyle(color: Colors.white, fontSize: 12),
+                      ),
+                    if (ctrl.showCircles) ...[
+                      Expanded(
+                        child: Slider(
+                          value: ctrl.circleDiameterMm,
+                          min: 40,
+                          max: 80,
+                          divisions: 40,
+                          activeColor: Colors.cyanAccent,
+                          onChanged: (v) => ctrl.setCircleDiameter(v),
+                        ),
+                      ),
+                      Text(
+                        "${ctrl.circleDiameterMm.round()}",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                    const VerticalDivider(color: Colors.white24, width: 20),
+                    Switch(
+                      value: ctrl.isBifocal,
+                      activeColor: Colors.orangeAccent,
+                      onChanged: (v) => ctrl.toggleBifocal(v),
+                    ),
+                    if (ctrl.isBifocal) ...[
+                      IconButton(
+                        icon: const Icon(
+                          Icons.arrow_drop_up,
+                          color: Colors.white,
+                        ),
+                        onPressed: () => ctrl.adjustBifocalLine(-1),
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.arrow_drop_down,
+                          color: Colors.white,
+                        ),
+                        onPressed: () => ctrl.adjustBifocalLine(1),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+
             Expanded(
               flex: 3,
               child: Stack(
@@ -172,7 +186,6 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
                         transformationController: _transformationController,
                         maxScale: 5.0,
                         minScale: 1.0,
-                        boundaryMargin: const EdgeInsets.all(double.infinity),
                         panEnabled: _isMoveMode,
                         scaleEnabled: _isMoveMode,
                         child: LayoutBuilder(
@@ -184,10 +197,8 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
                             final double scale = scaleX < scaleY
                                 ? scaleX
                                 : scaleY;
-
                             final double displayW = _imageSize!.width * scale;
                             final double displayH = _imageSize!.height * scale;
-
                             final double offsetX =
                                 (constraints.maxWidth - displayW) / 2;
                             final double offsetY =
@@ -216,12 +227,7 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
                                 children: [
                                   Transform.flip(
                                     flipX: widget.isFrontCamera,
-                                    child: Image.file(
-                                      _imageFile,
-                                      fit: BoxFit.contain,
-                                      width: constraints.maxWidth,
-                                      height: constraints.maxHeight,
-                                    ),
+                                    child: Image.file(_imageFile),
                                   ),
                                   CustomPaint(
                                     size: Size(
@@ -238,6 +244,13 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
                                       imageSize: _imageSize!,
                                       scale: scale,
                                       offset: Offset(offsetX, offsetY),
+                                      showCircles: controller.showCircles,
+                                      circleDiameterMm:
+                                          controller.circleDiameterMm,
+                                      pixelFactor: controller.pixelFactor,
+                                      isBifocal: controller.isBifocal,
+                                      bifocalOffset:
+                                          controller.bifocalLineOffset,
                                     ),
                                   ),
                                 ],
@@ -262,7 +275,9 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
   Widget _buildNudgeControls() {
     return Consumer<OpticalController>(
       builder: (context, controller, child) {
-        if (controller.selectedPoint == null || _isMoveMode) {
+        if ((controller.selectedPoint == null &&
+                controller.selectedLensSide == null) ||
+            _isMoveMode) {
           return const SizedBox.shrink();
         }
 
@@ -312,9 +327,10 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
     return GestureDetector(
       onTapDown: (_) {
         action();
-        _holdTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
-          action();
-        });
+        _holdTimer = Timer.periodic(
+          const Duration(milliseconds: 50),
+          (_) => action(),
+        );
       },
       onTapUp: (_) => _holdTimer?.cancel(),
       onTapCancel: () => _holdTimer?.cancel(),
@@ -325,13 +341,6 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
           color: Colors.grey[800],
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: Colors.white24),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 4,
-              offset: Offset(2, 2),
-            ),
-          ],
         ),
         child: Icon(icon, color: Colors.white, size: 30),
       ),
@@ -341,7 +350,8 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
   Widget _buildInfoPanel() {
     return Consumer<OpticalController>(
       builder: (context, ctrl, _) {
-        final r = ctrl.results;
+        double currentWidth = ctrl.getSelectedLensWidth();
+
         return Container(
           color: const Color(0xFF121212),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -351,8 +361,10 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _statItem("IPD (DI)", r.ipd, isLarge: true),
-                  _statItem("Bridge", r.bridge),
+                  _statItem("IPD (DI)", ctrl.di, isLarge: true),
+                  _statItem("Puente", ctrl.puente),
+                  _statItem("Aro Anc", ctrl.aroAnc),
+                  _statItem("Aro Alt", ctrl.aroAlt),
                 ],
               ),
               const Divider(color: Colors.white24),
@@ -360,28 +372,29 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
                 children: [
                   Expanded(
                     child: _eyeStat(
-                      "Right Eye",
-                      r.dnpRight,
-                      r.heightRight,
-                      r.diameterRight,
+                      "Ojo Der (P1)",
+                      ctrl.dnpRight,
+                      ctrl.altRight,
+                      ctrl.diametroRight,
                     ),
                   ),
                   Container(width: 1, height: 60, color: Colors.white24),
                   Expanded(
                     child: _eyeStat(
-                      "Left Eye",
-                      r.dnpLeft,
-                      r.heightLeft,
-                      r.diameterLeft,
+                      "Ojo Izq (P2)",
+                      ctrl.dnpLeft,
+                      ctrl.altLeft,
+                      ctrl.diametroLeft,
                     ),
                   ),
                 ],
               ),
+
               if (ctrl.selectedLensSide != null && !_isMoveMode)
                 Row(
                   children: [
                     Text(
-                      "Lens Size (${ctrl.selectedLensSide!.toUpperCase()}):",
+                      "Tam. Aro (${ctrl.selectedLensSide!.toUpperCase()}):",
                       style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 12,
@@ -389,13 +402,12 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
                     ),
                     Expanded(
                       child: Slider(
-                        value: 0,
-                        min: -20,
-                        max: 20,
+                        value: currentWidth.clamp(10.0, 300.0),
+                        min: 10.0,
+                        max: 300.0,
                         activeColor: Colors.cyanAccent,
-                        onChanged: (val) {},
-                        onChangeEnd: (val) {
-                          ctrl.resizeSelectedLens(val, val);
+                        onChanged: (val) {
+                          ctrl.setLensWidth(val);
                         },
                       ),
                     ),
@@ -442,11 +454,11 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
           style: const TextStyle(color: Colors.white),
         ),
         Text(
-          "Height: ${height.toStringAsFixed(1)}",
+          "Alt: ${height.toStringAsFixed(1)}",
           style: const TextStyle(color: Colors.white),
         ),
         Text(
-          "Eff. Diam: ${diam.toStringAsFixed(1)}",
+          "Diam: ${diam.toStringAsFixed(1)}",
           style: const TextStyle(color: Colors.white54, fontSize: 11),
         ),
       ],
