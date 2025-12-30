@@ -17,7 +17,7 @@ class SimulationData {
     _bifocalCategory,
     _polarizedCategory,
     _antiReflexCategory,
-    _driveCategory,
+    //_driveCategory, // Hidden for now
     _photochromicCategory,
     _solarCategory,
     _tintCategory,
@@ -1281,7 +1281,7 @@ class SimulationData {
         displayName: 'Gray',
         correctedImagePath: imagePath,
         quality: LensQuality.standard,
-        tintColor: Colors.black.withOpacity(0.6),
+        tintColor: Colors.black.withValues(alpha: 0.6),
       ),
       CorrectionLens(
         id: '${prefix}_brown',
@@ -1289,7 +1289,7 @@ class SimulationData {
         displayName: 'Brown',
         correctedImagePath: imagePath,
         quality: LensQuality.standard,
-        tintColor: Color(0xFF6D4C41).withOpacity(0.6), // Brown 400
+        tintColor: Color(0xFF6D4C41).withValues(alpha: 0.6), // Brown 400
       ),
       CorrectionLens(
         id: '${prefix}_green',
@@ -1297,7 +1297,7 @@ class SimulationData {
         displayName: 'Green',
         correctedImagePath: imagePath,
         quality: LensQuality.standard,
-        tintColor: Colors.green.withOpacity(0.6), // Green 800
+        tintColor: Colors.green.withValues(alpha: 0.6), // Green 800
       ),
       CorrectionLens(
         id: '${prefix}_yellow',
@@ -1305,7 +1305,7 @@ class SimulationData {
         displayName: 'Yellow',
         correctedImagePath: imagePath,
         quality: LensQuality.standard,
-        tintColor: Colors.yellow.withOpacity(0.6),
+        tintColor: Colors.yellow.withValues(alpha: 0.6),
       ),
       CorrectionLens(
         id: '${prefix}_aqua',
@@ -1313,7 +1313,7 @@ class SimulationData {
         displayName: 'Aqua',
         correctedImagePath: imagePath,
         quality: LensQuality.standard,
-        tintColor: Colors.cyanAccent.withOpacity(0.6),
+        tintColor: Colors.cyanAccent.withValues(alpha: 0.6),
       ),
       CorrectionLens(
         id: '${prefix}_blue',
@@ -1321,7 +1321,7 @@ class SimulationData {
         displayName: 'Blue',
         correctedImagePath: imagePath,
         quality: LensQuality.standard,
-        tintColor: Colors.blue.withOpacity(0.6),
+        tintColor: Colors.blue.withValues(alpha: 0.6),
       ),
       CorrectionLens(
         id: '${prefix}_orange',
@@ -1329,7 +1329,7 @@ class SimulationData {
         displayName: 'Orange',
         correctedImagePath: imagePath,
         quality: LensQuality.standard,
-        tintColor: Colors.orange.withOpacity(0.6),
+        tintColor: Colors.orange.withValues(alpha: 0.6),
       ),
       CorrectionLens(
         id: '${prefix}_red',
@@ -1337,7 +1337,7 @@ class SimulationData {
         displayName: 'Red',
         correctedImagePath: imagePath,
         quality: LensQuality.standard,
-        tintColor: Colors.red.withOpacity(0.6),
+        tintColor: Colors.red.withValues(alpha: 0.6),
       ),
     ];
   }

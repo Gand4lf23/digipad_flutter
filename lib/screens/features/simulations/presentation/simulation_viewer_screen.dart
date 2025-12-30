@@ -257,35 +257,44 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
   }
 
   Widget _buildInstructionOverlay(SimulationsState state) {
+    final size = MediaQuery.of(context).size;
+    final position = state.isVerticalDivider
+        ? Offset(size.width * state.dividerPosition, size.height / 2)
+        : Offset(size.width / 2, size.height * state.dividerPosition);
+
     return AnimatedBuilder(
       animation: _pulseAnimation,
       builder: (context, child) {
         return Positioned(
-          left: state.lensPosition.dx - 30,
-          top: state.lensPosition.dy - state.lensSize / 2 - 50,
+          left: state.isVerticalDivider
+              ? position.dx - 100
+              : size.width / 2 - 100,
+          top: state.isVerticalDivider ? position.dy - 100 : position.dy - 80,
           child: Opacity(
             opacity: _pulseAnimation.value,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.8),
+                color: Colors.black.withValues(alpha: 0.8),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withOpacity(0.3)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    Icons.touch_app_outlined,
-                    color: Colors.white.withOpacity(0.9),
+                    state.isVerticalDivider
+                        ? Icons.swap_horiz_outlined
+                        : Icons.swap_vert_outlined,
+                    color: Colors.white.withValues(alpha: 0.9),
                     size: 20,
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Drag the lens',
+                    'Drag the divider',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 12,
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontSize: 18,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

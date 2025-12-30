@@ -33,8 +33,8 @@ class SimulationControlPanel extends StatelessWidget {
           begin: Alignment.bottomCenter,
           end: Alignment.topCenter,
           colors: [
-            Colors.black.withOpacity(0.95),
-            Colors.black.withOpacity(0.8),
+            Colors.black.withValues(alpha: 0.95),
+            Colors.black.withValues(alpha: 0.8),
             Colors.transparent,
           ],
           stops: const [0.0, 0.7, 1.0],
@@ -51,7 +51,7 @@ class SimulationControlPanel extends StatelessWidget {
               Text(
                 'Select a lens:',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.white.withValues(alpha: 0.8),
                   fontSize: 32,
                   fontWeight: FontWeight.w500,
                 ),
@@ -78,7 +78,7 @@ class SimulationControlPanel extends StatelessWidget {
                     Container(
                       height: 120,
                       width: 2,
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                     ),
 
                     const SizedBox(width: 32),
@@ -87,29 +87,48 @@ class SimulationControlPanel extends StatelessWidget {
                     Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Size Slider
-                        Row(
+                        // Orientation Toggle Button
+                        Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
-                              Icons.crop_free_outlined,
-                              color: Colors.white.withOpacity(0.7),
-                              size: 32,
+                            Text(
+                              'Divider',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.7),
+                                fontSize: 18,
+                              ),
                             ),
-                            SizedBox(
-                              width: 180,
-                              height: 60,
-                              child: Slider(
-                                value: state.lensSize,
-                                min: 300,
-                                max: 550,
-                                activeColor: Colors.white,
-                                inactiveColor: Colors.white24,
-                                onChanged: (v) {
-                                  context.read<SimulationsCubit>().setLensSize(
-                                    v,
-                                  );
+                            const SizedBox(height: 8),
+                            Material(
+                              color: Colors.white.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(12),
+                                onTap: () {
+                                  context
+                                      .read<SimulationsCubit>()
+                                      .toggleDividerOrientation();
                                 },
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Icon(
+                                    state.isVerticalDivider
+                                        ? Icons.swap_horiz
+                                        : Icons.swap_vert,
+                                    color: Colors.white,
+                                    size: 56,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              state.isVerticalDivider
+                                  ? 'Vertical'
+                                  : 'Horizontal',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.6),
+                                fontSize: 18,
                               ),
                             ),
                           ],
@@ -121,7 +140,7 @@ class SimulationControlPanel extends StatelessWidget {
                             children: [
                               Icon(
                                 Icons.opacity,
-                                color: Colors.white.withOpacity(0.7),
+                                color: Colors.white.withValues(alpha: 0.7),
                                 size: 32,
                               ),
                               SizedBox(

@@ -1,4 +1,5 @@
 import 'package:digipad_flutter/screens/features/lenses_3d/cubit/lenses_3d_cubit.dart';
+import 'package:digipad_flutter/screens/features/lenses_3d/cubit/lenses_3d_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -7,176 +8,283 @@ class Lenses3DControlPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cubit = context.read<Lenses3DCubit>();
+    return BlocBuilder<Lenses3DCubit, Lenses3DState>(
+      builder: (context, state) {
+        final cubit = context.read<Lenses3DCubit>();
 
-    return Container(
-      color: Colors.grey.shade900,
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Lenses Control',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
+        return Container(
+          color: Colors.grey.shade900,
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title
+              const Text(
+                'Lens Configuration',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Material Index Selection
+                    Expanded(
+                      child: _buildMaterialSelector(context, state, cubit),
+                    ),
+                    const SizedBox(width: 24),
+
+                    // Prescription Control
+                    Expanded(
+                      child: _buildPrescriptionControl(context, state, cubit),
+                    ),
+                    const SizedBox(width: 24),
+
+                    // Frame Type Selection
+                    Expanded(child: _buildFrameSelector(context, state, cubit)),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 10),
-          Expanded(
-            child: Row(
-              children: [
-                // Left Eye Controls
-                Expanded(
-                  child: _EyeControlColumn(
-                    label: 'Left Lens',
-                    onGraduationChanged: cubit.updateLeftGraduation,
-                    onTintChanged: cubit.updateLeftTint,
-                  ),
-                ),
-                const VerticalDivider(color: Colors.grey),
-                // Right Eye Controls
-                Expanded(
-                  child: _EyeControlColumn(
-                    label: 'Right Lens',
-                    onGraduationChanged: cubit.updateRightGraduation,
-                    onTintChanged: cubit.updateRightTint,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          // Frame Selection (Placeholder)
-          SizedBox(
-            height: 50,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                _FrameOption(
-                  label: 'Frame 1',
-                  onTap: () => cubit.selectFrame('frame_1'),
-                ),
-                _FrameOption(
-                  label: 'Frame 2',
-                  onTap: () => cubit.selectFrame('frame_2'),
-                ),
-                _FrameOption(
-                  label: 'Frame 3',
-                  onTap: () => cubit.selectFrame('frame_3'),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
-}
 
-class _EyeControlColumn extends StatelessWidget {
-  final String label;
-  final ValueChanged<double> onGraduationChanged;
-  final ValueChanged<Color> onTintChanged;
-
-  const _EyeControlColumn({
-    required this.label,
-    required this.onGraduationChanged,
-    required this.onTintChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildMaterialSelector(
+    BuildContext context,
+    Lenses3DState state,
+    Lenses3DCubit cubit,
+  ) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white70)),
-        const SizedBox(height: 5),
         const Text(
-          'Graduation',
-          style: TextStyle(color: Colors.white54, fontSize: 12),
+          'Material Index',
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
+          ),
         ),
-        Slider(
-          value: 0.5, // TODO: Bind to state
-          onChanged: onGraduationChanged,
-          activeColor: Colors.blueAccent,
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: LensMaterialIndex.values.map((material) {
+            final isSelected = state.materialIndex == material;
+            return GestureDetector(
+              onTap: () => cubit.updateMaterialIndex(material),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.blueAccent : Colors.grey.shade800,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: isSelected
+                        ? Colors.blueAccent.shade200
+                        : Colors.grey.shade700,
+                    width: 2,
+                  ),
+                ),
+                child: Text(
+                  material.displayName,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : Colors.white70,
+                    fontSize: 20,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
         ),
-        const Text(
-          'Tint',
-          style: TextStyle(color: Colors.white54, fontSize: 12),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _ColorDot(
-              color: Colors.transparent,
-              onTap: () => onTintChanged(Colors.transparent),
-            ),
-            _ColorDot(
-              color: Colors.blue.withValues(alpha: 0.3),
-              onTap: () => onTintChanged(Colors.blue.withValues(alpha: 0.3)),
-            ),
-            _ColorDot(
-              color: Colors.brown.withValues(alpha: 0.3),
-              onTap: () => onTintChanged(Colors.brown.withValues(alpha: 0.3)),
-            ),
-            _ColorDot(
-              color: Colors.grey.withValues(alpha: 0.3),
-              onTap: () => onTintChanged(Colors.grey.withValues(alpha: 0.3)),
-            ),
-          ],
+        const SizedBox(height: 8),
+        Text(
+          'Higher index = thinner lens',
+          style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
         ),
       ],
     );
   }
-}
 
-class _ColorDot extends StatelessWidget {
-  final Color color;
-  final VoidCallback onTap;
-
-  const _ColorDot({required this.color, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        width: 20,
-        height: 20,
-        decoration: BoxDecoration(
-          color: color == Colors.transparent ? Colors.white : color,
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white),
+  Widget _buildPrescriptionControl(
+    BuildContext context,
+    Lenses3DState state,
+    Lenses3DCubit cubit,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Prescription',
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
+          ),
         ),
-        child: color == Colors.transparent
-            ? const Icon(Icons.block, size: 12, color: Colors.black)
-            : null,
-      ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            // Decrement button
+            _buildCircleButton(
+              icon: Icons.remove,
+              onTap: state.prescription > state.minPrescription
+                  ? cubit.decrementPrescription
+                  : null,
+            ),
+            const SizedBox(width: 16),
+
+            // Prescription value display
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade800,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blueAccent, width: 2),
+              ),
+              child: SizedBox(
+                width: 50,
+                child: Text(
+                  '${state.prescription} D',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+
+            // Increment button
+            _buildCircleButton(
+              icon: Icons.add,
+              onTap: state.prescription < state.maxPrescription
+                  ? cubit.incrementPrescription
+                  : null,
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Range: ${state.minPrescription}-${state.maxPrescription} diopters',
+          style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+        ),
+        const SizedBox(height: 12),
+
+        // Slider for quick adjustment
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            activeTrackColor: Colors.blueAccent,
+            inactiveTrackColor: Colors.grey.shade700,
+            thumbColor: Colors.blueAccent,
+            overlayColor: Colors.blueAccent.withValues(alpha: 0.3),
+            trackHeight: 6,
+          ),
+          child: Slider(
+            value: state.prescription.toDouble(),
+            min: state.minPrescription.toDouble(),
+            max: state.maxPrescription.toDouble(),
+            divisions: state.maxPrescription - state.minPrescription,
+            onChanged: (value) => cubit.updatePrescription(value.round()),
+          ),
+        ),
+      ],
     );
   }
-}
 
-class _FrameOption extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
+  Widget _buildFrameSelector(
+    BuildContext context,
+    Lenses3DState state,
+    Lenses3DCubit cubit,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Frame Type',
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: LensFrameType.values.map((frame) {
+            final isSelected = state.frameType == frame;
+            return GestureDetector(
+              onTap: () => cubit.updateFrameType(frame),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.blueAccent : Colors.grey.shade800,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: isSelected
+                        ? Colors.blueAccent.shade200
+                        : Colors.grey.shade700,
+                    width: 2,
+                  ),
+                ),
+                child: Text(
+                  frame.displayName,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : Colors.white70,
+                    fontSize: 20,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Different frame styles',
+          style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+        ),
+      ],
+    );
+  }
 
-  const _FrameOption({required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildCircleButton({required IconData icon, VoidCallback? onTap}) {
+    final isEnabled = onTap != null;
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        width: 48,
+        height: 48,
         decoration: BoxDecoration(
-          color: Colors.grey.shade800,
-          borderRadius: BorderRadius.circular(20),
+          color: isEnabled ? Colors.blueAccent : Colors.grey.shade800,
+          shape: BoxShape.circle,
         ),
-        alignment: Alignment.center,
-        child: Text(label, style: const TextStyle(color: Colors.white)),
+        child: Icon(
+          icon,
+          color: isEnabled ? Colors.white : Colors.grey.shade600,
+          size: 28,
+        ),
       ),
     );
   }
