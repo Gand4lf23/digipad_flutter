@@ -10,9 +10,7 @@ class HomeView extends StatelessWidget {
     return Scaffold(
       key: GlobalKey(),
       backgroundColor: Colors.black,
-      // appBar: AppBar(
-      //   title: Image.asset('assets/images/tfl_logo.png', fit: BoxFit.contain),
-      // ),
+
       body: const HomeScreen(),
     );
   }

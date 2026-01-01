@@ -19,7 +19,7 @@ class _IrisSelectorWidgetState extends State<IrisSelectorWidget> {
 
   // Helper function to extract clean color name from file path
   String _getColorName(String path) {
-    final filename = path.split('/').last.replaceAll('.png', '');
+    final filename = path.split('/').last.replaceAll('.webp', '');
 
     // Manual mapping for better display names
     final colorMappings = {

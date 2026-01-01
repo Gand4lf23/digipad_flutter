@@ -11,9 +11,9 @@ class ImageManager {
   static const String _basePath = 'assets/images/';
 
   // App images
-  static const String background = '${_basePath}background.png';
-  static const String icLauncher = '${_basePath}ic_launcher.png';
-  static const String splashImage = '${_basePath}splash_image.png';
+  static const String background = '${_basePath}background.webp';
+  static const String icLauncher = '${_basePath}ic_launcher.webp';
+  static const String splashImage = '${_basePath}splash_image.webp';
 
   // Get image path by name
   String getImagePath(String name) {
