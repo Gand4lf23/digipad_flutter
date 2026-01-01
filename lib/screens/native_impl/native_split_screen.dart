@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:digipad_flutter/l10n/l10n.dart';
 
 class NativeSplitScreen extends StatefulWidget {
   const NativeSplitScreen({super.key});
@@ -33,9 +34,6 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
   bool _hasPermission = false;
   bool _isCheckingPermission = true;
   bool _isCapturing = false;
-
-  // This will hold detections from the live camera feed, if you need it elsewhere
-  Map<String, dynamic> _liveDetections = {'circles': [], 'eyes': []};
 
   static const Color _backgroundColor = Color(0xFF121212);
   static const Color _accentColor = Colors.deepPurpleAccent;
@@ -100,18 +98,18 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.grey[900],
-        title: const Text(
-          'Camera Required',
-          style: TextStyle(color: Colors.white),
+        title: Text(
+          context.l10n.cameraRequiredTitle,
+          style: const TextStyle(color: Colors.white),
         ),
-        content: const Text(
-          'Camera access has been permanently denied. Please enable it in your system settings to use this feature.',
-          style: TextStyle(color: Colors.white70),
+        content: Text(
+          context.l10n.cameraRequiredContent,
+          style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: _accentColor),
@@ -119,9 +117,9 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
               Navigator.pop(ctx);
               openAppSettings();
             },
-            child: const Text(
-              'Open Settings',
-              style: TextStyle(color: Colors.white),
+            child: Text(
+              context.l10n.openSettings,
+              style: const TextStyle(color: Colors.white),
             ),
           ),
         ],
@@ -182,10 +180,10 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
                             onPlatformViewCreated: _onPlatformViewCreated,
                           )
                         else
-                          const Center(
+                          Center(
                             child: Text(
-                              "Platform not supported",
-                              style: TextStyle(color: Colors.white),
+                              context.l10n.platformNotSupported,
+                              style: const TextStyle(color: Colors.white),
                             ),
                           ),
                         _buildGuideBox(),
@@ -209,35 +207,43 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
   }
 
   Widget _buildGuideBox() {
-    final width = (MediaQuery.of(context).size.width * 0.57);
+    final width = MediaQuery.of(context).size.width >= 768
+        ? 400.0
+        : (MediaQuery.of(context).size.width * 0.57);
 
     return Positioned(
-      top: (MediaQuery.of(context).size.height) * 0.25,
-      left: (MediaQuery.of(context).size.width) / 5,
+      top: MediaQuery.of(context).size.width >= 768
+          ? (MediaQuery.of(context).size.height) * 0.15
+          : (MediaQuery.of(context).size.height) * 0.25,
+      left: 0,
+      right: 0,
       child: IgnorePointer(
-        child: Container(
-          width: width,
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: Colors.white.withOpacity(0.5),
-              width: 2.0,
-            ),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.add, color: Colors.white.withOpacity(0.3), size: 40),
-              const SizedBox(height: 8),
-              Text(
-                "Coloque la referencia aquí",
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.5),
-                  fontSize: 12,
-                ),
+        child: Center(
+          child: Container(
+            width: width,
+            height: 120,
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: Colors.white.withOpacity(0.5),
+                width: 2.0,
               ),
-            ],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.add, color: Colors.white.withOpacity(0.3), size: 40),
+                const SizedBox(height: 8),
+                Text(
+                  context.l10n.placeReferenceHere,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.5),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -285,12 +291,7 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
         try {
           final data = Map<String, dynamic>.from(call.arguments);
           // Update the live detections
-          setState(() {
-            _liveDetections = {
-              'circles': _inflateDetections(data['circles']),
-              'eyes': _inflateDetections(data['eyes']),
-            };
-          });
+          setState(() {});
         } catch (e) {
           debugPrint("Error parsing detection data: $e");
         }
@@ -338,28 +339,28 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
             children: [
               const Icon(Icons.camera_alt, size: 100, color: Colors.white24),
               const SizedBox(height: 24),
-              const Text(
-                'Camera Permission Required',
+              Text(
+                context.l10n.cameraPermissionRequired,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
-                'We need camera access to detect faces and reference markers.',
+              Text(
+                context.l10n.cameraPermissionExplain,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white70),
+                style: const TextStyle(color: Colors.white70),
               ),
               const SizedBox(height: 32),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: _accentColor),
                 onPressed: _requestCameraPermission,
-                child: const Text(
-                  'Grant Permission',
-                  style: TextStyle(color: Colors.white),
+                child: Text(
+                  context.l10n.grantPermission,
+                  style: const TextStyle(color: Colors.white),
                 ),
               ),
             ],
@@ -379,7 +380,7 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildCompactSwitch(
-                label: 'Detection',
+                label: context.l10n.detectionLabel,
                 value: _detectionEnabled,
                 onChanged: (v) {
                   setState(() => _detectionEnabled = v);
@@ -387,7 +388,7 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
                 },
               ),
               _buildCompactSwitch(
-                label: 'Overlay',
+                label: context.l10n.overlayLabel,
                 value: _overlayVisible,
                 onChanged: (v) {
                   setState(() => _overlayVisible = v);
@@ -576,9 +577,7 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
             // Helpful error message for debugging
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(
-                  "Detection incomplete. Found ${circles.length}/4 circles. Please try a clearer image.",
-                ),
+                content: Text(context.l10n.detectionIncomplete(circles.length)),
                 backgroundColor: Colors.orange,
                 duration: const Duration(seconds: 4),
               ),

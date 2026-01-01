@@ -92,21 +92,19 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
               ),
               onPressed: () => setState(() => _isMoveMode = !_isMoveMode),
             ),
+
             Builder(
               builder: (context) {
                 if (_isMoveMode || _controller.selectedPoint != null) {
                   return IconButton(
                     icon: const Icon(Icons.check, color: Colors.cyanAccent),
                     onPressed: () {
-                      setState(() {
-                        _isMoveMode = false;
-                      });
-
-                      _controller.handleTap(Offset.zero, 1, Offset.zero);
+                      setState(() => _isMoveMode = false);
+                      _controller.selectedPoint = null;
+                      _controller.notifyListeners();
                     },
                   );
                 }
-
                 return const SizedBox.shrink();
               },
             ),
@@ -127,29 +125,33 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
                     ),
                     if (!ctrl.showCircles)
                       const Text(
-                        "Ver Diámetros",
+                        "Guías",
                         style: TextStyle(color: Colors.white, fontSize: 12),
                       ),
+
                     if (ctrl.showCircles) ...[
                       Expanded(
                         child: Slider(
-                          value: ctrl.circleDiameterMm,
+                          value: ctrl.referenceCircleDiameter,
                           min: 40,
-                          max: 80,
-                          divisions: 40,
-                          activeColor: Colors.cyanAccent,
-                          onChanged: (v) => ctrl.setCircleDiameter(v),
+                          max: 90,
+                          divisions: 50,
+                          activeColor: Colors.white,
+                          inactiveColor: Colors.white24,
+                          onChanged: (v) => ctrl.setReferenceDiameter(v),
                         ),
                       ),
                       Text(
-                        "${ctrl.circleDiameterMm.round()}",
+                        "Ref: ${ctrl.referenceCircleDiameter.round()}",
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
                         ),
                       ),
+                      const SizedBox(width: 8),
                     ],
                     const VerticalDivider(color: Colors.white24, width: 20),
+
                     Switch(
                       value: ctrl.isBifocal,
                       activeColor: Colors.orangeAccent,
@@ -161,14 +163,14 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
                           Icons.arrow_drop_up,
                           color: Colors.white,
                         ),
-                        onPressed: () => ctrl.adjustBifocalLine(-1),
+                        onPressed: () => ctrl.adjustBifocalLine(-5),
                       ),
                       IconButton(
                         icon: const Icon(
                           Icons.arrow_drop_down,
                           color: Colors.white,
                         ),
-                        onPressed: () => ctrl.adjustBifocalLine(1),
+                        onPressed: () => ctrl.adjustBifocalLine(5),
                       ),
                     ],
                   ],
@@ -236,17 +238,17 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
                                     ),
                                     painter: OpticalPainter(
                                       points: controller.points,
-                                      leftLens: controller.leftLensRect,
-                                      rightLens: controller.rightLensRect,
                                       selectedPoint: controller.selectedPoint,
-                                      selectedLensSide:
-                                          controller.selectedLensSide,
-                                      imageSize: _imageSize!,
                                       scale: scale,
                                       offset: Offset(offsetX, offsetY),
+
                                       showCircles: controller.showCircles,
-                                      circleDiameterMm:
-                                          controller.circleDiameterMm,
+                                      refDiameterMm:
+                                          controller.referenceCircleDiameter,
+                                      calcRadiusPxR:
+                                          controller.calcRadiusPxRight,
+                                      calcRadiusPxL:
+                                          controller.calcRadiusPxLeft,
                                       pixelFactor: controller.pixelFactor,
                                       isBifocal: controller.isBifocal,
                                       bifocalOffset:
@@ -265,6 +267,7 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
                 ],
               ),
             ),
+
             Expanded(flex: 2, child: _buildInfoPanel()),
           ],
         ),
@@ -275,9 +278,7 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
   Widget _buildNudgeControls() {
     return Consumer<OpticalController>(
       builder: (context, controller, child) {
-        if ((controller.selectedPoint == null &&
-                controller.selectedLensSide == null) ||
-            _isMoveMode) {
+        if (controller.selectedPoint == null || _isMoveMode) {
           return const SizedBox.shrink();
         }
 
@@ -350,8 +351,6 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
   Widget _buildInfoPanel() {
     return Consumer<OpticalController>(
       builder: (context, ctrl, _) {
-        double currentWidth = ctrl.getSelectedLensWidth();
-
         return Container(
           color: const Color(0xFF121212),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -368,6 +367,7 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
                 ],
               ),
               const Divider(color: Colors.white24),
+
               Row(
                 children: [
                   Expanded(
@@ -389,30 +389,6 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
                   ),
                 ],
               ),
-
-              if (ctrl.selectedLensSide != null && !_isMoveMode)
-                Row(
-                  children: [
-                    Text(
-                      "Tam. Aro (${ctrl.selectedLensSide!.toUpperCase()}):",
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
-                    ),
-                    Expanded(
-                      child: Slider(
-                        value: currentWidth.clamp(10.0, 300.0),
-                        min: 10.0,
-                        max: 300.0,
-                        activeColor: Colors.cyanAccent,
-                        onChanged: (val) {
-                          ctrl.setLensWidth(val);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
             ],
           ),
         );

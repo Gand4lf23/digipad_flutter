@@ -2,6 +2,7 @@ import 'package:digipad_flutter/screens/features/cosmetic_lenses/cubit/cosmetic_
 import 'package:digipad_flutter/screens/features/cosmetic_lenses/cubit/cosmetic_lenses_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:digipad_flutter/l10n/l10n.dart';
 
 class CosmeticControlPanel extends StatelessWidget {
   const CosmeticControlPanel({super.key});
@@ -31,25 +32,28 @@ class CosmeticControlPanel extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   SegmentedButton<EyeSelection>(
-                    segments: const [
+                    segments: [
                       ButtonSegment(
                         value: EyeSelection.left,
-                        label: Text('Left Eye', style: TextStyle(fontSize: 18)),
+                        label: Text(
+                          context.l10n.leftEye,
+                          style: const TextStyle(fontSize: 18),
+                        ),
                         icon: Icon(Icons.visibility, size: 20),
                       ),
                       ButtonSegment(
                         value: EyeSelection.both,
                         label: Text(
-                          'Both Eyes',
-                          style: TextStyle(fontSize: 20),
+                          context.l10n.bothEyes,
+                          style: const TextStyle(fontSize: 20),
                         ),
                         icon: Icon(Icons.remove_red_eye, size: 18),
                       ),
                       ButtonSegment(
                         value: EyeSelection.right,
                         label: Text(
-                          'Right Eye',
-                          style: TextStyle(fontSize: 20),
+                          context.l10n.rightEye,
+                          style: const TextStyle(fontSize: 20),
                         ),
                         icon: Icon(Icons.visibility, size: 18),
                       ),
@@ -96,7 +100,7 @@ class CosmeticControlPanel extends StatelessWidget {
                                     MainAxisAlignment.spaceEvenly,
                                 children: [
                                   _VerticalSlider(
-                                    label: 'Size',
+                                    label: context.l10n.size,
                                     value: state.leftIris.scale,
                                     min: 0.2,
                                     max: 3.0,
@@ -105,7 +109,7 @@ class CosmeticControlPanel extends StatelessWidget {
                                     color: Colors.blue,
                                   ),
                                   _VerticalSlider(
-                                    label: 'Opacity',
+                                    label: context.l10n.opacity,
                                     value: state.leftIris.opacity,
                                     min: 0.0,
                                     max: 1.0,
@@ -115,7 +119,7 @@ class CosmeticControlPanel extends StatelessWidget {
                                     isPercentage: true,
                                   ),
                                   _VerticalToggle(
-                                    label: 'Eyelid',
+                                    label: context.l10n.eyelid,
                                     value: state.leftIris.showEyelid,
                                     onChanged: (value) =>
                                         cubit.toggleLeftEyelid(value),
@@ -147,7 +151,7 @@ class CosmeticControlPanel extends StatelessWidget {
                                     MainAxisAlignment.spaceEvenly,
                                 children: [
                                   _VerticalSlider(
-                                    label: 'Size',
+                                    label: context.l10n.size,
                                     value: state.rightIris.scale,
                                     min: 0.2,
                                     max: 3.0,
@@ -156,7 +160,7 @@ class CosmeticControlPanel extends StatelessWidget {
                                     color: Colors.green,
                                   ),
                                   _VerticalSlider(
-                                    label: 'Opacity',
+                                    label: context.l10n.opacity,
                                     value: state.rightIris.opacity,
                                     min: 0.0,
                                     max: 1.0,
@@ -166,7 +170,7 @@ class CosmeticControlPanel extends StatelessWidget {
                                     isPercentage: true,
                                   ),
                                   _VerticalToggle(
-                                    label: 'Eyelid',
+                                    label: context.l10n.eyelid,
                                     value: state.rightIris.showEyelid,
                                     onChanged: (value) =>
                                         cubit.toggleRightEyelid(value),
@@ -339,7 +343,7 @@ class _VerticalToggle extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          value ? 'On' : 'Off',
+          value ? context.l10n.onLabel : context.l10n.offLabel,
           style: const TextStyle(color: Colors.white70, fontSize: 20),
         ),
       ],

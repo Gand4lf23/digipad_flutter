@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:digipad_flutter/l10n/l10n.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -233,7 +234,7 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Go Back'),
+            child: Text(context.l10n.goBack),
           ),
         ],
       ),
@@ -248,7 +249,7 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
           const CircularProgressIndicator(color: Colors.white),
           const SizedBox(height: 24),
           Text(
-            'Loading simulation...',
+            context.l10n.loadingSimulation,
             style: TextStyle(color: Colors.white.withOpacity(0.8)),
           ),
         ],
@@ -291,7 +292,7 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Drag the divider',
+                    context.l10n.dragDivider,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.9),
                       fontSize: 18,

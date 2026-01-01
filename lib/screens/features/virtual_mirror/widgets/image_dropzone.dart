@@ -4,6 +4,7 @@ import 'package:digipad_flutter/screens/features/virtual_mirror/cubit/virtual_mi
 import 'package:digipad_flutter/screens/features/virtual_mirror/presentation/virtual_mirror_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:digipad_flutter/l10n/l10n.dart';
 
 class ImageDropZone extends StatefulWidget {
   final DropSide side;
@@ -64,11 +65,14 @@ class _ImageDropZoneState extends State<ImageDropZone> {
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: isEmpty && widget.showEmptyMessage
-                  ? const Center(
+                  ? Center(
                       child: Text(
-                        'Please pick a photo from your gallery or take a new one',
+                        context.l10n.vmPickOrTake,
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white54, fontSize: 22),
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 22,
+                        ),
                       ),
                     )
                   : image != null
@@ -89,10 +93,13 @@ class _ImageDropZoneState extends State<ImageDropZone> {
                         ),
                       ),
                     )
-                  : const Center(
+                  : Center(
                       child: Text(
-                        'Drop image here',
-                        style: TextStyle(color: Colors.white54, fontSize: 22),
+                        context.l10n.vmDropHere,
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 22,
+                        ),
                       ),
                     ),
             ),

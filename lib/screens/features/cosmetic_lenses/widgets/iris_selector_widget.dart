@@ -2,6 +2,7 @@ import 'package:digipad_flutter/screens/features/cosmetic_lenses/cubit/cosmetic_
 import 'package:digipad_flutter/screens/features/cosmetic_lenses/cubit/cosmetic_lenses_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:digipad_flutter/l10n/l10n.dart';
 
 class IrisSelectorWidget extends StatefulWidget {
   final bool isLeftEye;
@@ -147,7 +148,7 @@ class _IrisSelectorWidgetState extends State<IrisSelectorWidget> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                widget.isLeftEye ? 'Left Eye' : 'Right Eye',
+                widget.isLeftEye ? context.l10n.leftEye : context.l10n.rightEye,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 20,
@@ -159,9 +160,9 @@ class _IrisSelectorWidgetState extends State<IrisSelectorWidget> {
               // Brand dropdown
               DropdownButton<String>(
                 value: selectedBrand,
-                hint: const Text(
-                  'Select Brand',
-                  style: TextStyle(color: Colors.white70),
+                hint: Text(
+                  context.l10n.selectBrand,
+                  style: const TextStyle(color: Colors.white70),
                 ),
                 isExpanded: true,
                 dropdownColor: Colors.grey.shade900,
@@ -183,9 +184,9 @@ class _IrisSelectorWidgetState extends State<IrisSelectorWidget> {
                 // Iris color dropdown (only shown when brand is selected)
                 DropdownButton<String>(
                   value: selectedIris,
-                  hint: const Text(
-                    'Select Color',
-                    style: TextStyle(color: Colors.white70),
+                  hint: Text(
+                    context.l10n.selectColor,
+                    style: const TextStyle(color: Colors.white70),
                   ),
                   isExpanded: true,
                   dropdownColor: Colors.grey.shade900,

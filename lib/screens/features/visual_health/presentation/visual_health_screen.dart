@@ -5,6 +5,7 @@ import 'package:digipad_flutter/screens/features/visual_health/widgets/test_gall
 import 'package:digipad_flutter/screens/features/visual_health/widgets/visual_health_control_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:digipad_flutter/l10n/l10n.dart';
 
 class VisualHealthScreen extends StatefulWidget {
   const VisualHealthScreen({super.key});
@@ -32,8 +33,11 @@ class _VisualHealthScreenState extends State<VisualHealthScreen> {
               builder: (context, state) {
                 return Text(
                   state.currentTestImage != null
-                      ? 'Test ${state.currentTestIndex + 1} of ${state.testImages.length}'
-                      : 'Select a visual health test',
+                      ? context.l10n.vhTestSummary(
+                          state.currentTestIndex + 1,
+                          state.testImages.length,
+                        )
+                      : context.l10n.vhSelectTest,
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: Colors.white, fontSize: 28),
                 );

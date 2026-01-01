@@ -2,6 +2,7 @@ import 'package:digipad_flutter/screens/features/visual_health/cubit/visual_heal
 import 'package:digipad_flutter/screens/features/visual_health/cubit/visual_health_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:digipad_flutter/l10n/l10n.dart';
 
 class TestDisplayWidget extends StatefulWidget {
   const TestDisplayWidget({super.key});
@@ -50,11 +51,14 @@ class _TestDisplayWidgetState extends State<TestDisplayWidget> {
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: currentImage == null
-                  ? const Center(
+                  ? Center(
                       child: Text(
-                        'Select a test from the gallery above',
+                        context.l10n.vhSelectAbove,
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white54, fontSize: 22),
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 22,
+                        ),
                       ),
                     )
                   : ClipRRect(

@@ -5,6 +5,7 @@ import 'package:digipad_flutter/screens/features/cosmetic_lenses/cubit/cosmetic_
 import 'package:digipad_flutter/screens/features/cosmetic_lenses/widgets/draggable_iris_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:digipad_flutter/l10n/l10n.dart';
 
 // Global key for canvas capture
 final GlobalKey canvasKey = GlobalKey();
@@ -22,16 +23,23 @@ class PhotoCanvasWidget extends StatelessWidget {
             border: Border.all(color: Colors.grey.shade600, width: 2),
           ),
           child: state.cameraPhoto == null
-              ? const Center(
+              ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.camera_alt, size: 80, color: Colors.white54),
-                      SizedBox(height: 24),
+                      const Icon(
+                        Icons.camera_alt,
+                        size: 80,
+                        color: Colors.white54,
+                      ),
+                      const SizedBox(height: 24),
                       Text(
-                        'Take a photo or select from Gallery to get started',
+                        context.l10n.takeOrSelectStart,
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white54, fontSize: 20),
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 20,
+                        ),
                       ),
                     ],
                   ),

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:digipad_flutter/screens/features/virtual_mirror/cubit/virtual_mirror_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:digipad_flutter/l10n/l10n.dart';
 
 class GallerySection extends StatefulWidget {
   final List<File> gallery;
@@ -69,29 +70,31 @@ class _GalleryCardState extends State<GallerySection> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            title: const Text(
-                              'Delete image?',
-                              style: TextStyle(color: Colors.white),
+                            title: Text(
+                              context.l10n.galleryDeleteTitle,
+                              style: const TextStyle(color: Colors.white),
                             ),
-                            content: const Text(
-                              'This will permanently remove the image from storage.',
-                              style: TextStyle(color: Colors.white70),
+                            content: Text(
+                              context.l10n.galleryDeleteContent,
+                              style: const TextStyle(color: Colors.white70),
                             ),
                             actions: [
                               TextButton(
                                 onPressed: () =>
                                     Navigator.of(context).pop(false),
-                                child: const Text(
-                                  'Cancel',
-                                  style: TextStyle(color: Colors.white),
+                                child: Text(
+                                  context.l10n.cancel,
+                                  style: const TextStyle(color: Colors.white),
                                 ),
                               ),
                               TextButton(
                                 onPressed: () =>
                                     Navigator.of(context).pop(true),
-                                child: const Text(
-                                  'Delete',
-                                  style: TextStyle(color: Colors.redAccent),
+                                child: Text(
+                                  context.l10n.delete,
+                                  style: const TextStyle(
+                                    color: Colors.redAccent,
+                                  ),
                                 ),
                               ),
                             ],

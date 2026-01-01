@@ -1,5 +1,6 @@
 import 'package:digipad_flutter/screens/features/lenses_3d/cubit/lenses_3d_state.dart';
 import 'package:flutter/material.dart';
+import 'package:digipad_flutter/l10n/l10n.dart';
 
 class LensImageViewer extends StatelessWidget {
   final Lenses3DState state;
@@ -35,7 +36,7 @@ class LensImageViewer extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Image not available',
+                      context.l10n.imageNotAvailable,
                       style: TextStyle(
                         color: Colors.grey.shade500,
                         fontSize: 14,
@@ -43,7 +44,7 @@ class LensImageViewer extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Try different settings',
+                      context.l10n.tryDifferentSettings,
                       style: TextStyle(
                         color: Colors.grey.shade600,
                         fontSize: 12,
@@ -108,7 +109,7 @@ class LensImageViewer extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  isZoomedOut ? 'Full View' : 'Detail View',
+                  isZoomedOut ? context.l10n.fullView : context.l10n.detailView,
                   style: const TextStyle(color: Colors.white70, fontSize: 12),
                 ),
               ],

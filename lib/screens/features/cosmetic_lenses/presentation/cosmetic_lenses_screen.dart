@@ -4,6 +4,7 @@ import 'package:digipad_flutter/screens/features/cosmetic_lenses/widgets/iris_se
 import 'package:digipad_flutter/screens/features/cosmetic_lenses/widgets/photo_canvas_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:digipad_flutter/l10n/l10n.dart';
 
 class CosmeticLensesScreen extends StatefulWidget {
   const CosmeticLensesScreen({super.key});
@@ -50,9 +51,9 @@ class _CosmeticLensesScreenState extends State<CosmeticLensesScreen> {
                             bottom: BorderSide(color: Colors.grey.shade600),
                           ),
                         ),
-                        child: const Text(
-                          'Cosmetic Lenses',
-                          style: TextStyle(
+                        child: Text(
+                          context.l10n.menuCosmeticLenses,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,

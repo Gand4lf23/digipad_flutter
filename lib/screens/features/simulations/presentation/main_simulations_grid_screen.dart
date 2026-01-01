@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:digipad_flutter/l10n/l10n.dart';
 
 import '../cubit/simulations_cubit.dart';
 import '../cubit/simulations_state.dart';
@@ -59,7 +60,8 @@ class _SimulationsGridView extends StatelessWidget {
       ),
       flexibleSpace: FlexibleSpaceBar(
         title: Text(
-          state.selectedCategory?.displayName ?? 'Lens Simulator',
+          state.selectedCategory?.displayName ??
+              context.l10n.lensSimulatorTitle,
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 22,
@@ -122,10 +124,10 @@ class _SimulationsGridView extends StatelessWidget {
 
     return SliverList(
       delegate: SliverChildListDelegate([
-        _buildSectionHeader('Refractive conditions'),
+        _buildSectionHeader(context.l10n.refractiveConditions),
         _buildGridSection(context, problemCategories),
         const SizedBox(height: 24),
-        _buildSectionHeader('Lens Treatments'),
+        _buildSectionHeader(context.l10n.lensTreatments),
         _buildGridSection(context, treatmentCategories),
         const SizedBox(height: 32),
       ]),
@@ -314,7 +316,7 @@ class _CategoryCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${category.scenarios.length} scenes',
+                  context.l10n.scenesCount(category.scenarios.length),
                   style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
                 ),
               ],
@@ -399,7 +401,7 @@ class _ScenarioCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        'Without lens',
+                        context.l10n.withoutLens,
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.9),
                           fontSize: 12,
@@ -430,7 +432,9 @@ class _ScenarioCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '${scenario.correctionLenses.length} lenses available',
+                      context.l10n.lensesAvailable(
+                        scenario.correctionLenses.length,
+                      ),
                       style: TextStyle(
                         fontSize: 18,
                         color: Colors.grey.shade600,

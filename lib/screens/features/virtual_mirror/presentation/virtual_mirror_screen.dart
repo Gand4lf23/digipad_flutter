@@ -5,6 +5,7 @@ import 'package:digipad_flutter/screens/features/virtual_mirror/widgets/gallery_
 import 'package:digipad_flutter/screens/features/virtual_mirror/widgets/image_dropzone.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:digipad_flutter/l10n/l10n.dart';
 
 class VirtualMirrorScreen extends StatefulWidget {
   const VirtualMirrorScreen({super.key});
@@ -47,8 +48,11 @@ class _VirtualMirrorScreenState extends State<VirtualMirrorScreen> {
                         child: Center(
                           child: Text(
                             textAlign: TextAlign.center,
-                            'No images loaded yet. \nCapture one or select from your gallery to get started!',
-                            style: TextStyle(color: Colors.white, fontSize: 24),
+                            context.l10n.vmNoImages,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                            ),
                           ),
                         ),
                       ),
@@ -60,9 +64,9 @@ class _VirtualMirrorScreenState extends State<VirtualMirrorScreen> {
               },
             ),
             Text(
-              'Drag and drop photos',
+              context.l10n.vmDragAndDrop,
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white, fontSize: 38),
+              style: const TextStyle(color: Colors.white, fontSize: 38),
             ),
             Expanded(
               child: Row(
