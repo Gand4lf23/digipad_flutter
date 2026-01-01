@@ -13,7 +13,7 @@ echo "Scanning for PNGs in: $TARGET_DIR (and subfolders)"
 
 # Find all PNG files recursively and process them one by one
 # -print0 and -d '' handle filenames with spaces correctly
-find "$TARGET_DIR" -type f -name "*.png" -print0 | while IFS= read -r -d '' file; do
+find "$TARGET_DIR" -type f -name "*.jpg" -print0 | while IFS= read -r -d '' file; do
 
     # Get filename without extension
     # "${file%.*}" removes the last extension (e.g., .png)

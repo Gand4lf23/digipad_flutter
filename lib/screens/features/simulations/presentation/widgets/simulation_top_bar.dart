@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:digipad_flutter/l10n/l10n.dart';
+import '../simulation_strings.dart';
 
 import '../../models/simulation_scenario.dart';
 
@@ -53,7 +55,7 @@ class SimulationTopBar extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        scenario.displayName,
+                        SimulationStrings.scenarioName(context, scenario),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 45,
@@ -68,7 +70,7 @@ class SimulationTopBar extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        category.displayName,
+                        SimulationStrings.categoryName(context, category),
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.9),
                           fontSize: 32,
@@ -92,4 +94,5 @@ class SimulationTopBar extends StatelessWidget {
       ),
     );
   }
+
 }

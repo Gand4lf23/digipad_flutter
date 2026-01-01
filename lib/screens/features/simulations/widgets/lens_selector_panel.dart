@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:digipad_flutter/l10n/l10n.dart';
 
 import '../models/simulation_scenario.dart';
 
@@ -25,7 +26,7 @@ class LensSelectorPanel extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
-          'No lenses available for this scene',
+          context.l10n.lensesAvailable(0),
           style: TextStyle(color: Colors.white.withOpacity(0.7)),
         ),
       );
@@ -137,7 +138,7 @@ class _LensCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      lens.displayName,
+                      _localizedLensName(context, lens),
                       style: TextStyle(
                         color: isSelected
                             ? Colors.white
@@ -161,7 +162,7 @@ class _LensCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    lens.quality.displayName,
+                    _localizedQualityLabel(context, lens.quality),
                     style: TextStyle(
                       color: _qualityColor,
                       fontSize: 12,
@@ -175,5 +176,55 @@ class _LensCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _localizedLensName(BuildContext context, CorrectionLens lens) {
+    switch (lens.name) {
+      case 'monofocal_near':
+        return context.l10n.simLensMonofocalNear;
+      case 'monofocal_far':
+        return context.l10n.simLensMonofocalFar;
+      case 'invisible':
+        return context.l10n.simLensInvisibleBifocal;
+      case 'multifocal':
+        return context.l10n.simLensMultifocal;
+      case 'anti_reflective':
+        return context.l10n.simLensWithAR;
+      case 'drivewear':
+        return context.l10n.simCatDriveWear;
+      case 'gray':
+        return context.l10n.simColorGray;
+      case 'brown':
+        return context.l10n.simColorBrown;
+      case 'green':
+        return context.l10n.simColorGreen;
+      case 'sunbalance':
+        return context.l10n.simColorSunBalance;
+      case 'yellow':
+        return context.l10n.simColorYellow;
+      case 'aqua':
+        return context.l10n.simColorAqua;
+      case 'blue':
+        return context.l10n.simColorBlue;
+      case 'orange':
+        return context.l10n.simColorOrange;
+      case 'red':
+        return context.l10n.simColorRed;
+      default:
+        return lens.displayName;
+    }
+  }
+
+  String _localizedQualityLabel(BuildContext context, LensQuality quality) {
+    switch (quality) {
+      case LensQuality.economy:
+        return context.l10n.simQualityEconomy;
+      case LensQuality.standard:
+        return context.l10n.simQualityStandard;
+      case LensQuality.good:
+        return context.l10n.simQualityGood;
+      case LensQuality.premium:
+        return context.l10n.simQualityPremium;
+    }
   }
 }

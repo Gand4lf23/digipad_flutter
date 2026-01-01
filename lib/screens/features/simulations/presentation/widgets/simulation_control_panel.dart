@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:digipad_flutter/l10n/l10n.dart';
 
 import '../../cubit/simulations_cubit.dart';
 import '../../cubit/simulations_state.dart';
@@ -49,7 +50,7 @@ class SimulationControlPanel extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Select a lens:',
+                context.l10n.selectLensLabel,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.8),
                   fontSize: 32,
@@ -92,7 +93,7 @@ class SimulationControlPanel extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'Divider',
+                              context.l10n.dividerLabel,
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.7),
                                 fontSize: 18,
@@ -124,8 +125,8 @@ class SimulationControlPanel extends StatelessWidget {
                             const SizedBox(height: 4),
                             Text(
                               state.isVerticalDivider
-                                  ? 'Vertical'
-                                  : 'Horizontal',
+                                  ? context.l10n.verticalLabel
+                                  : context.l10n.horizontalLabel,
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.6),
                                 fontSize: 18,

@@ -47,9 +47,9 @@ class Lenses3DState {
 
   /// Generate the asset path for the current lens configuration.
   String get currentImagePath {
-    // Format: glasses_[material]_[prescription]0015_[frame].jpg
-    // Examples: glasses_160_40015_1.jpg, glasses_170_100015_mp.jpg
-    return 'assets/images/lenses_3d/glasses_${materialIndex.fileCode}_${prescription}0015_${frameType.fileCode}.jpg';
+    // Format: glasses_[material]_[prescription]0015_[frame].webp
+    // Examples: glasses_160_40015_1.webp, glasses_170_100015_mp.webp
+    return 'assets/images/lenses_3d/glasses_${materialIndex.fileCode}_${prescription}0015_${frameType.fileCode}.webp';
   }
 
   /// Get the minimum available prescription for the current material index.

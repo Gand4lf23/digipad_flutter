@@ -36,20 +36,20 @@ class SimulationData {
         id: 'myopia_kitchen',
         sceneName: 'kitchen',
         displayName: 'Kitchen',
-        problemImagePath: '$_basePath/myopia/myopia_kitchen_noLens.jpg',
+        problemImagePath: '$_basePath/myopia/myopia_kitchen_noLens.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'myopia_kitchen_near',
             name: 'monofocal_near',
             displayName: 'Monofocal Near',
-            correctedImagePath: '$_basePath/myopia/myopia_kitchen_close.jpg',
+            correctedImagePath: '$_basePath/myopia/myopia_kitchen_close.webp',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
             id: 'myopia_kitchen_far',
             name: 'monofocal_far',
             displayName: 'Monofocal Far',
-            correctedImagePath: '$_basePath/myopia/myopia_kitchen_far.jpg',
+            correctedImagePath: '$_basePath/myopia/myopia_kitchen_far.webp',
             quality: LensQuality.good,
           ),
         ],
@@ -59,20 +59,20 @@ class SimulationData {
         id: 'myopia_market',
         sceneName: 'market',
         displayName: 'Market',
-        problemImagePath: '$_basePath/myopia/myopia_market_noLens.jpg',
+        problemImagePath: '$_basePath/myopia/myopia_market_noLens.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'myopia_market_near',
             name: 'monofocal_near',
             displayName: 'Monofocal Near',
-            correctedImagePath: '$_basePath/myopia/myopia_market_close.jpg',
+            correctedImagePath: '$_basePath/myopia/myopia_market_close.webp',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
             id: 'myopia_market_far',
             name: 'monofocal_far',
             displayName: 'Monofocal Far',
-            correctedImagePath: '$_basePath/myopia/myopia_market_far.jpg',
+            correctedImagePath: '$_basePath/myopia/myopia_market_far.webp',
             quality: LensQuality.good,
           ),
         ],
@@ -82,20 +82,20 @@ class SimulationData {
         id: 'myopia_grocery',
         sceneName: 'grocery',
         displayName: 'Grocery',
-        problemImagePath: '$_basePath/myopia/myopia_grocery_noLens.jpg',
+        problemImagePath: '$_basePath/myopia/myopia_grocery_noLens.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'myopia_grocery_near',
             name: 'monofocal_near',
             displayName: 'Monofocal Near',
-            correctedImagePath: '$_basePath/myopia/myopia_grocery_close.jpg',
+            correctedImagePath: '$_basePath/myopia/myopia_grocery_close.webp',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
             id: 'myopia_grocery_far',
             name: 'monofocal_far',
             displayName: 'Monofocal Far',
-            correctedImagePath: '$_basePath/myopia/myopia_grocery_far.jpg',
+            correctedImagePath: '$_basePath/myopia/myopia_grocery_far.webp',
             quality: LensQuality.good,
           ),
         ],
@@ -105,20 +105,20 @@ class SimulationData {
         id: 'myopia_clothing',
         sceneName: 'clothing',
         displayName: 'Clothing Store',
-        problemImagePath: '$_basePath/myopia/myopia_clothing_noLens.jpg',
+        problemImagePath: '$_basePath/myopia/myopia_clothing_noLens.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'myopia_clothing_near',
             name: 'monofocal_near',
             displayName: 'Monofocal Near',
-            correctedImagePath: '$_basePath/myopia/myopia_clothing_close.jpg',
+            correctedImagePath: '$_basePath/myopia/myopia_clothing_close.webp',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
             id: 'myopia_clothing_far',
             name: 'monofocal_far',
             displayName: 'Monofocal Far',
-            correctedImagePath: '$_basePath/myopia/myopia_clothing_far.jpg',
+            correctedImagePath: '$_basePath/myopia/myopia_clothing_far.webp',
             quality: LensQuality.good,
           ),
         ],
@@ -139,14 +139,14 @@ class SimulationData {
         id: 'multifocal_kitchen2',
         sceneName: 'kitchen',
         displayName: 'Kitchen',
-        problemImagePath: '$_basePath/multifocal/kitchen2.jpg',
+        problemImagePath: '$_basePath/multifocal/kitchen2.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'multifocal_kitchen2_economic',
             name: 'economic',
             displayName: 'Economy',
             correctedImagePath:
-                '$_basePath/multifocal/multifocal_economic_kitchen2.jpg',
+                '$_basePath/multifocal/multifocal_economic_kitchen2.webp',
             quality: LensQuality.economy,
           ),
           CorrectionLens(
@@ -154,7 +154,7 @@ class SimulationData {
             name: 'standard',
             displayName: 'Standard',
             correctedImagePath:
-                '$_basePath/multifocal/multifocal_standard_kitchen2.jpg',
+                '$_basePath/multifocal/multifocal_standard_kitchen2.webp',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
@@ -162,7 +162,7 @@ class SimulationData {
             name: 'good',
             displayName: 'Good',
             correctedImagePath:
-                '$_basePath/multifocal/multifocal_good_kitchen2.jpg',
+                '$_basePath/multifocal/multifocal_good_kitchen2.webp',
             quality: LensQuality.good,
           ),
           CorrectionLens(
@@ -170,7 +170,7 @@ class SimulationData {
             name: 'premium',
             displayName: 'Premium',
             correctedImagePath:
-                '$_basePath/multifocal/multifocal_premium_kitchen2.jpg',
+                '$_basePath/multifocal/multifocal_premium_kitchen2.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -180,14 +180,14 @@ class SimulationData {
         id: 'multifocal_market',
         sceneName: 'market',
         displayName: 'Market',
-        problemImagePath: '$_basePath/multifocal/market.jpg',
+        problemImagePath: '$_basePath/multifocal/market.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'multifocal_market_economic',
             name: 'economic',
             displayName: 'Economy',
             correctedImagePath:
-                '$_basePath/multifocal/multifocal_economic_market.jpg',
+                '$_basePath/multifocal/multifocal_economic_market.webp',
             quality: LensQuality.economy,
           ),
           CorrectionLens(
@@ -195,7 +195,7 @@ class SimulationData {
             name: 'standard',
             displayName: 'Standard',
             correctedImagePath:
-                '$_basePath/multifocal/multifocal_standard_market.jpg',
+                '$_basePath/multifocal/multifocal_standard_market.webp',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
@@ -203,7 +203,7 @@ class SimulationData {
             name: 'good',
             displayName: 'Good',
             correctedImagePath:
-                '$_basePath/multifocal/multifocal_good_market.jpg',
+                '$_basePath/multifocal/multifocal_good_market.webp',
             quality: LensQuality.good,
           ),
           CorrectionLens(
@@ -211,7 +211,7 @@ class SimulationData {
             name: 'premium',
             displayName: 'Premium',
             correctedImagePath:
-                '$_basePath/multifocal/multifocal_premium_market.jpg',
+                '$_basePath/multifocal/multifocal_premium_market.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -221,14 +221,14 @@ class SimulationData {
         id: 'multifocal_clothing',
         sceneName: 'clothing',
         displayName: 'Clothing',
-        problemImagePath: '$_basePath/multifocal/clothing.jpg',
+        problemImagePath: '$_basePath/multifocal/clothing.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'multifocal_clothing_economic',
             name: 'economic',
             displayName: 'Economy',
             correctedImagePath:
-                '$_basePath/multifocal/multifocal_economic_clothing.jpg',
+                '$_basePath/multifocal/multifocal_economic_clothing.webp',
             quality: LensQuality.economy,
           ),
           CorrectionLens(
@@ -236,7 +236,7 @@ class SimulationData {
             name: 'standard',
             displayName: 'Standard',
             correctedImagePath:
-                '$_basePath/multifocal/multifocal_standard_clothing.jpg',
+                '$_basePath/multifocal/multifocal_standard_clothing.webp',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
@@ -244,7 +244,7 @@ class SimulationData {
             name: 'good',
             displayName: 'Good',
             correctedImagePath:
-                '$_basePath/multifocal/multifocal_good_clothing.jpg',
+                '$_basePath/multifocal/multifocal_good_clothing.webp',
             quality: LensQuality.good,
           ),
           CorrectionLens(
@@ -252,7 +252,7 @@ class SimulationData {
             name: 'premium',
             displayName: 'Premium',
             correctedImagePath:
-                '$_basePath/multifocal/multifocal_premium_clothing.jpg',
+                '$_basePath/multifocal/multifocal_premium_clothing.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -272,13 +272,13 @@ class SimulationData {
         id: 'presbyopia_kitchen',
         sceneName: 'kitchen',
         displayName: 'Kitchen',
-        problemImagePath: '$_basePath/presbicia/PresbiciaCocina.jpg',
+        problemImagePath: '$_basePath/presbicia/PresbiciaCocina.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'presbyopia_kitchen_progressive',
             name: 'progressive',
             displayName: 'Progressive Lens',
-            correctedImagePath: '$_basePath/presbicia/presbicia_cocina.jpg',
+            correctedImagePath: '$_basePath/presbicia/presbicia_cocina.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -287,13 +287,13 @@ class SimulationData {
         id: 'presbyopia_supermarket',
         sceneName: 'supermarket',
         displayName: 'Supermarket',
-        problemImagePath: '$_basePath/presbicia/PresbiciaSuper.jpg',
+        problemImagePath: '$_basePath/presbicia/PresbiciaSuper.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'presbyopia_super_progressive',
             name: 'progressive',
             displayName: 'Progressive Lens',
-            correctedImagePath: '$_basePath/presbicia/presbicia_almacen.jpg',
+            correctedImagePath: '$_basePath/presbicia/presbicia_almacen.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -302,13 +302,13 @@ class SimulationData {
         id: 'presbyopia_store',
         sceneName: 'store',
         displayName: 'Store',
-        problemImagePath: '$_basePath/presbicia/PresbiciaTienda.jpg',
+        problemImagePath: '$_basePath/presbicia/PresbiciaTienda.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'presbyopia_store_progressive',
             name: 'progressive',
             displayName: 'Progressive Lens',
-            correctedImagePath: '$_basePath/presbicia/presbicia_oficina.jpg',
+            correctedImagePath: '$_basePath/presbicia/presbicia_oficina.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -327,14 +327,14 @@ class SimulationData {
         id: 'bifocal_office',
         sceneName: 'office',
         displayName: 'Office',
-        problemImagePath: '$_basePath/bifocal/BifocalOficina.jpg',
+        problemImagePath: '$_basePath/bifocal/BifocalOficina.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'bifocal_office_invisible',
             name: 'invisible',
             displayName: 'Invisible Bifocal',
             correctedImagePath:
-                '$_basePath/bifocal/BifocalOficinaInvisible.jpg',
+                '$_basePath/bifocal/BifocalOficinaInvisible.webp',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
@@ -342,7 +342,7 @@ class SimulationData {
             name: 'multifocal',
             displayName: 'Multifocal',
             correctedImagePath:
-                '$_basePath/bifocal/BifocalOficinaMultifocal.jpg',
+                '$_basePath/bifocal/BifocalOficinaMultifocal.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -351,14 +351,14 @@ class SimulationData {
         id: 'bifocal_driving',
         sceneName: 'driving',
         displayName: 'Driving',
-        problemImagePath: '$_basePath/bifocal/BifocalManejando.jpg',
+        problemImagePath: '$_basePath/bifocal/BifocalManejando.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'bifocal_driving_multifocal',
             name: 'multifocal',
             displayName: 'Multifocal',
             correctedImagePath:
-                '$_basePath/bifocal/BifocalManejandoMultifocal.jpg',
+                '$_basePath/bifocal/BifocalManejandoMultifocal.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -378,14 +378,14 @@ class SimulationData {
         id: 'polarized_golf',
         sceneName: 'golf',
         displayName: 'Golf',
-        problemImagePath: '$_basePath/polarized/polarized_golf_noLens.jpg',
+        problemImagePath: '$_basePath/polarized/polarized_golf_noLens.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'polarized_golf_standard',
             name: 'standard',
             displayName: 'Standard',
             correctedImagePath:
-                '$_basePath/polarized/polarized_golf_standard.jpg',
+                '$_basePath/polarized/polarized_golf_standard.webp',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
@@ -393,7 +393,7 @@ class SimulationData {
             name: 'premium',
             displayName: 'Premium',
             correctedImagePath:
-                '$_basePath/polarized/polarized_golf_premium.jpg',
+                '$_basePath/polarized/polarized_golf_premium.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -403,14 +403,14 @@ class SimulationData {
         id: 'polarized_driving',
         sceneName: 'driving',
         displayName: 'Driving',
-        problemImagePath: '$_basePath/polarized/polarized_driving_noLens.jpg',
+        problemImagePath: '$_basePath/polarized/polarized_driving_noLens.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'polarized_driving_standard',
             name: 'standard',
             displayName: 'Standard',
             correctedImagePath:
-                '$_basePath/polarized/polarized_driving_standard.jpg',
+                '$_basePath/polarized/polarized_driving_standard.webp',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
@@ -418,7 +418,7 @@ class SimulationData {
             name: 'premium',
             displayName: 'Premium',
             correctedImagePath:
-                '$_basePath/polarized/polarized_driving_premium.jpg',
+                '$_basePath/polarized/polarized_driving_premium.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -428,14 +428,14 @@ class SimulationData {
         id: 'polarized_beach',
         sceneName: 'beach',
         displayName: 'Beach',
-        problemImagePath: '$_basePath/polarized/polarized_beach_noLens.jpg',
+        problemImagePath: '$_basePath/polarized/polarized_beach_noLens.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'polarized_beach_standard',
             name: 'standard',
             displayName: 'Standard',
             correctedImagePath:
-                '$_basePath/polarized/polarized_beach_standard.jpg',
+                '$_basePath/polarized/polarized_beach_standard.webp',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
@@ -443,7 +443,7 @@ class SimulationData {
             name: 'premium',
             displayName: 'Premium',
             correctedImagePath:
-                '$_basePath/polarized/polarized_beach_premium.jpg',
+                '$_basePath/polarized/polarized_beach_premium.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -453,14 +453,14 @@ class SimulationData {
         id: 'polarized_tennis',
         sceneName: 'tennis',
         displayName: 'Tennis',
-        problemImagePath: '$_basePath/polarized/polarized_tennis_noLens.jpg',
+        problemImagePath: '$_basePath/polarized/polarized_tennis_noLens.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'polarized_tennis_standard',
             name: 'standard',
             displayName: 'Standard',
             correctedImagePath:
-                '$_basePath/polarized/polarized_tennis_standard.jpg',
+                '$_basePath/polarized/polarized_tennis_standard.webp',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
@@ -468,7 +468,7 @@ class SimulationData {
             name: 'premium',
             displayName: 'Premium',
             correctedImagePath:
-                '$_basePath/polarized/polarized_tennis_premium.jpg',
+                '$_basePath/polarized/polarized_tennis_premium.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -478,14 +478,14 @@ class SimulationData {
         id: 'polarized_yacht',
         sceneName: 'yacht',
         displayName: 'Yacht',
-        problemImagePath: '$_basePath/polarized/polarized_yacht_noLens.jpg',
+        problemImagePath: '$_basePath/polarized/polarized_yacht_noLens.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'polarized_yacht_standard',
             name: 'standard',
             displayName: 'Standard',
             correctedImagePath:
-                '$_basePath/polarized/polarized_yatch_standard.jpg',
+                '$_basePath/polarized/polarized_yatch_standard.webp',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
@@ -493,7 +493,7 @@ class SimulationData {
             name: 'premium',
             displayName: 'Premium',
             correctedImagePath:
-                '$_basePath/polarized/polarized_yatch_premium.jpg',
+                '$_basePath/polarized/polarized_yatch_premium.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -504,14 +504,14 @@ class SimulationData {
         sceneName: 'motorcycle',
         displayName: 'Motorcycle',
         problemImagePath:
-            '$_basePath/polarized/polarized_motorcycle_noLens.jpg',
+            '$_basePath/polarized/polarized_motorcycle_noLens.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'polarized_moto_standard',
             name: 'standard',
             displayName: 'Standard',
             correctedImagePath:
-                '$_basePath/polarized/polarized_motorcycle_standard.jpg',
+                '$_basePath/polarized/polarized_motorcycle_standard.webp',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
@@ -519,7 +519,7 @@ class SimulationData {
             name: 'premium',
             displayName: 'Premium',
             correctedImagePath:
-                '$_basePath/polarized/polarized_motorcycle_premium.jpg',
+                '$_basePath/polarized/polarized_motorcycle_premium.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -540,14 +540,14 @@ class SimulationData {
         sceneName: 'driving',
         displayName: 'Driving',
         problemImagePath:
-            '$_basePath/anti_reflex/anti_reflection_driving_noLense.jpg',
+            '$_basePath/anti_reflex/anti_reflection_driving_noLense.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'ar_driving_standard',
             name: 'standard',
             displayName: 'Standard',
             correctedImagePath:
-                '$_basePath/anti_reflex/anti_reflection_driving_standard.jpg',
+                '$_basePath/anti_reflex/anti_reflection_driving_standard.webp',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
@@ -555,7 +555,7 @@ class SimulationData {
             name: 'premium',
             displayName: 'Premium',
             correctedImagePath:
-                '$_basePath/anti_reflex/anti_reflection_driving_premium.jpg',
+                '$_basePath/anti_reflex/anti_reflection_driving_premium.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -566,14 +566,14 @@ class SimulationData {
         sceneName: 'baseball',
         displayName: 'Baseball',
         problemImagePath:
-            '$_basePath/anti_reflex/anti_reflection_baseball_noLens.jpg',
+            '$_basePath/anti_reflex/anti_reflection_baseball_noLens.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'ar_baseball_standard',
             name: 'standard',
             displayName: 'Standard',
             correctedImagePath:
-                '$_basePath/anti_reflex/anti_reflection_baseball_standard.jpg',
+                '$_basePath/anti_reflex/anti_reflection_baseball_standard.webp',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
@@ -581,7 +581,7 @@ class SimulationData {
             name: 'premium',
             displayName: 'Premium',
             correctedImagePath:
-                '$_basePath/anti_reflex/anti_reflection_baseball_premium.jpg',
+                '$_basePath/anti_reflex/anti_reflection_baseball_premium.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -592,14 +592,14 @@ class SimulationData {
         sceneName: 'basketball',
         displayName: 'Basketball',
         problemImagePath:
-            '$_basePath/anti_reflex/anti_reflection_basket_noLens.jpg',
+            '$_basePath/anti_reflex/anti_reflection_basket_noLens.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'ar_basket_standard',
             name: 'standard',
             displayName: 'Standard',
             correctedImagePath:
-                '$_basePath/anti_reflex/anti_reflection_basket_standard.jpg',
+                '$_basePath/anti_reflex/anti_reflection_basket_standard.webp',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
@@ -607,7 +607,7 @@ class SimulationData {
             name: 'premium',
             displayName: 'Premium',
             correctedImagePath:
-                '$_basePath/anti_reflex/anti_reflection_basket_premium.jpg',
+                '$_basePath/anti_reflex/anti_reflection_basket_premium.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -618,14 +618,14 @@ class SimulationData {
         sceneName: 'soccer',
         displayName: 'Soccer',
         problemImagePath:
-            '$_basePath/anti_reflex/anti_reflection_soccer_noLens.jpg',
+            '$_basePath/anti_reflex/anti_reflection_soccer_noLens.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'ar_soccer_standard',
             name: 'standard',
             displayName: 'Standard',
             correctedImagePath:
-                '$_basePath/anti_reflex/anti_reflection_soccer_standard.jpg',
+                '$_basePath/anti_reflex/anti_reflection_soccer_standard.webp',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
@@ -633,7 +633,7 @@ class SimulationData {
             name: 'premium',
             displayName: 'Premium',
             correctedImagePath:
-                '$_basePath/anti_reflex/anti_reflection_soccer_premium.jpg',
+                '$_basePath/anti_reflex/anti_reflection_soccer_premium.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -644,14 +644,14 @@ class SimulationData {
         sceneName: 'tennis',
         displayName: 'Tennis',
         problemImagePath:
-            '$_basePath/anti_reflex/anti_reflection_tennis_noLens.jpg',
+            '$_basePath/anti_reflex/anti_reflection_tennis_noLens.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'ar_tennis_standard',
             name: 'standard',
             displayName: 'Standard',
             correctedImagePath:
-                '$_basePath/anti_reflex/anti_reflection_tennis_standard.jpg',
+                '$_basePath/anti_reflex/anti_reflection_tennis_standard.webp',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
@@ -659,7 +659,7 @@ class SimulationData {
             name: 'premium',
             displayName: 'Premium',
             correctedImagePath:
-                '$_basePath/anti_reflex/anti_reflection_tennis_premium.jpg',
+                '$_basePath/anti_reflex/anti_reflection_tennis_premium.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -670,14 +670,14 @@ class SimulationData {
         sceneName: 'concert',
         displayName: 'Concert',
         problemImagePath:
-            '$_basePath/anti_reflex/anti_reflection_concert_noLens.jpg',
+            '$_basePath/anti_reflex/anti_reflection_concert_noLens.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'ar_concert_standard',
             name: 'standard',
             displayName: 'Standard',
             correctedImagePath:
-                '$_basePath/anti_reflex/anti_reflection_concert_standard.jpg',
+                '$_basePath/anti_reflex/anti_reflection_concert_standard.webp',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
@@ -685,7 +685,7 @@ class SimulationData {
             name: 'premium',
             displayName: 'Premium',
             correctedImagePath:
-                '$_basePath/anti_reflex/anti_reflection_concert_premium.jpg',
+                '$_basePath/anti_reflex/anti_reflection_concert_premium.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -696,14 +696,14 @@ class SimulationData {
         sceneName: 'bridge',
         displayName: 'Bridge',
         problemImagePath:
-            '$_basePath/anti_reflex/anti_reflection_bridge_noLens.jpg',
+            '$_basePath/anti_reflex/anti_reflection_bridge_noLens.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'ar_bridge_standard',
             name: 'standard',
             displayName: 'Standard',
             correctedImagePath:
-                '$_basePath/anti_reflex/anti_reflection_bridge_standard.jpg',
+                '$_basePath/anti_reflex/anti_reflection_bridge_standard.webp',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
@@ -711,7 +711,7 @@ class SimulationData {
             name: 'premium',
             displayName: 'Premium',
             correctedImagePath:
-                '$_basePath/anti_reflex/anti_reflection_bridge_premium.jpg',
+                '$_basePath/anti_reflex/anti_reflection_bridge_premium.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -731,13 +731,13 @@ class SimulationData {
         id: 'drive_driving_sunny',
         sceneName: 'driving_sunny',
         displayName: 'Driving (Sunny)',
-        problemImagePath: '$_basePath/drive/DriveManejandoSoleadoSin.jpg',
+        problemImagePath: '$_basePath/drive/DriveManejandoSoleadoSin.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'drive_driving_sunny_lens',
             name: 'drivewear',
             displayName: 'DriveWear',
-            correctedImagePath: '$_basePath/drive/DriveManejandoSoleado.jpg',
+            correctedImagePath: '$_basePath/drive/DriveManejandoSoleado.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -747,13 +747,13 @@ class SimulationData {
         id: 'drive_driving_cloudy',
         sceneName: 'driving_cloudy',
         displayName: 'Driving (Cloudy)',
-        problemImagePath: '$_basePath/drive/DriveManejandoNubladoSin.jpg',
+        problemImagePath: '$_basePath/drive/DriveManejandoNubladoSin.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'drive_driving_cloudy_lens',
             name: 'drivewear',
             displayName: 'DriveWear',
-            correctedImagePath: '$_basePath/drive/DriveManejandoNublado.jpg',
+            correctedImagePath: '$_basePath/drive/DriveManejandoNublado.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -763,13 +763,13 @@ class SimulationData {
         id: 'drive_golf_sunny',
         sceneName: 'golf_sunny',
         displayName: 'Golf (Sunny)',
-        problemImagePath: '$_basePath/drive/DriveGolfSoleadoSin.jpg',
+        problemImagePath: '$_basePath/drive/DriveGolfSoleadoSin.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'drive_golf_sunny_lens',
             name: 'drivewear',
             displayName: 'DriveWear',
-            correctedImagePath: '$_basePath/drive/DriveGolfSoleado.jpg',
+            correctedImagePath: '$_basePath/drive/DriveGolfSoleado.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -779,13 +779,13 @@ class SimulationData {
         id: 'drive_golf_cloudy',
         sceneName: 'golf_cloudy',
         displayName: 'Golf (Cloudy)',
-        problemImagePath: '$_basePath/drive/DriveGolfNubladoSin.jpg',
+        problemImagePath: '$_basePath/drive/DriveGolfNubladoSin.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'drive_golf_cloudy_lens',
             name: 'drivewear',
             displayName: 'DriveWear',
-            correctedImagePath: '$_basePath/drive/DriveGolfNublado.jpg',
+            correctedImagePath: '$_basePath/drive/DriveGolfNublado.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -795,13 +795,13 @@ class SimulationData {
         id: 'drive_beach_sunny',
         sceneName: 'beach_sunny',
         displayName: 'Beach (Sunny)',
-        problemImagePath: '$_basePath/drive/DrivePlayaSoleadoSin.jpg',
+        problemImagePath: '$_basePath/drive/DrivePlayaSoleadoSin.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'drive_beach_sunny_lens',
             name: 'drivewear',
             displayName: 'DriveWear',
-            correctedImagePath: '$_basePath/drive/DrivePlayaSoleado.jpg',
+            correctedImagePath: '$_basePath/drive/DrivePlayaSoleado.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -811,13 +811,13 @@ class SimulationData {
         id: 'drive_beach_cloudy',
         sceneName: 'beach_cloudy',
         displayName: 'Beach (Cloudy)',
-        problemImagePath: '$_basePath/drive/DrivePlayaNubladoSin.jpg',
+        problemImagePath: '$_basePath/drive/DrivePlayaNubladoSin.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'drive_beach_cloudy_lens',
             name: 'drivewear',
             displayName: 'DriveWear',
-            correctedImagePath: '$_basePath/drive/DrivePlayaNublado.jpg',
+            correctedImagePath: '$_basePath/drive/DrivePlayaNublado.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -827,13 +827,13 @@ class SimulationData {
         id: 'drive_moto_sunny',
         sceneName: 'motorcycle_sunny',
         displayName: 'Motorcycle (Sunny)',
-        problemImagePath: '$_basePath/drive/DriveMotoSoleadoSin.jpg',
+        problemImagePath: '$_basePath/drive/DriveMotoSoleadoSin.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'drive_moto_sunny_lens',
             name: 'drivewear',
             displayName: 'DriveWear',
-            correctedImagePath: '$_basePath/drive/DriveMotoSoleado.jpg',
+            correctedImagePath: '$_basePath/drive/DriveMotoSoleado.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -843,13 +843,13 @@ class SimulationData {
         id: 'drive_moto_cloudy',
         sceneName: 'motorcycle_cloudy',
         displayName: 'Motorcycle (Cloudy)',
-        problemImagePath: '$_basePath/drive/DriveMotoNubladoSin.jpg',
+        problemImagePath: '$_basePath/drive/DriveMotoNubladoSin.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'drive_moto_cloudy_lens',
             name: 'drivewear',
             displayName: 'DriveWear',
-            correctedImagePath: '$_basePath/drive/DriveMotoNublado.jpg',
+            correctedImagePath: '$_basePath/drive/DriveMotoNublado.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -859,13 +859,13 @@ class SimulationData {
         id: 'drive_tennis_sunny',
         sceneName: 'tennis_sunny',
         displayName: 'Tennis (Sunny)',
-        problemImagePath: '$_basePath/drive/DriveTenisSoleadoSin.jpg',
+        problemImagePath: '$_basePath/drive/DriveTenisSoleadoSin.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'drive_tennis_sunny_lens',
             name: 'drivewear',
             displayName: 'DriveWear',
-            correctedImagePath: '$_basePath/drive/DriveTenisSoleado.jpg',
+            correctedImagePath: '$_basePath/drive/DriveTenisSoleado.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -875,13 +875,13 @@ class SimulationData {
         id: 'drive_tennis_cloudy',
         sceneName: 'tennis_cloudy',
         displayName: 'Tennis (Cloudy)',
-        problemImagePath: '$_basePath/drive/DriveTenisNubladoSin.jpg',
+        problemImagePath: '$_basePath/drive/DriveTenisNubladoSin.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'drive_tennis_cloudy_lens',
             name: 'drivewear',
             displayName: 'DriveWear',
-            correctedImagePath: '$_basePath/drive/DriveTenisNublado.jpg',
+            correctedImagePath: '$_basePath/drive/DriveTenisNublado.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -891,13 +891,13 @@ class SimulationData {
         id: 'drive_yacht_sunny',
         sceneName: 'yacht_sunny',
         displayName: 'Yacht (Sunny)',
-        problemImagePath: '$_basePath/drive/DriveYateSoleladoSin.jpg',
+        problemImagePath: '$_basePath/drive/DriveYateSoleladoSin.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'drive_yacht_sunny_lens',
             name: 'drivewear',
             displayName: 'DriveWear',
-            correctedImagePath: '$_basePath/drive/DriveYateSolelado.jpg',
+            correctedImagePath: '$_basePath/drive/DriveYateSolelado.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -907,13 +907,13 @@ class SimulationData {
         id: 'drive_yacht_cloudy',
         sceneName: 'yacht_cloudy',
         displayName: 'Yacht (Cloudy)',
-        problemImagePath: '$_basePath/drive/DriveYateNubladoSin.jpg',
+        problemImagePath: '$_basePath/drive/DriveYateNubladoSin.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'drive_yacht_cloudy_lens',
             name: 'drivewear',
             displayName: 'DriveWear',
-            correctedImagePath: '$_basePath/drive/DriveYateNublado.jpg',
+            correctedImagePath: '$_basePath/drive/DriveYateNublado.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -933,14 +933,14 @@ class SimulationData {
         id: 'photo_optic',
         sceneName: 'optic',
         displayName: 'Optic Store',
-        problemImagePath: '$_basePath/photochromic/photochromic_optic_off.jpg',
+        problemImagePath: '$_basePath/photochromic/photochromic_optic_off.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'photo_optic_gray',
             name: 'gray',
             displayName: 'Gray',
             correctedImagePath:
-                '$_basePath/photochromic/photochromic_optic_on.jpg',
+                '$_basePath/photochromic/photochromic_optic_on.webp',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
@@ -948,7 +948,7 @@ class SimulationData {
             name: 'brown',
             displayName: 'Brown',
             correctedImagePath:
-                '$_basePath/photochromic/photochromic_optic_on_brown.jpg',
+                '$_basePath/photochromic/photochromic_optic_on_brown.webp',
             quality: LensQuality.good,
           ),
           CorrectionLens(
@@ -956,7 +956,7 @@ class SimulationData {
             name: 'green',
             displayName: 'Green',
             correctedImagePath:
-                '$_basePath/photochromic/photochromic_optic_on_green.jpg',
+                '$_basePath/photochromic/photochromic_optic_on_green.webp',
             quality: LensQuality.good,
           ),
           CorrectionLens(
@@ -964,7 +964,7 @@ class SimulationData {
             name: 'sunbalance',
             displayName: 'SunBalance',
             correctedImagePath:
-                '$_basePath/photochromic/photochromic_optic_on_sunbalance.jpg',
+                '$_basePath/photochromic/photochromic_optic_on_sunbalance.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -974,14 +974,14 @@ class SimulationData {
         id: 'photo_beach',
         sceneName: 'beach',
         displayName: 'Beach',
-        problemImagePath: '$_basePath/photochromic/photochromic_beach_off.jpg',
+        problemImagePath: '$_basePath/photochromic/photochromic_beach_off.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'photo_beach_gray',
             name: 'gray',
             displayName: 'Gray',
             correctedImagePath:
-                '$_basePath/photochromic/photochromic_beach_on_gray.jpg',
+                '$_basePath/photochromic/photochromic_beach_on_gray.webp',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
@@ -989,7 +989,7 @@ class SimulationData {
             name: 'brown',
             displayName: 'Brown',
             correctedImagePath:
-                '$_basePath/photochromic/photochromic_beach_on_brown.jpg',
+                '$_basePath/photochromic/photochromic_beach_on_brown.webp',
             quality: LensQuality.good,
           ),
           CorrectionLens(
@@ -997,7 +997,7 @@ class SimulationData {
             name: 'green',
             displayName: 'Green',
             correctedImagePath:
-                '$_basePath/photochromic/photochromic_beach_on_green.jpg',
+                '$_basePath/photochromic/photochromic_beach_on_green.webp',
             quality: LensQuality.good,
           ),
         ],
@@ -1008,14 +1008,14 @@ class SimulationData {
         sceneName: 'driving',
         displayName: 'Driving',
         problemImagePath:
-            '$_basePath/photochromic/photochromic_driving_off.jpg',
+            '$_basePath/photochromic/photochromic_driving_off.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'photo_driving_gray',
             name: 'gray',
             displayName: 'Gray',
             correctedImagePath:
-                '$_basePath/photochromic/photochromic_driving_on_gray.jpg',
+                '$_basePath/photochromic/photochromic_driving_on_gray.webp',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
@@ -1023,7 +1023,7 @@ class SimulationData {
             name: 'brown',
             displayName: 'Brown',
             correctedImagePath:
-                '$_basePath/photochromic/photochromic_driving_on_brown.jpg',
+                '$_basePath/photochromic/photochromic_driving_on_brown.webp',
             quality: LensQuality.good,
           ),
           CorrectionLens(
@@ -1031,7 +1031,7 @@ class SimulationData {
             name: 'green',
             displayName: 'Green',
             correctedImagePath:
-                '$_basePath/photochromic/photochromic_driving_on_green.jpg',
+                '$_basePath/photochromic/photochromic_driving_on_green.webp',
             quality: LensQuality.good,
           ),
         ],
@@ -1051,13 +1051,13 @@ class SimulationData {
         id: 'solar_beach',
         sceneName: 'beach',
         displayName: 'Beach',
-        problemImagePath: '$_basePath/solar/solar_beach_without.jpg',
+        problemImagePath: '$_basePath/solar/solar_beach_without.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'solar_beach_ar',
             name: 'anti_reflective',
             displayName: 'With AR',
-            correctedImagePath: '$_basePath/solar/solar_beach_withAr.jpg',
+            correctedImagePath: '$_basePath/solar/solar_beach_withAr.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -1067,13 +1067,13 @@ class SimulationData {
         id: 'solar_beach2',
         sceneName: 'beach2',
         displayName: 'Beach 2',
-        problemImagePath: '$_basePath/solar/solar_beach2_without.jpg',
+        problemImagePath: '$_basePath/solar/solar_beach2_without.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'solar_beach2_ar',
             name: 'anti_reflective',
             displayName: 'With AR',
-            correctedImagePath: '$_basePath/solar/solar_beach2_withAr.jpg',
+            correctedImagePath: '$_basePath/solar/solar_beach2_withAr.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -1083,13 +1083,13 @@ class SimulationData {
         id: 'solar_car',
         sceneName: 'car',
         displayName: 'Car',
-        problemImagePath: '$_basePath/solar/solar_car_without.jpg',
+        problemImagePath: '$_basePath/solar/solar_car_without.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'solar_car_ar',
             name: 'anti_reflective',
             displayName: 'With AR',
-            correctedImagePath: '$_basePath/solar/solar_car_withAr.jpg',
+            correctedImagePath: '$_basePath/solar/solar_car_withAr.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -1099,13 +1099,13 @@ class SimulationData {
         id: 'solar_driving',
         sceneName: 'driving',
         displayName: 'Driving',
-        problemImagePath: '$_basePath/solar/solar_driving_without.jpg',
+        problemImagePath: '$_basePath/solar/solar_driving_without.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'solar_driving_ar',
             name: 'anti_reflective',
             displayName: 'With AR',
-            correctedImagePath: '$_basePath/solar/solar_driving_withAr.jpg',
+            correctedImagePath: '$_basePath/solar/solar_driving_withAr.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -1115,13 +1115,13 @@ class SimulationData {
         id: 'solar_golf',
         sceneName: 'golf',
         displayName: 'Golf',
-        problemImagePath: '$_basePath/solar/solar_golf_without.jpg',
+        problemImagePath: '$_basePath/solar/solar_golf_without.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'solar_golf_ar',
             name: 'anti_reflective',
             displayName: 'With AR',
-            correctedImagePath: '$_basePath/solar/solar_golf_withAr.jpg',
+            correctedImagePath: '$_basePath/solar/solar_golf_withAr.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -1131,13 +1131,13 @@ class SimulationData {
         id: 'solar_lake',
         sceneName: 'lake',
         displayName: 'Lake',
-        problemImagePath: '$_basePath/solar/solar_lake_without.jpg',
+        problemImagePath: '$_basePath/solar/solar_lake_without.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'solar_lake_ar',
             name: 'anti_reflective',
             displayName: 'With AR',
-            correctedImagePath: '$_basePath/solar/solar_lake_withAr.jpg',
+            correctedImagePath: '$_basePath/solar/solar_lake_withAr.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -1147,13 +1147,13 @@ class SimulationData {
         id: 'solar_moto',
         sceneName: 'motorcycle',
         displayName: 'Motorcycle',
-        problemImagePath: '$_basePath/solar/solar_moto_without.jpg',
+        problemImagePath: '$_basePath/solar/solar_moto_without.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'solar_moto_ar',
             name: 'anti_reflective',
             displayName: 'With AR',
-            correctedImagePath: '$_basePath/solar/solar_moto_withAr.jpg',
+            correctedImagePath: '$_basePath/solar/solar_moto_withAr.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -1163,13 +1163,13 @@ class SimulationData {
         id: 'solar_tennis',
         sceneName: 'tennis',
         displayName: 'Tennis',
-        problemImagePath: '$_basePath/solar/solar_tennis_without.jpg',
+        problemImagePath: '$_basePath/solar/solar_tennis_without.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'solar_tennis_ar',
             name: 'anti_reflective',
             displayName: 'With AR',
-            correctedImagePath: '$_basePath/solar/solar_tennis_withAr.jpg',
+            correctedImagePath: '$_basePath/solar/solar_tennis_withAr.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -1179,13 +1179,13 @@ class SimulationData {
         id: 'solar_yacht',
         sceneName: 'yacht',
         displayName: 'Yacht',
-        problemImagePath: '$_basePath/solar/solar_yacht_without.jpg',
+        problemImagePath: '$_basePath/solar/solar_yacht_without.webp',
         correctionLenses: [
           CorrectionLens(
             id: 'solar_yacht_ar',
             name: 'anti_reflective',
             displayName: 'With AR',
-            correctedImagePath: '$_basePath/solar/solar_yacht_withAr.jpg',
+            correctedImagePath: '$_basePath/solar/solar_yacht_withAr.webp',
             quality: LensQuality.premium,
           ),
         ],
@@ -1204,70 +1204,70 @@ class SimulationData {
         id: 'tint_beach',
         sceneName: 'beach',
         displayName: 'Beach',
-        problemImagePath: '$_basePath/tint/tint_beach.jpg',
+        problemImagePath: '$_basePath/tint/tint_beach.webp',
         correctionLenses: _getTintLenses(
           'tint_beach',
-          '$_basePath/tint/tint_beach.jpg',
+          '$_basePath/tint/tint_beach.webp',
         ),
       ),
       SimulationScenario(
         id: 'tint_driving',
         sceneName: 'driving',
         displayName: 'Driving',
-        problemImagePath: '$_basePath/tint/tint_driving.jpg',
+        problemImagePath: '$_basePath/tint/tint_driving.webp',
         correctionLenses: _getTintLenses(
           'tint_driving',
-          '$_basePath/tint/tint_driving.jpg',
+          '$_basePath/tint/tint_driving.webp',
         ),
       ),
       SimulationScenario(
         id: 'tint_golf',
         sceneName: 'golf',
         displayName: 'Golf',
-        problemImagePath: '$_basePath/tint/tint_golf.jpg',
+        problemImagePath: '$_basePath/tint/tint_golf.webp',
         correctionLenses: _getTintLenses(
           'tint_golf',
-          '$_basePath/tint/tint_golf.jpg',
+          '$_basePath/tint/tint_golf.webp',
         ),
       ),
       SimulationScenario(
         id: 'tint_lake',
         sceneName: 'lake',
         displayName: 'Lake',
-        problemImagePath: '$_basePath/tint/tint_lake.jpg',
+        problemImagePath: '$_basePath/tint/tint_lake.webp',
         correctionLenses: _getTintLenses(
           'tint_lake',
-          '$_basePath/tint/tint_lake.jpg',
+          '$_basePath/tint/tint_lake.webp',
         ),
       ),
       SimulationScenario(
         id: 'tint_moto',
         sceneName: 'motorcycle',
         displayName: 'Motorcycle',
-        problemImagePath: '$_basePath/tint/tint_motorcycle.jpg',
+        problemImagePath: '$_basePath/tint/tint_motorcycle.webp',
         correctionLenses: _getTintLenses(
           'tint_moto',
-          '$_basePath/tint/tint_motorcycle.jpg',
+          '$_basePath/tint/tint_motorcycle.webp',
         ),
       ),
       SimulationScenario(
         id: 'tint_tennis',
         sceneName: 'tennis',
         displayName: 'Tennis',
-        problemImagePath: '$_basePath/tint/tint_tennis.jpg',
+        problemImagePath: '$_basePath/tint/tint_tennis.webp',
         correctionLenses: _getTintLenses(
           'tint_tennis',
-          '$_basePath/tint/tint_tennis.jpg',
+          '$_basePath/tint/tint_tennis.webp',
         ),
       ),
       SimulationScenario(
         id: 'tint_yacht',
         sceneName: 'yacht',
         displayName: 'Yacht',
-        problemImagePath: '$_basePath/tint/tint_yacht.jpg',
+        problemImagePath: '$_basePath/tint/tint_yacht.webp',
         correctionLenses: _getTintLenses(
           'tint_yacht',
-          '$_basePath/tint/tint_yacht.jpg',
+          '$_basePath/tint/tint_yacht.webp',
         ),
       ),
     ],

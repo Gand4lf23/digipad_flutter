@@ -281,4 +281,208 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get overlayLabel => 'Superposición';
+
+  @override
+  String get simCatMyopia => 'Miopía';
+
+  @override
+  String get simCatMyopiaDesc => 'Dificultad para ver claramente objetos lejanos (miopía)';
+
+  @override
+  String get simSceneKitchen => 'Cocina';
+
+  @override
+  String get simSceneMarket => 'Mercado';
+
+  @override
+  String get simSceneGrocery => 'Supermercado';
+
+  @override
+  String get simSceneClothingStore => 'Tienda de Ropa';
+
+  @override
+  String get simLensMonofocalNear => 'Monofocal Cerca';
+
+  @override
+  String get simLensMonofocalFar => 'Monofocal Lejos';
+
+  @override
+  String get simCatMultifocal => 'Multifocal';
+
+  @override
+  String get simCatMultifocalDesc => 'Comparación de calidad de lentes progresivos';
+
+  @override
+  String get simSceneClothing => 'Ropa';
+
+  @override
+  String get simQualityEconomy => 'Económico';
+
+  @override
+  String get simQualityStandard => 'Estándar';
+
+  @override
+  String get simQualityGood => 'Bueno';
+
+  @override
+  String get simQualityPremium => 'Premium';
+
+  @override
+  String get simCatBifocal => 'Bifocal';
+
+  @override
+  String get simCatBifocalDesc => 'Comparación entre lentes bifocales y multifocales';
+
+  @override
+  String get simSceneOffice => 'Oficina';
+
+  @override
+  String get simSceneDriving => 'Conducción';
+
+  @override
+  String get simLensInvisibleBifocal => 'Bifocal Invisible';
+
+  @override
+  String get simLensMultifocal => 'Multifocal';
+
+  @override
+  String get simCatPolarized => 'Polarizado';
+
+  @override
+  String get simCatPolarizedDesc => 'Reducción de reflejos y deslumbramiento';
+
+  @override
+  String get simSceneGolf => 'Golf';
+
+  @override
+  String get simSceneBeach => 'Playa';
+
+  @override
+  String get simSceneTennis => 'Tenis';
+
+  @override
+  String get simSceneYacht => 'Yate';
+
+  @override
+  String get simSceneMotorcycle => 'Motocicleta';
+
+  @override
+  String get simCatAntiReflective => 'Antirreflejo';
+
+  @override
+  String get simCatAntiReflectiveDesc => 'Reducción de reflejos en la lente y mejor claridad';
+
+  @override
+  String get simSceneBaseball => 'Béisbol';
+
+  @override
+  String get simSceneBasketball => 'Baloncesto';
+
+  @override
+  String get simSceneSoccer => 'Fútbol';
+
+  @override
+  String get simSceneConcert => 'Concierto';
+
+  @override
+  String get simSceneBridge => 'Puente';
+
+  @override
+  String get simCatDriveWear => 'DriveWear';
+
+  @override
+  String get simCatDriveWearDesc => 'Lentes optimizados para conducir en diferentes condiciones';
+
+  @override
+  String get simSceneDrivingSunny => 'Conducción (Soleado)';
+
+  @override
+  String get simSceneDrivingCloudy => 'Conducción (Nublado)';
+
+  @override
+  String get simSceneGolfSunny => 'Golf (Soleado)';
+
+  @override
+  String get simSceneGolfCloudy => 'Golf (Nublado)';
+
+  @override
+  String get simSceneBeachSunny => 'Playa (Soleado)';
+
+  @override
+  String get simSceneBeachCloudy => 'Playa (Nublado)';
+
+  @override
+  String get simSceneMotorcycleSunny => 'Motocicleta (Soleado)';
+
+  @override
+  String get simSceneMotorcycleCloudy => 'Motocicleta (Nublado)';
+
+  @override
+  String get simSceneTennisSunny => 'Tenis (Soleado)';
+
+  @override
+  String get simSceneTennisCloudy => 'Tenis (Nublado)';
+
+  @override
+  String get simSceneYachtSunny => 'Yate (Soleado)';
+
+  @override
+  String get simSceneYachtCloudy => 'Yate (Nublado)';
+
+  @override
+  String get simCatPhotochromic => 'Fotocromático';
+
+  @override
+  String get simCatPhotochromicDesc => 'Lentes que se adaptan a las condiciones de luz';
+
+  @override
+  String get simSceneOpticStore => 'Óptica';
+
+  @override
+  String get simColorGray => 'Gris';
+
+  @override
+  String get simColorBrown => 'Marrón';
+
+  @override
+  String get simColorGreen => 'Verde';
+
+  @override
+  String get simColorSunBalance => 'SunBalance';
+
+  @override
+  String get simCatSolar => 'Solar';
+
+  @override
+  String get simCatSolarDesc => 'Protección solar con recubrimiento antirreflejo';
+
+  @override
+  String get simSceneBeach2 => 'Playa 2';
+
+  @override
+  String get simSceneCar => 'Auto';
+
+  @override
+  String get simLensWithAR => 'Con AR';
+
+  @override
+  String get simCatTint => 'Tinte';
+
+  @override
+  String get simCatTintDesc => 'Tintes de lentes personalizables para diferentes entornos';
+
+  @override
+  String get simColorYellow => 'Amarillo';
+
+  @override
+  String get simColorAqua => 'Aguamarina';
+
+  @override
+  String get simColorBlue => 'Azul';
+
+  @override
+  String get simColorOrange => 'Naranja';
+
+  @override
+  String get simColorRed => 'Rojo';
 }

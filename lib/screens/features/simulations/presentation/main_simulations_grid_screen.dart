@@ -7,6 +7,7 @@ import '../cubit/simulations_state.dart';
 import '../data/simulation_data.dart';
 import '../models/simulation_scenario.dart';
 import 'simulation_viewer_screen.dart';
+import 'simulation_strings.dart';
 
 /// Main grid screen for selecting visual problems and scenarios.
 class MainSimulationsGridScreen extends StatelessWidget {
@@ -60,8 +61,12 @@ class _SimulationsGridView extends StatelessWidget {
       ),
       flexibleSpace: FlexibleSpaceBar(
         title: Text(
-          state.selectedCategory?.displayName ??
-              context.l10n.lensSimulatorTitle,
+          state.selectedCategory == null
+              ? context.l10n.lensSimulatorTitle
+              : SimulationStrings.categoryName(
+                  context,
+                  state.selectedCategory!,
+                ),
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 22,
@@ -97,7 +102,10 @@ class _SimulationsGridView extends StatelessWidget {
                   bottom: 60,
                   right: 20,
                   child: Text(
-                    state.selectedCategory!.description,
+                    SimulationStrings.categoryDescription(
+                      context,
+                      state.selectedCategory!,
+                    ),
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.9),
                       fontSize: 16,
@@ -305,7 +313,7 @@ class _CategoryCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  category.displayName,
+                  SimulationStrings.categoryName(context, category),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 30,
@@ -422,7 +430,7 @@ class _ScenarioCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      scenario.displayName,
+                      SimulationStrings.scenarioName(context, scenario),
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 28,
@@ -459,7 +467,7 @@ class _ScenarioCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                lens.displayName,
+                                _localizedLensName(context, lens),
                                 style: TextStyle(
                                   fontSize: 22,
                                   color: _getLensColor(lens.quality),
@@ -491,5 +499,10 @@ class _ScenarioCard extends StatelessWidget {
       case LensQuality.premium:
         return Colors.amber.shade700;
     }
+  }
+
+
+  String _localizedLensName(BuildContext context, CorrectionLens lens) {
+    return SimulationStrings.lensName(context, lens);
   }
 }

@@ -600,6 +600,414 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Overlay'**
   String get overlayLabel;
+
+  /// No description provided for @simCatMyopia.
+  ///
+  /// In en, this message translates to:
+  /// **'Myopia'**
+  String get simCatMyopia;
+
+  /// No description provided for @simCatMyopiaDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Difficulty seeing distant objects clearly (nearsightedness)'**
+  String get simCatMyopiaDesc;
+
+  /// No description provided for @simSceneKitchen.
+  ///
+  /// In en, this message translates to:
+  /// **'Kitchen'**
+  String get simSceneKitchen;
+
+  /// No description provided for @simSceneMarket.
+  ///
+  /// In en, this message translates to:
+  /// **'Market'**
+  String get simSceneMarket;
+
+  /// No description provided for @simSceneGrocery.
+  ///
+  /// In en, this message translates to:
+  /// **'Grocery'**
+  String get simSceneGrocery;
+
+  /// No description provided for @simSceneClothingStore.
+  ///
+  /// In en, this message translates to:
+  /// **'Clothing Store'**
+  String get simSceneClothingStore;
+
+  /// No description provided for @simLensMonofocalNear.
+  ///
+  /// In en, this message translates to:
+  /// **'Monofocal Near'**
+  String get simLensMonofocalNear;
+
+  /// No description provided for @simLensMonofocalFar.
+  ///
+  /// In en, this message translates to:
+  /// **'Monofocal Far'**
+  String get simLensMonofocalFar;
+
+  /// No description provided for @simCatMultifocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Multifocal'**
+  String get simCatMultifocal;
+
+  /// No description provided for @simCatMultifocalDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Progressive lens quality comparison'**
+  String get simCatMultifocalDesc;
+
+  /// No description provided for @simSceneClothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Clothing'**
+  String get simSceneClothing;
+
+  /// No description provided for @simQualityEconomy.
+  ///
+  /// In en, this message translates to:
+  /// **'Economy'**
+  String get simQualityEconomy;
+
+  /// No description provided for @simQualityStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard'**
+  String get simQualityStandard;
+
+  /// No description provided for @simQualityGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Good'**
+  String get simQualityGood;
+
+  /// No description provided for @simQualityPremium.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium'**
+  String get simQualityPremium;
+
+  /// No description provided for @simCatBifocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Bifocal'**
+  String get simCatBifocal;
+
+  /// No description provided for @simCatBifocalDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Comparison between bifocal and multifocal lenses'**
+  String get simCatBifocalDesc;
+
+  /// No description provided for @simSceneOffice.
+  ///
+  /// In en, this message translates to:
+  /// **'Office'**
+  String get simSceneOffice;
+
+  /// No description provided for @simSceneDriving.
+  ///
+  /// In en, this message translates to:
+  /// **'Driving'**
+  String get simSceneDriving;
+
+  /// No description provided for @simLensInvisibleBifocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Invisible Bifocal'**
+  String get simLensInvisibleBifocal;
+
+  /// No description provided for @simLensMultifocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Multifocal'**
+  String get simLensMultifocal;
+
+  /// No description provided for @simCatPolarized.
+  ///
+  /// In en, this message translates to:
+  /// **'Polarized'**
+  String get simCatPolarized;
+
+  /// No description provided for @simCatPolarizedDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Reduction of reflections and glare'**
+  String get simCatPolarizedDesc;
+
+  /// No description provided for @simSceneGolf.
+  ///
+  /// In en, this message translates to:
+  /// **'Golf'**
+  String get simSceneGolf;
+
+  /// No description provided for @simSceneBeach.
+  ///
+  /// In en, this message translates to:
+  /// **'Beach'**
+  String get simSceneBeach;
+
+  /// No description provided for @simSceneTennis.
+  ///
+  /// In en, this message translates to:
+  /// **'Tennis'**
+  String get simSceneTennis;
+
+  /// No description provided for @simSceneYacht.
+  ///
+  /// In en, this message translates to:
+  /// **'Yacht'**
+  String get simSceneYacht;
+
+  /// No description provided for @simSceneMotorcycle.
+  ///
+  /// In en, this message translates to:
+  /// **'Motorcycle'**
+  String get simSceneMotorcycle;
+
+  /// No description provided for @simCatAntiReflective.
+  ///
+  /// In en, this message translates to:
+  /// **'Anti-Reflective'**
+  String get simCatAntiReflective;
+
+  /// No description provided for @simCatAntiReflectiveDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Reduction of lens reflections and better clarity'**
+  String get simCatAntiReflectiveDesc;
+
+  /// No description provided for @simSceneBaseball.
+  ///
+  /// In en, this message translates to:
+  /// **'Baseball'**
+  String get simSceneBaseball;
+
+  /// No description provided for @simSceneBasketball.
+  ///
+  /// In en, this message translates to:
+  /// **'Basketball'**
+  String get simSceneBasketball;
+
+  /// No description provided for @simSceneSoccer.
+  ///
+  /// In en, this message translates to:
+  /// **'Soccer'**
+  String get simSceneSoccer;
+
+  /// No description provided for @simSceneConcert.
+  ///
+  /// In en, this message translates to:
+  /// **'Concert'**
+  String get simSceneConcert;
+
+  /// No description provided for @simSceneBridge.
+  ///
+  /// In en, this message translates to:
+  /// **'Bridge'**
+  String get simSceneBridge;
+
+  /// No description provided for @simCatDriveWear.
+  ///
+  /// In en, this message translates to:
+  /// **'DriveWear'**
+  String get simCatDriveWear;
+
+  /// No description provided for @simCatDriveWearDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Lenses optimized for driving in different conditions'**
+  String get simCatDriveWearDesc;
+
+  /// No description provided for @simSceneDrivingSunny.
+  ///
+  /// In en, this message translates to:
+  /// **'Driving (Sunny)'**
+  String get simSceneDrivingSunny;
+
+  /// No description provided for @simSceneDrivingCloudy.
+  ///
+  /// In en, this message translates to:
+  /// **'Driving (Cloudy)'**
+  String get simSceneDrivingCloudy;
+
+  /// No description provided for @simSceneGolfSunny.
+  ///
+  /// In en, this message translates to:
+  /// **'Golf (Sunny)'**
+  String get simSceneGolfSunny;
+
+  /// No description provided for @simSceneGolfCloudy.
+  ///
+  /// In en, this message translates to:
+  /// **'Golf (Cloudy)'**
+  String get simSceneGolfCloudy;
+
+  /// No description provided for @simSceneBeachSunny.
+  ///
+  /// In en, this message translates to:
+  /// **'Beach (Sunny)'**
+  String get simSceneBeachSunny;
+
+  /// No description provided for @simSceneBeachCloudy.
+  ///
+  /// In en, this message translates to:
+  /// **'Beach (Cloudy)'**
+  String get simSceneBeachCloudy;
+
+  /// No description provided for @simSceneMotorcycleSunny.
+  ///
+  /// In en, this message translates to:
+  /// **'Motorcycle (Sunny)'**
+  String get simSceneMotorcycleSunny;
+
+  /// No description provided for @simSceneMotorcycleCloudy.
+  ///
+  /// In en, this message translates to:
+  /// **'Motorcycle (Cloudy)'**
+  String get simSceneMotorcycleCloudy;
+
+  /// No description provided for @simSceneTennisSunny.
+  ///
+  /// In en, this message translates to:
+  /// **'Tennis (Sunny)'**
+  String get simSceneTennisSunny;
+
+  /// No description provided for @simSceneTennisCloudy.
+  ///
+  /// In en, this message translates to:
+  /// **'Tennis (Cloudy)'**
+  String get simSceneTennisCloudy;
+
+  /// No description provided for @simSceneYachtSunny.
+  ///
+  /// In en, this message translates to:
+  /// **'Yacht (Sunny)'**
+  String get simSceneYachtSunny;
+
+  /// No description provided for @simSceneYachtCloudy.
+  ///
+  /// In en, this message translates to:
+  /// **'Yacht (Cloudy)'**
+  String get simSceneYachtCloudy;
+
+  /// No description provided for @simCatPhotochromic.
+  ///
+  /// In en, this message translates to:
+  /// **'Photochromic'**
+  String get simCatPhotochromic;
+
+  /// No description provided for @simCatPhotochromicDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Lenses that adapt to light conditions'**
+  String get simCatPhotochromicDesc;
+
+  /// No description provided for @simSceneOpticStore.
+  ///
+  /// In en, this message translates to:
+  /// **'Optic Store'**
+  String get simSceneOpticStore;
+
+  /// No description provided for @simColorGray.
+  ///
+  /// In en, this message translates to:
+  /// **'Gray'**
+  String get simColorGray;
+
+  /// No description provided for @simColorBrown.
+  ///
+  /// In en, this message translates to:
+  /// **'Brown'**
+  String get simColorBrown;
+
+  /// No description provided for @simColorGreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Green'**
+  String get simColorGreen;
+
+  /// No description provided for @simColorSunBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'SunBalance'**
+  String get simColorSunBalance;
+
+  /// No description provided for @simCatSolar.
+  ///
+  /// In en, this message translates to:
+  /// **'Solar'**
+  String get simCatSolar;
+
+  /// No description provided for @simCatSolarDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Sun protection with anti-reflective coating'**
+  String get simCatSolarDesc;
+
+  /// No description provided for @simSceneBeach2.
+  ///
+  /// In en, this message translates to:
+  /// **'Beach 2'**
+  String get simSceneBeach2;
+
+  /// No description provided for @simSceneCar.
+  ///
+  /// In en, this message translates to:
+  /// **'Car'**
+  String get simSceneCar;
+
+  /// No description provided for @simLensWithAR.
+  ///
+  /// In en, this message translates to:
+  /// **'With AR'**
+  String get simLensWithAR;
+
+  /// No description provided for @simCatTint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tint'**
+  String get simCatTint;
+
+  /// No description provided for @simCatTintDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Customizable lens tints for different environments'**
+  String get simCatTintDesc;
+
+  /// No description provided for @simColorYellow.
+  ///
+  /// In en, this message translates to:
+  /// **'Yellow'**
+  String get simColorYellow;
+
+  /// No description provided for @simColorAqua.
+  ///
+  /// In en, this message translates to:
+  /// **'Aqua'**
+  String get simColorAqua;
+
+  /// No description provided for @simColorBlue.
+  ///
+  /// In en, this message translates to:
+  /// **'Blue'**
+  String get simColorBlue;
+
+  /// No description provided for @simColorOrange.
+  ///
+  /// In en, this message translates to:
+  /// **'Orange'**
+  String get simColorOrange;
+
+  /// No description provided for @simColorRed.
+  ///
+  /// In en, this message translates to:
+  /// **'Red'**
+  String get simColorRed;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
