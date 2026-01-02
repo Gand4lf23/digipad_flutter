@@ -176,9 +176,9 @@ class _ArrowButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: CircleAvatar(
-        radius: 40,
+        radius: 32,
         backgroundColor: Colors.grey.shade800,
-        child: Icon(icon, color: Colors.white, size: 22),
+        child: Icon(icon, color: Colors.white, size: 16),
       ),
     );
   }

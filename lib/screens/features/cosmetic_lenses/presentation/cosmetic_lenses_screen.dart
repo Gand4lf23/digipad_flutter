@@ -1,3 +1,4 @@
+import 'package:digipad_flutter/common/utils/responsive_utils.dart';
 import 'package:digipad_flutter/screens/features/cosmetic_lenses/cubit/cosmetic_lenses_cubit.dart';
 import 'package:digipad_flutter/screens/features/cosmetic_lenses/widgets/cosmetic_control_panel.dart';
 import 'package:digipad_flutter/screens/features/cosmetic_lenses/widgets/iris_selector_widget.dart';
@@ -24,64 +25,87 @@ class _CosmeticLensesScreenState extends State<CosmeticLensesScreen> {
     return Scaffold(
       backgroundColor: Colors.grey.shade900,
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(flex: 48, child: const PhotoCanvasWidget()),
-            Expanded(
-              flex: 35,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade800,
-                  border: Border(
-                    top: BorderSide(color: Colors.grey.shade600, width: 2),
-                  ),
-                ),
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      // Title
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 12,
-                          horizontal: 16,
-                        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return OrientationBuilder(
+              builder: (context, orientation) {
+                final responsive = context.responsive(constraints, orientation);
+
+                return Column(
+                  children: [
+                    Expanded(flex: 55, child: const PhotoCanvasWidget()),
+                    Expanded(
+                      flex: 45,
+                      child: Container(
                         decoration: BoxDecoration(
+                          color: Colors.grey.shade800,
                           border: Border(
-                            bottom: BorderSide(color: Colors.grey.shade600),
+                            top: BorderSide(
+                              color: Colors.grey.shade600,
+                              width: 2,
+                            ),
                           ),
                         ),
-                        child: const Text(
-                          'Cosmetic Lenses',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              // Title
+                              Container(
+                                padding: responsive.padding(
+                                  const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                    horizontal: 16,
+                                  ),
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ),
+                                child: Text(
+                                  'Cosmetic Lenses',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: responsive.fontSize(20),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              // Iris selectors
+                              Padding(
+                                padding: responsive.padding(
+                                  const EdgeInsets.all(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Expanded(
+                                      child: IrisSelectorWidget(
+                                        isLeftEye: true,
+                                      ),
+                                    ),
+                                    SizedBox(width: responsive.spacing(12)),
+                                    const Expanded(
+                                      child: IrisSelectorWidget(
+                                        isLeftEye: false,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // Control panel
+                              const CosmeticControlPanel(),
+                            ],
                           ),
                         ),
                       ),
-                      // Iris selectors
-                      Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Row(
-                          children: const [
-                            Expanded(
-                              child: IrisSelectorWidget(isLeftEye: true),
-                            ),
-                            SizedBox(width: 12),
-                            Expanded(
-                              child: IrisSelectorWidget(isLeftEye: false),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Control panel
-                      const CosmeticControlPanel(),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
+                    ),
+                  ],
+                );
+              },
+            );
+          },
         ),
       ),
     );

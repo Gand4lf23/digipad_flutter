@@ -1,3 +1,4 @@
+import 'package:digipad_flutter/common/utils/responsive_utils.dart';
 import 'package:digipad_flutter/screens/features/virtual_mirror/cubit/virtual_mirror_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,54 +10,71 @@ class ControlPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final cubit = context.read<VirtualMirrorCubit>();
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        border: Border(
-          top: BorderSide(color: Colors.grey.shade400),
-          left: BorderSide.none,
-          right: BorderSide.none,
-          bottom: BorderSide.none,
-        ),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return OrientationBuilder(
+          builder: (context, orientation) {
+            final responsive = context.responsive(constraints, orientation);
 
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          // GO BACK
-          _CircleIconButton(
-            icon: Icons.arrow_back_ios_new,
-            onPressed: () => Navigator.of(context).pop(),
-            size: 32,
-          ),
-          // PICK FROM GALLERY
-          _CircleIconButton(
-            icon: Icons.photo_library,
-            onPressed: () => cubit.pickFromGallery(),
-            size: 32,
-          ),
-          // TAKE PHOTO (bigger)
-          _CircleIconButton(
-            icon: Icons.camera_alt,
-            onPressed: () => cubit.capturePhoto(),
-            size: 60,
-            containerSize: 96,
-          ),
-          // TAKE VIDEO
-          _CircleIconButton(
-            icon: Icons.videocam,
-            onPressed: () => cubit.captureVideo(),
-            size: 32,
-          ),
-          // RESET BOTH DROPZONES
-          _CircleIconButton(
-            icon: Icons.refresh,
-            onPressed: cubit.clearImages,
-            size: 32,
-          ),
-        ],
-      ),
+            return Container(
+              padding: responsive.padding(
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(32),
+                ),
+                border: Border(
+                  top: BorderSide(color: Colors.grey.shade400),
+                  left: BorderSide.none,
+                  right: BorderSide.none,
+                  bottom: BorderSide.none,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // GO BACK
+                  _CircleIconButton(
+                    icon: Icons.arrow_back_ios_new,
+                    onPressed: () => Navigator.of(context).pop(),
+                    size: responsive.controlPanelIconSize(32),
+                    containerSize: responsive.controlPanelContainerSize(64),
+                  ),
+                  // PICK FROM GALLERY
+                  _CircleIconButton(
+                    icon: Icons.photo_library,
+                    onPressed: () => cubit.pickFromGallery(),
+                    size: responsive.controlPanelIconSize(32),
+                    containerSize: responsive.controlPanelContainerSize(64),
+                  ),
+                  // TAKE PHOTO (bigger)
+                  _CircleIconButton(
+                    icon: Icons.camera_alt,
+                    onPressed: () => cubit.capturePhoto(),
+                    size: responsive.controlPanelIconSize(60),
+                    containerSize: responsive.controlPanelContainerSize(96),
+                  ),
+                  // TAKE VIDEO
+                  _CircleIconButton(
+                    icon: Icons.videocam,
+                    onPressed: () => cubit.captureVideo(),
+                    size: responsive.controlPanelIconSize(32),
+                    containerSize: responsive.controlPanelContainerSize(64),
+                  ),
+                  // RESET BOTH DROPZONES
+                  _CircleIconButton(
+                    icon: Icons.refresh,
+                    onPressed: cubit.clearImages,
+                    size: responsive.controlPanelIconSize(32),
+                    containerSize: responsive.controlPanelContainerSize(64),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
@@ -71,7 +89,7 @@ class _CircleIconButton extends StatelessWidget {
     required this.icon,
     required this.onPressed,
     required this.size,
-    this.containerSize = 64,
+    required this.containerSize,
   });
 
   @override
