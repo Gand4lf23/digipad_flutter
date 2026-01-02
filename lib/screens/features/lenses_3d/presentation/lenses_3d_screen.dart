@@ -5,6 +5,7 @@ import 'package:digipad_flutter/screens/features/lenses_3d/widgets/lens_image_vi
 import 'package:digipad_flutter/screens/features/lenses_3d/widgets/lenses_3d_control_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:digipad_flutter/l10n/l10n.dart';
 
 class Lenses3DScreen extends StatelessWidget {
   const Lenses3DScreen({super.key});
@@ -25,7 +26,7 @@ class Lenses3DScreen extends StatelessWidget {
                     orientation,
                   );
                   return Text(
-                    'Lens Thickness Simulator',
+                    context.l10n.lensThicknessSimulator,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: responsive.fontSize(20),

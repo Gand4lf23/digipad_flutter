@@ -2,6 +2,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:digipad_flutter/common/utils/responsive_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:digipad_flutter/l10n/l10n.dart';
 
 import '../cubit/simulations_cubit.dart';
 import '../cubit/simulations_state.dart';
@@ -147,10 +148,10 @@ class _SimulationsGridView extends StatelessWidget {
 
     return SliverList(
       delegate: SliverChildListDelegate([
-        _buildSectionHeader('Refractive conditions'),
+        _buildSectionHeader(context.l10n.refractiveConditions),
         _buildGridSection(context, problemCategories),
         const SizedBox(height: 24),
-        _buildSectionHeader('Lens Treatments'),
+        _buildSectionHeader(context.l10n.lensTreatments),
         _buildGridSection(context, treatmentCategories),
         const SizedBox(height: 32),
       ]),
@@ -452,7 +453,7 @@ class _ScenarioCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        'Without lens',
+                        context.l10n.withoutLens,
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.9),
                           fontSize: 12,
@@ -483,7 +484,9 @@ class _ScenarioCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '${scenario.correctionLenses.length} lenses available',
+                      context.l10n.lensesAvailable(
+                        scenario.correctionLenses.length,
+                      ),
                       style: TextStyle(
                         fontSize: isPhone ? 12 : 22,
                         color: Colors.grey.shade600,

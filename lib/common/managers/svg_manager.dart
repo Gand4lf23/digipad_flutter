@@ -1,15 +1,15 @@
 class SvgManager {
   static final SvgManager _instance = SvgManager._internal();
-  
+
   factory SvgManager() {
     return _instance;
   }
-  
+
   SvgManager._internal();
 
   // SVG asset paths
   static const String _basePath = 'assets/svgs/';
-  
+
   // Menu icons
   static const String contactLensesIcon = '${_basePath}contact_lenses_icon.svg';
   static const String lenses3dIcon = '${_basePath}lenses_3d_icon.svg';
@@ -22,38 +22,14 @@ class SvgManager {
 
   // Menu items configuration
   static const List<MenuItemData> menuItems = [
-    MenuItemData(
-      title: 'Virtual Mirror',
-      svgPath: virtualMirrorIcon,
-    ),
-    MenuItemData(
-      title: 'Simulations',
-      svgPath: simulationsIcon,
-    ),
-    MenuItemData(
-      title: 'Lenses 3D',
-      svgPath: lenses3dIcon,
-    ),
-    MenuItemData(
-      title: 'Contact Lenses',
-      svgPath: contactLensesIcon,
-    ),
-    MenuItemData(
-      title: 'Measurements',
-      svgPath: measurementsIcon,
-    ),
-    MenuItemData(
-      title: 'Vision Test',
-      svgPath: visionTestIcon,
-    ),
-    MenuItemData(
-      title: 'Manual',
-      svgPath: manualIcon,
-    ),
-    MenuItemData(
-      title: 'Video',
-      svgPath: videoIcon,
-    ),
+    MenuItemData(title: 'Virtual Mirror', svgPath: virtualMirrorIcon),
+    MenuItemData(title: 'Simulations', svgPath: simulationsIcon),
+    MenuItemData(title: 'Lenses 3D', svgPath: lenses3dIcon),
+    MenuItemData(title: 'Contact Lenses', svgPath: contactLensesIcon),
+    MenuItemData(title: 'Measurements', svgPath: measurementsIcon),
+    MenuItemData(title: 'Vision Test', svgPath: visionTestIcon),
+    MenuItemData(title: 'Manual', svgPath: manualIcon),
+    MenuItemData(title: 'Video', svgPath: videoIcon),
   ];
 
   // Get SVG path by name
@@ -114,8 +90,5 @@ class MenuItemData {
   final String title;
   final String svgPath;
 
-  const MenuItemData({
-    required this.title,
-    required this.svgPath,
-  });
+  const MenuItemData({required this.title, required this.svgPath});
 }

@@ -3,6 +3,7 @@ import 'package:digipad_flutter/screens/features/lenses_3d/cubit/lenses_3d_cubit
 import 'package:digipad_flutter/screens/features/lenses_3d/cubit/lenses_3d_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:digipad_flutter/l10n/l10n.dart';
 
 class Lenses3DControlPanel extends StatelessWidget {
   const Lenses3DControlPanel({super.key});
@@ -27,11 +28,11 @@ class Lenses3DControlPanel extends StatelessWidget {
                     children: [
                       // Title
                       Text(
-                        'Lens Configuration',
-                        style: TextStyle(
+                        context.l10n.lensConfiguration,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          fontSize: responsive.fontSize(24),
+                          fontSize: 24,
                         ),
                       ),
                       SizedBox(height: responsive.spacing(16)),
@@ -71,9 +72,9 @@ class Lenses3DControlPanel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Material Index',
-          style: TextStyle(
+        Text(
+          context.l10n.materialIndex,
+          style: const TextStyle(
             color: Colors.white70,
             fontSize: 18,
             fontWeight: FontWeight.w500,
@@ -118,7 +119,7 @@ class Lenses3DControlPanel extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Higher index = thinner lens',
+          context.l10n.higherIndexHint,
           style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
         ),
       ],
@@ -134,9 +135,9 @@ class Lenses3DControlPanel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Prescription',
-          style: TextStyle(
+        Text(
+          context.l10n.prescription,
+          style: const TextStyle(
             color: Colors.white70,
             fontSize: 18,
             fontWeight: FontWeight.w500,
@@ -188,7 +189,10 @@ class Lenses3DControlPanel extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Range: ${state.minPrescription}-${state.maxPrescription} diopters',
+          context.l10n.rangeDiopters(
+            state.minPrescription,
+            state.maxPrescription,
+          ),
           style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
         ),
         const SizedBox(height: 12),
@@ -223,9 +227,9 @@ class Lenses3DControlPanel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Frame Type',
-          style: TextStyle(
+        Text(
+          context.l10n.frameType,
+          style: const TextStyle(
             color: Colors.white70,
             fontSize: 18,
             fontWeight: FontWeight.w500,
@@ -270,7 +274,7 @@ class Lenses3DControlPanel extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Different frame styles',
+          context.l10n.lensTreatments,
           style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
         ),
       ],

@@ -6,6 +6,7 @@ import 'package:digipad_flutter/screens/features/virtual_mirror/widgets/gallery_
 import 'package:digipad_flutter/screens/features/virtual_mirror/widgets/image_dropzone.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:digipad_flutter/l10n/l10n.dart';
 
 class VirtualMirrorScreen extends StatefulWidget {
   const VirtualMirrorScreen({super.key});

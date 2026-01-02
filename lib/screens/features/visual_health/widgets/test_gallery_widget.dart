@@ -2,6 +2,7 @@ import 'package:digipad_flutter/screens/features/visual_health/cubit/visual_heal
 import 'package:digipad_flutter/screens/features/visual_health/cubit/visual_health_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:digipad_flutter/l10n/l10n.dart';
 
 class TestGalleryWidget extends StatefulWidget {
   const TestGalleryWidget({super.key});
@@ -48,7 +49,7 @@ class _TestGalleryWidgetState extends State<TestGalleryWidget> {
                 child: Center(
                   child: Text(
                     textAlign: TextAlign.center,
-                    'No tests loaded yet.',
+                    context.l10n.vhNoTests,
                     style: TextStyle(color: Colors.white, fontSize: 24),
                   ),
                 ),

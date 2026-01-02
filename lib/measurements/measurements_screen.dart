@@ -15,26 +15,16 @@ class MeasurementsScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.straighten,
-              size: 64,
-              color: Colors.orange,
-            ),
+            Icon(Icons.straighten, size: 64, color: Colors.orange),
             SizedBox(height: 16),
             Text(
               'Measurements Module',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
             Text(
               'Measurement functionality will be implemented here',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey),
               textAlign: TextAlign.center,
             ),
           ],
