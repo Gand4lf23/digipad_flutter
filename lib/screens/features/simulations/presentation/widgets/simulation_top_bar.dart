@@ -18,6 +18,9 @@ class SimulationTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isPhone = screenWidth < 600;
+
     return Positioned(
       top: 0,
       left: 0,
@@ -41,48 +44,30 @@ class SimulationTopBar extends StatelessWidget {
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.arrow_back_ios_new,
                     color: Colors.white,
-                    size: 40,
+                    size: isPhone ? 24 : 40,
                   ),
                   onPressed: onBack,
                 ),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        scenario.displayName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 45,
-                          fontWeight: FontWeight.bold,
-                          shadows: [
-                            Shadow(
-                              offset: Offset(0, 1),
-                              blurRadius: 3.0,
-                              color: Colors.black45,
-                            ),
-                          ],
+                  child: Text(
+                    'Scene: ${scenario.displayName} - Lens: ${category.displayName}',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: isPhone ? 16 : 32,
+                      fontWeight: FontWeight.bold,
+                      shadows: const [
+                        Shadow(
+                          offset: Offset(0, 1),
+                          blurRadius: 3.0,
+                          color: Colors.black45,
                         ),
-                      ),
-                      Text(
-                        category.displayName,
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
-                          fontSize: 32,
-                          fontWeight: FontWeight.w500,
-                          shadows: const [
-                            Shadow(
-                              offset: Offset(0, 1),
-                              blurRadius: 2.0,
-                              color: Colors.black45,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],

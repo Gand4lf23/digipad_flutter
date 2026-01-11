@@ -1,3 +1,4 @@
+import 'package:digipad_flutter/common/utils/responsive_utils.dart';
 import 'package:digipad_flutter/screens/features/lenses_3d/cubit/lenses_3d_cubit.dart';
 import 'package:digipad_flutter/screens/features/lenses_3d/cubit/lenses_3d_state.dart';
 import 'package:flutter/material.dart';
@@ -9,50 +10,54 @@ class Lenses3DControlPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<Lenses3DCubit, Lenses3DState>(
-      builder: (context, state) {
-        final cubit = context.read<Lenses3DCubit>();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return OrientationBuilder(
+          builder: (context, orientation) {
+            final responsive = context.responsive(constraints, orientation);
 
-        return Container(
-          color: Colors.grey.shade900,
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Title
-              Text(
-                context.l10n.lensConfiguration,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24,
-                ),
-              ),
-              const SizedBox(height: 16),
+            return BlocBuilder<Lenses3DCubit, Lenses3DState>(
+              builder: (context, state) {
+                final cubit = context.read<Lenses3DCubit>();
 
-              Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Material Index Selection
-                    Expanded(
-                      child: _buildMaterialSelector(context, state, cubit),
-                    ),
-                    const SizedBox(width: 24),
+                return Container(
+                  color: Colors.grey.shade900,
+                  padding: responsive.padding(const EdgeInsets.all(20)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title
+                      Text(
+                        context.l10n.lensConfiguration,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 24,
+                        ),
+                      ),
+                      SizedBox(height: responsive.spacing(16)),
 
-                    // Prescription Control
-                    Expanded(
-                      child: _buildPrescriptionControl(context, state, cubit),
-                    ),
-                    const SizedBox(width: 24),
+                      // Material Index Selection
+                      _buildMaterialSelector(context, state, cubit, responsive),
+                      SizedBox(height: responsive.spacing(16)),
 
-                    // Frame Type Selection
-                    Expanded(child: _buildFrameSelector(context, state, cubit)),
-                  ],
-                ),
-              ),
-            ],
-          ),
+                      // Prescription Control
+                      _buildPrescriptionControl(
+                        context,
+                        state,
+                        cubit,
+                        responsive,
+                      ),
+                      SizedBox(height: responsive.spacing(16)),
+
+                      // Frame Type Selection
+                      _buildFrameSelector(context, state, cubit, responsive),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
         );
       },
     );
@@ -62,6 +67,7 @@ class Lenses3DControlPanel extends StatelessWidget {
     BuildContext context,
     Lenses3DState state,
     Lenses3DCubit cubit,
+    ResponsiveUtils responsive,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -124,6 +130,7 @@ class Lenses3DControlPanel extends StatelessWidget {
     BuildContext context,
     Lenses3DState state,
     Lenses3DCubit cubit,
+    ResponsiveUtils responsive,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,6 +222,7 @@ class Lenses3DControlPanel extends StatelessWidget {
     BuildContext context,
     Lenses3DState state,
     Lenses3DCubit cubit,
+    ResponsiveUtils responsive,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

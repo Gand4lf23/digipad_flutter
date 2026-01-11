@@ -1,3 +1,4 @@
+import 'package:digipad_flutter/common/utils/responsive_utils.dart';
 import 'package:digipad_flutter/screens/features/visual_health/cubit/visual_health_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,53 +10,71 @@ class VisualHealthControlPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final cubit = context.read<VisualHealthCubit>();
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        border: Border(
-          top: BorderSide(color: Colors.grey.shade400),
-          left: BorderSide.none,
-          right: BorderSide.none,
-          bottom: BorderSide.none,
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          // GO BACK
-          _CircleIconButton(
-            icon: Icons.arrow_back_ios_new,
-            onPressed: () => Navigator.of(context).pop(),
-            size: 32,
-          ),
-          // PREVIOUS TEST
-          _CircleIconButton(
-            icon: Icons.skip_previous,
-            onPressed: cubit.previousTest,
-            size: 32,
-          ),
-          // RESET
-          _CircleIconButton(
-            icon: Icons.refresh,
-            onPressed: cubit.reset,
-            size: 60,
-            containerSize: 96,
-          ),
-          // NEXT TEST
-          _CircleIconButton(
-            icon: Icons.skip_next,
-            onPressed: cubit.nextTest,
-            size: 32,
-          ),
-          // HOME
-          _CircleIconButton(
-            icon: Icons.home,
-            onPressed: () => Navigator.of(context).pop(),
-            size: 32,
-          ),
-        ],
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return OrientationBuilder(
+          builder: (context, orientation) {
+            final responsive = context.responsive(constraints, orientation);
+
+            return Container(
+              padding: responsive.padding(
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(responsive.borderRadius(24)),
+                ),
+                border: Border(
+                  top: BorderSide(color: Colors.grey.shade400),
+                  left: BorderSide.none,
+                  right: BorderSide.none,
+                  bottom: BorderSide.none,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // GO BACK
+                  _CircleIconButton(
+                    icon: Icons.arrow_back_ios_new,
+                    onPressed: () => Navigator.of(context).pop(),
+                    size: responsive.controlPanelIconSize(32),
+                    containerSize: responsive.controlPanelContainerSize(64),
+                  ),
+                  // PREVIOUS TEST
+                  _CircleIconButton(
+                    icon: Icons.skip_previous,
+                    onPressed: cubit.previousTest,
+                    size: responsive.controlPanelIconSize(32),
+                    containerSize: responsive.controlPanelContainerSize(64),
+                  ),
+                  // RESET
+                  _CircleIconButton(
+                    icon: Icons.refresh,
+                    onPressed: cubit.reset,
+                    size: responsive.controlPanelIconSize(60),
+                    containerSize: responsive.controlPanelContainerSize(96),
+                  ),
+                  // NEXT TEST
+                  _CircleIconButton(
+                    icon: Icons.skip_next,
+                    onPressed: cubit.nextTest,
+                    size: responsive.controlPanelIconSize(32),
+                    containerSize: responsive.controlPanelContainerSize(64),
+                  ),
+                  // HOME
+                  _CircleIconButton(
+                    icon: Icons.home,
+                    onPressed: () => Navigator.of(context).pop(),
+                    size: responsive.controlPanelIconSize(32),
+                    containerSize: responsive.controlPanelContainerSize(64),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

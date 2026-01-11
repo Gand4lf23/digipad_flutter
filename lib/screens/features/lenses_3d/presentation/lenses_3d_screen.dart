@@ -1,3 +1,4 @@
+import 'package:digipad_flutter/common/utils/responsive_utils.dart';
 import 'package:digipad_flutter/screens/features/lenses_3d/cubit/lenses_3d_cubit.dart';
 import 'package:digipad_flutter/screens/features/lenses_3d/cubit/lenses_3d_state.dart';
 import 'package:digipad_flutter/screens/features/lenses_3d/widgets/lens_image_viewer.dart';
@@ -16,9 +17,24 @@ class Lenses3DScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: Colors.greenAccent.shade100,
         appBar: AppBar(
-          title: Text(
-            context.l10n.lensThicknessSimulator,
-            style: const TextStyle(fontWeight: FontWeight.bold),
+          title: LayoutBuilder(
+            builder: (context, constraints) {
+              return OrientationBuilder(
+                builder: (context, orientation) {
+                  final responsive = context.responsive(
+                    constraints,
+                    orientation,
+                  );
+                  return Text(
+                    context.l10n.lensThicknessSimulator,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: responsive.fontSize(20),
+                    ),
+                  );
+                },
+              );
+            },
           ),
           backgroundColor: Colors.greenAccent.shade200,
           elevation: 0,
@@ -31,11 +47,11 @@ class Lenses3DScreen extends StatelessWidget {
           builder: (context, state) {
             return Column(
               children: [
-                // Top section (40%): Detail view - zoomed in
+                // Top section: Detail view - zoomed in
                 Expanded(
-                  flex: 4,
+                  flex: 3,
                   child: Container(
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       border: Border(
                         bottom: BorderSide(color: Colors.white, width: 1),
                       ),
@@ -44,9 +60,9 @@ class Lenses3DScreen extends StatelessWidget {
                   ),
                 ),
 
-                // Middle section (30%): Full view - zoomed out
+                // Middle section: Full view - zoomed out
                 Expanded(
-                  flex: 3,
+                  flex: 2,
                   child: Container(
                     decoration: BoxDecoration(
                       border: Border(
@@ -60,8 +76,13 @@ class Lenses3DScreen extends StatelessWidget {
                   ),
                 ),
 
-                // Bottom section (30%): Control panel
-                const Expanded(flex: 3, child: Lenses3DControlPanel()),
+                // Bottom section: Control panel (scrollable for small screens)
+                Expanded(
+                  flex: 3,
+                  child: const SingleChildScrollView(
+                    child: Lenses3DControlPanel(),
+                  ),
+                ),
               ],
             );
           },
