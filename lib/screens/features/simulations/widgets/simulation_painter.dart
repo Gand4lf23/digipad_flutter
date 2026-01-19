@@ -12,11 +12,14 @@ class SimulationPainter extends CustomPainter {
   final Color? tintColor;
   final bool showFullCorrection;
   final BoxFit boxFit;
-  
+
   // Lens dragging mode parameters
   final bool isLensDraggingMode;
   final Offset lensPosition;
   final double lensRadius;
+
+  // Responsive parameters
+  final double fontSize;
 
   SimulationPainter({
     required this.problemImage,
@@ -30,6 +33,7 @@ class SimulationPainter extends CustomPainter {
     this.isLensDraggingMode = false,
     this.lensPosition = const Offset(200, 200),
     this.lensRadius = 100,
+    this.fontSize = 18,
   });
 
   @override
@@ -169,11 +173,11 @@ class SimulationPainter extends CustomPainter {
     }
 
     // Draw labels
-    _drawLabel(canvas, 'Without Lens', Offset(dividerX / 2, 40), size);
+    _drawLabel(canvas, 'Without Lens', Offset(dividerX / 2, 120), size);
     _drawLabel(
       canvas,
       'With Lens',
-      Offset(dividerX + (size.width - dividerX) / 2, 40),
+      Offset(dividerX + (size.width - dividerX) / 2, 120),
       size,
     );
   }
@@ -235,16 +239,11 @@ class SimulationPainter extends CustomPainter {
     }
 
     // Draw labels
-    _drawLabel(
-      canvas,
-      'Without Lens',
-      Offset(size.width / 2, dividerY / 2),
-      size,
-    );
+    _drawLabel(canvas, 'Without Lens', Offset(size.width / 2, 120), size);
     _drawLabel(
       canvas,
       'With Lens',
-      Offset(size.width / 2, dividerY + (size.height - dividerY) / 2),
+      Offset(size.width / 2, dividerY + 80),
       size,
     );
   }
@@ -263,19 +262,27 @@ class SimulationPainter extends CustomPainter {
 
     if (isVerticalDivider) {
       final x = size.width * dividerPosition;
+      // Only draw line in middle third of screen (from 1/3 to 2/3)
+      final lineStart = size.height / 3;
+      final lineEnd = size.height * 2 / 3;
+
       // Draw shadow
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), shadowPaint);
+      canvas.drawLine(Offset(x, lineStart), Offset(x, lineEnd), shadowPaint);
       // Draw line
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+      canvas.drawLine(Offset(x, lineStart), Offset(x, lineEnd), paint);
 
       // Draw draggable handle
       _drawHandle(canvas, Offset(x, size.height / 2), true);
     } else {
       final y = size.height * dividerPosition;
+      // Only draw line in middle third of screen (from 1/3 to 2/3)
+      final lineStart = size.width / 3;
+      final lineEnd = size.width * 2 / 3;
+
       // Draw shadow
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), shadowPaint);
+      canvas.drawLine(Offset(lineStart, y), Offset(lineEnd, y), shadowPaint);
       // Draw line
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+      canvas.drawLine(Offset(lineStart, y), Offset(lineEnd, y), paint);
 
       // Draw draggable handle
       _drawHandle(canvas, Offset(size.width / 2, y), false);
@@ -344,9 +351,9 @@ class SimulationPainter extends CustomPainter {
     final textPainter = TextPainter(
       text: TextSpan(
         text: text,
-        style: const TextStyle(
+        style: TextStyle(
           color: Colors.white,
-          fontSize: 22,
+          fontSize: fontSize + 4, // Slightly larger than base font
           fontWeight: FontWeight.bold,
           shadows: [
             Shadow(blurRadius: 8, color: Colors.black, offset: Offset(0, 2)),
@@ -368,11 +375,11 @@ class SimulationPainter extends CustomPainter {
 
   void _drawNoLensMessage(Canvas canvas, Size size) {
     final textPainter = TextPainter(
-      text: const TextSpan(
+      text: TextSpan(
         text: 'Select a lens to compare',
         style: TextStyle(
           color: Colors.white70,
-          fontSize: 18,
+          fontSize: fontSize,
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -415,10 +422,7 @@ class SimulationPainter extends CustomPainter {
 
     // Create circular clip for lens
     final lensPath = Path()
-      ..addOval(Rect.fromCircle(
-        center: lensPosition,
-        radius: lensRadius,
-      ));
+      ..addOval(Rect.fromCircle(center: lensPosition, radius: lensRadius));
 
     // Draw corrected image within the lens circle
     canvas.save();
@@ -471,10 +475,7 @@ class SimulationPainter extends CustomPainter {
       ..style = PaintingStyle.fill
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
 
-    final handleRect = Rect.fromCircle(
-      center: lensPosition,
-      radius: 20,
-    );
+    final handleRect = Rect.fromCircle(center: lensPosition, radius: 20);
     final handleRRect = RRect.fromRectAndRadius(
       handleRect,
       const Radius.circular(10),
@@ -495,7 +496,11 @@ class SimulationPainter extends CustomPainter {
     for (int i = -1; i <= 1; i++) {
       for (int j = -1; j <= 1; j++) {
         final offset = Offset(i * 4.0, j * 4.0);
-        canvas.drawCircle(lensPosition + offset, 1, gripPaint..style = PaintingStyle.fill);
+        canvas.drawCircle(
+          lensPosition + offset,
+          1,
+          gripPaint..style = PaintingStyle.fill,
+        );
       }
     }
   }
@@ -509,6 +514,7 @@ class SimulationPainter extends CustomPainter {
         oldDelegate.correctedImage != correctedImage ||
         oldDelegate.isLensDraggingMode != isLensDraggingMode ||
         oldDelegate.lensPosition != lensPosition ||
-        oldDelegate.lensRadius != lensRadius;
+        oldDelegate.lensRadius != lensRadius ||
+        oldDelegate.fontSize != fontSize;
   }
 }

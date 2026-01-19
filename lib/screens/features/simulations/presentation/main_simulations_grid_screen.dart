@@ -1,3 +1,5 @@
+import 'package:auto_size_text/auto_size_text.dart';
+import 'package:digipad_flutter/common/utils/responsive_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:digipad_flutter/l10n/l10n.dart';
@@ -46,75 +48,101 @@ class _SimulationsGridView extends StatelessWidget {
 
   Widget _buildAppBar(BuildContext context, SimulationsState state) {
     return SliverAppBar(
-      expandedHeight: 180,
+      expandedHeight: 80,
       floating: false,
       pinned: true,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new),
-        onPressed: () {
-          if (state.selectedCategory != null) {
-            context.read<SimulationsCubit>().goToCategories();
-          } else {
-            Navigator.pop(context);
-          }
+      leading: LayoutBuilder(
+        builder: (context, constraints) {
+          return OrientationBuilder(
+            builder: (context, orientation) {
+              final responsive = context.responsive(constraints, orientation);
+              return IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios_new,
+                  size: responsive.iconSize(24),
+                ),
+                onPressed: () {
+                  if (state.selectedCategory != null) {
+                    context.read<SimulationsCubit>().goToCategories();
+                  } else {
+                    Navigator.pop(context);
+                  }
+                },
+              );
+            },
+          );
         },
       ),
-      flexibleSpace: FlexibleSpaceBar(
-        title: Text(
-          state.selectedCategory == null
-              ? context.l10n.lensSimulatorTitle
-              : SimulationStrings.categoryName(
-                  context,
-                  state.selectedCategory!,
-                ),
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-            shadows: [Shadow(blurRadius: 8, color: Colors.black54)],
-          ),
-        ),
-        background: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Theme.of(context).primaryColor,
-                Theme.of(context).primaryColor.withOpacity(0.7),
-                Colors.deepPurple.shade700,
-              ],
-            ),
-          ),
-          child: Stack(
-            children: [
-              Positioned(
-                right: -30,
-                top: 20,
-                child: Icon(
-                  Icons.visibility_outlined,
-                  size: 150,
-                  color: Colors.white.withOpacity(0.1),
-                ),
-              ),
-              if (state.selectedCategory != null)
-                Positioned(
-                  left: 20,
-                  bottom: 60,
-                  right: 20,
-                  child: Text(
-                    SimulationStrings.categoryDescription(
-                      context,
-                      state.selectedCategory!,
-                    ),
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 16,
-                    ),
+      flexibleSpace: LayoutBuilder(
+        builder: (context, constraints) {
+          return OrientationBuilder(
+            builder: (context, orientation) {
+              final responsive = context.responsive(constraints, orientation);
+
+              return FlexibleSpaceBar(
+                title: Text(
+                  state.selectedCategory == null
+                      ? context.l10n.lensSimulatorTitle
+                      : SimulationStrings.categoryName(
+                          context,
+                          state.selectedCategory!,
+                        ),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: responsive.fontSize(22),
+                    shadows: const [
+                      Shadow(blurRadius: 8, color: Colors.black54),
+                    ],
                   ),
                 ),
-            ],
-          ),
-        ),
+                background: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Theme.of(context).primaryColor,
+                        Theme.of(context).primaryColor.withOpacity(0.7),
+                        Colors.deepPurple.shade700,
+                      ],
+                    ),
+                  ),
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        right: -30,
+                        top: 20,
+                        child: Icon(
+                          Icons.visibility_outlined,
+                          size: 150,
+                          color: Colors.white.withOpacity(0.1),
+                        ),
+                      ),
+                      if (state.selectedCategory != null)
+                        Positioned(
+                          left: 20,
+                          bottom: 60,
+                          right: 20,
+                          child: Text(
+                            SimulationStrings.categoryDescription(
+                              context,
+                              state.selectedCategory!,
+                            ),
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: responsive.fontSize(16),
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }
@@ -143,16 +171,25 @@ class _SimulationsGridView extends StatelessWidget {
   }
 
   Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-          color: Colors.black87,
-        ),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return OrientationBuilder(
+          builder: (context, orientation) {
+            final responsive = context.responsive(constraints, orientation);
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: responsive.fontSize(24),
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -160,15 +197,18 @@ class _SimulationsGridView extends StatelessWidget {
     BuildContext context,
     List<SimulationCategory> categories,
   ) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isPhone = screenWidth < 600;
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3, // 3 options per row
-        childAspectRatio: 0.85, // Taller to fit large text
-        crossAxisSpacing: 16, // Increased spacing
-        mainAxisSpacing: 16,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: isPhone ? 2 : 3,
+        childAspectRatio: 0.85,
+        crossAxisSpacing: isPhone ? 12 : 16,
+        mainAxisSpacing: isPhone ? 12 : 16,
       ),
       itemCount: categories.length,
       itemBuilder: (context, index) {
@@ -184,14 +224,17 @@ class _SimulationsGridView extends StatelessWidget {
   }
 
   Widget _buildScenarioGrid(BuildContext context, SimulationCategory category) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isPhone = screenWidth < 600;
+
     return SliverPadding(
       padding: const EdgeInsets.all(16),
       sliver: SliverGrid(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 0.75, // Taller
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: isPhone ? 1 : 2,
+          childAspectRatio: isPhone ? 1.2 : 0.75,
+          crossAxisSpacing: isPhone ? 12 : 16,
+          mainAxisSpacing: isPhone ? 12 : 16,
         ),
         delegate: SliverChildBuilderDelegate((context, index) {
           final scenario = category.scenarios[index];
@@ -283,6 +326,9 @@ class _CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isPhone = screenWidth < 600;
+
     return Material(
       elevation: 4,
       borderRadius: BorderRadius.circular(16),
@@ -309,23 +355,30 @@ class _CategoryCard extends StatelessWidget {
                     color: _iconColor.withOpacity(0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(_icon, size: 60, color: _iconColor),
+                  child: Icon(
+                    _icon,
+                    size: isPhone ? 32 : 90,
+                    color: _iconColor,
+                  ),
                 ),
                 const SizedBox(height: 12),
-                Text(
+                AutoSizeText(
                   SimulationStrings.categoryName(context, category),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 30,
+                  style: TextStyle(
+                    fontSize: isPhone ? 16 : 40,
                     fontWeight: FontWeight.w600,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  minFontSize: 10,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  context.l10n.scenesCount(category.scenarios.length),
-                  style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
+                  '${category.scenarios.length} scenes',
+                  style: TextStyle(
+                    fontSize: isPhone ? 11 : 22,
+                    color: Colors.grey.shade600,
+                  ),
                 ),
               ],
             ),
@@ -350,6 +403,9 @@ class _ScenarioCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isPhone = screenWidth < 600;
+
     return Material(
       elevation: 4,
       borderRadius: BorderRadius.circular(16),
@@ -376,7 +432,6 @@ class _ScenarioCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // Gradient overlay
                   Positioned(
                     bottom: 0,
                     left: 0,
@@ -395,7 +450,6 @@ class _ScenarioCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // Blur effect indicator
                   Positioned(
                     top: 8,
                     right: 8,
@@ -429,14 +483,14 @@ class _ScenarioCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
+                    AutoSizeText(
                       SimulationStrings.scenarioName(context, scenario),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 28,
+                        fontSize: isPhone ? 18 : 36,
                       ),
                       maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      minFontSize: 12,
                     ),
                     const SizedBox(height: 6),
                     Text(
@@ -444,7 +498,7 @@ class _ScenarioCard extends StatelessWidget {
                         scenario.correctionLenses.length,
                       ),
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: isPhone ? 12 : 22,
                         color: Colors.grey.shade600,
                       ),
                     ),
@@ -466,13 +520,15 @@ class _ScenarioCard extends StatelessWidget {
                                 ).withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: Text(
-                                _localizedLensName(context, lens),
+                              child: AutoSizeText(
+                                SimulationStrings.lensName(context, lens),
                                 style: TextStyle(
-                                  fontSize: 22,
+                                  fontSize: isPhone ? 13 : 28,
                                   color: _getLensColor(lens.quality),
                                   fontWeight: FontWeight.w500,
                                 ),
+                                maxLines: 1,
+                                minFontSize: 9,
                               ),
                             ),
                           )
@@ -499,10 +555,5 @@ class _ScenarioCard extends StatelessWidget {
       case LensQuality.premium:
         return Colors.amber.shade700;
     }
-  }
-
-
-  String _localizedLensName(BuildContext context, CorrectionLens lens) {
-    return SimulationStrings.lensName(context, lens);
   }
 }

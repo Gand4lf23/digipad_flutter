@@ -1,3 +1,4 @@
+import 'package:digipad_flutter/common/utils/responsive_utils.dart';
 import 'package:digipad_flutter/screens/features/lenses_3d/cubit/lenses_3d_cubit.dart';
 import 'package:digipad_flutter/screens/features/lenses_3d/cubit/lenses_3d_state.dart';
 import 'package:flutter/material.dart';
@@ -9,58 +10,139 @@ class Lenses3DControlPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<Lenses3DCubit, Lenses3DState>(
-      builder: (context, state) {
-        final cubit = context.read<Lenses3DCubit>();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return OrientationBuilder(
+          builder: (context, orientation) {
+            final responsive = context.responsive(constraints, orientation);
 
-        return Container(
-          color: Colors.grey.shade900,
-          padding: const EdgeInsets.all(16),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Title
-                Text(
-                  context.l10n.lensConfiguration,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
+            // Determine if we have enough width to show the 3 controls in a Row
+            // or if we should stack them in a Column (Mobile Portrait)
+            final isLandscapeOrWide = constraints.maxWidth > 600;
+
+            return BlocBuilder<Lenses3DCubit, Lenses3DState>(
+              builder: (context, state) {
+                final cubit = context.read<Lenses3DCubit>();
+
+                return Container(
+                  color: Colors.grey.shade900,
+                  // Use responsive padding
+                  padding: responsive.padding(const EdgeInsets.all(16)),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Title
+                        Text(
+                          context.l10n.lensConfiguration,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: responsive.value(
+                              mobile: 18,
+                              tablet: 22,
+                              desktop: 24,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: responsive.spacing(12)),
+
+                        // Main Controls: Material, Prescription, Frame
+                        // We use a Flex to switch between Row (Wide) and Column (Narrow)
+                        Flex(
+                          direction: isLandscapeOrWide
+                              ? Axis.horizontal
+                              : Axis.vertical,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Material Index
+                            if (isLandscapeOrWide)
+                              Expanded(
+                                child: _buildMaterialSelector(
+                                  context,
+                                  state,
+                                  cubit,
+                                  responsive,
+                                ),
+                              )
+                            else
+                              _buildMaterialSelector(
+                                context,
+                                state,
+                                cubit,
+                                responsive,
+                              ),
+
+                            SizedBox(
+                              width: responsive.spacing(12),
+                              height: isLandscapeOrWide
+                                  ? 0
+                                  : responsive.spacing(12),
+                            ),
+
+                            // Prescription
+                            if (isLandscapeOrWide)
+                              Expanded(
+                                child: _buildPrescriptionControl(
+                                  context,
+                                  state,
+                                  cubit,
+                                  responsive,
+                                ),
+                              )
+                            else
+                              _buildPrescriptionControl(
+                                context,
+                                state,
+                                cubit,
+                                responsive,
+                              ),
+
+                            SizedBox(
+                              width: responsive.spacing(12),
+                              height: isLandscapeOrWide
+                                  ? 0
+                                  : responsive.spacing(12),
+                            ),
+
+                            // Frame Type
+                            if (isLandscapeOrWide)
+                              Expanded(
+                                child: _buildFrameSelector(
+                                  context,
+                                  state,
+                                  cubit,
+                                  responsive,
+                                ),
+                              )
+                            else
+                              _buildFrameSelector(
+                                context,
+                                state,
+                                cubit,
+                                responsive,
+                              ),
+                          ],
+                        ),
+
+                        SizedBox(height: responsive.spacing(12)),
+                        const Divider(color: Colors.white24, height: 1),
+                        SizedBox(height: responsive.spacing(12)),
+
+                        // Orientation Control (Full Width)
+                        _buildOrientationControl(
+                          context,
+                          state,
+                          cubit,
+                          responsive,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-
-                // Material Index + Prescription + Frame in a Row
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Material Index
-                    Expanded(
-                      child: _buildMaterialSelector(context, state, cubit),
-                    ),
-                    const SizedBox(width: 12),
-
-                    // Prescription
-                    Expanded(
-                      child: _buildPrescriptionControl(context, state, cubit),
-                    ),
-                    const SizedBox(width: 12),
-
-                    // Frame Type
-                    Expanded(child: _buildFrameSelector(context, state, cubit)),
-                  ],
-                ),
-
-                const SizedBox(height: 12),
-                const Divider(color: Colors.white24, height: 1),
-                const SizedBox(height: 12),
-
-                // Orientation Control (Full Width)
-                _buildOrientationControl(context, state, cubit),
-              ],
-            ),
-          ),
+                );
+              },
+            );
+          },
         );
       },
     );
@@ -70,6 +152,7 @@ class Lenses3DControlPanel extends StatelessWidget {
     BuildContext context,
     Lenses3DState state,
     Lenses3DCubit cubit,
+    ResponsiveUtils responsive,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,6 +211,7 @@ class Lenses3DControlPanel extends StatelessWidget {
     BuildContext context,
     Lenses3DState state,
     Lenses3DCubit cubit,
+    ResponsiveUtils responsive,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,7 +227,8 @@ class Lenses3DControlPanel extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment:
+              MainAxisAlignment.center, // Kept specific centering from HEAD
           children: [
             _buildCircleButton(
               icon: Icons.remove,
@@ -204,6 +289,7 @@ class Lenses3DControlPanel extends StatelessWidget {
     BuildContext context,
     Lenses3DState state,
     Lenses3DCubit cubit,
+    ResponsiveUtils responsive,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -262,8 +348,10 @@ class Lenses3DControlPanel extends StatelessWidget {
     BuildContext context,
     Lenses3DState state,
     Lenses3DCubit cubit,
+    ResponsiveUtils responsive,
   ) {
-    final angles = LensOrientation.values.map((o) => o.angle).toList()..sort();
+    // Note: angles usage logic was removed in HEAD body but existed in definition
+    // Keeping logic consistent with HEAD display
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -340,7 +428,7 @@ class Lenses3DControlPanel extends StatelessWidget {
           padding: const EdgeInsets.only(top: 2),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
+            children: const [
               Text(
                 'Lateral',
                 style: TextStyle(color: Colors.white54, fontSize: 9),

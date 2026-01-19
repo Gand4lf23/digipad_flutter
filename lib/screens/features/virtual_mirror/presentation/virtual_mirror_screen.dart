@@ -1,3 +1,4 @@
+import 'package:digipad_flutter/common/utils/responsive_utils.dart';
 import 'package:digipad_flutter/screens/features/virtual_mirror/cubit/virtual_mirror_cubit.dart';
 import 'package:digipad_flutter/screens/features/virtual_mirror/cubit/virtual_mirror_state.dart';
 import 'package:digipad_flutter/screens/features/virtual_mirror/widgets/control_panel.dart';
@@ -26,75 +27,131 @@ class _VirtualMirrorScreenState extends State<VirtualMirrorScreen> {
     return Scaffold(
       backgroundColor: Colors.grey.shade900,
       body: SafeArea(
-        child: Column(
-          children: [
-            BlocBuilder<VirtualMirrorCubit, VirtualMirrorState>(
-              builder: (context, state) {
-                if (state.galleryImages.isEmpty) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    child: Card(
-                      color: Colors.grey.shade900,
-                      elevation: 1,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(color: Colors.grey.shade600, width: 1),
-                      ),
-                      child: SizedBox(
-                        height: 250,
-                        child: Center(
-                          child: Text(
-                            textAlign: TextAlign.center,
-                            context.l10n.vmNoImages,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return OrientationBuilder(
+              builder: (context, orientation) {
+                final responsive = context.responsive(constraints, orientation);
+
+                return Column(
+                  children: [
+                    // Gallery section
+                    BlocBuilder<VirtualMirrorCubit, VirtualMirrorState>(
+                      builder: (context, state) {
+                        if (state.galleryImages.isEmpty) {
+                          return Padding(
+                            padding: responsive.padding(
+                              const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
                             ),
-                          ),
+                            child: Card(
+                              color: Colors.grey.shade900,
+                              elevation: 1,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  responsive.borderRadius(16),
+                                ),
+                                side: BorderSide(
+                                  color: Colors.grey.shade600,
+                                  width: 1,
+                                ),
+                              ),
+                              child: SizedBox(
+                                height: responsive.isPhone ? 150 : 250,
+                                child: Center(
+                                  child: Text(
+                                    textAlign: TextAlign.center,
+                                    'No images loaded yet. \nCapture one or select from your gallery to get started!',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: responsive.fontSize(24),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+
+                        return GallerySection(gallery: state.galleryImages);
+                      },
+                    ),
+
+                    // Title
+                    Padding(
+                      padding: responsive.padding(
+                        const EdgeInsets.symmetric(vertical: 8),
+                      ),
+                      child: Text(
+                        'Drag and drop photos',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: responsive.fontSize(38),
                         ),
                       ),
                     ),
-                  );
-                }
 
-                return GallerySection(gallery: state.galleryImages);
+                    // Image comparison area - horizontal on tablets, vertical on phones
+                    Expanded(
+                      child: responsive.shouldUseSideBySideLayout
+                          ? Row(
+                              children: [
+                                const Expanded(
+                                  child: ImageDropZone(
+                                    side: DropSide.left,
+                                    showEmptyMessage: true,
+                                  ),
+                                ),
+                                VerticalDivider(
+                                  indent: responsive.spacing(20),
+                                  endIndent: responsive.spacing(20),
+                                  width: 8,
+                                  color: Colors.grey.shade400,
+                                  thickness: 3,
+                                ),
+                                const Expanded(
+                                  child: ImageDropZone(
+                                    side: DropSide.right,
+                                    showEmptyMessage: true,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Column(
+                              children: [
+                                const Expanded(
+                                  child: ImageDropZone(
+                                    side: DropSide.left,
+                                    showEmptyMessage: true,
+                                  ),
+                                ),
+                                Divider(
+                                  indent: responsive.spacing(20),
+                                  endIndent: responsive.spacing(20),
+                                  height: 8,
+                                  color: Colors.grey.shade400,
+                                  thickness: 3,
+                                ),
+                                const Expanded(
+                                  child: ImageDropZone(
+                                    side: DropSide.right,
+                                    showEmptyMessage: true,
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+
+                    // Control panel
+                    const ControlPanel(),
+                  ],
+                );
               },
-            ),
-            Text(
-              context.l10n.vmDragAndDrop,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white, fontSize: 38),
-            ),
-            Expanded(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: ImageDropZone(
-                      side: DropSide.left,
-                      showEmptyMessage: true,
-                    ),
-                  ),
-                  VerticalDivider(
-                    indent: 100,
-                    endIndent: 100,
-                    width: 8,
-                    color: Colors.grey.shade400,
-                    thickness: 3,
-                  ),
-                  Expanded(
-                    child: ImageDropZone(
-                      side: DropSide.right,
-                      showEmptyMessage: true,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const ControlPanel(),
-          ],
+            );
+          },
         ),
       ),
     );

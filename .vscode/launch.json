@@ -1,0 +1,38 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "digipad-1 (emulator-5554)",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "emulator-5554"
+        },
+        {
+            "name": "digipad-1 (emulator-5556)",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "emulator-5556"
+        },
+        {
+            "name": "digipad-1 (profile mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "digipad-1 (release mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "digipad-1 on both emulators",
+            "configurations": [
+                "digipad-1 (emulator-5554)",
+                "digipad-1 (emulator-5556)"
+            ]
+        }
+    ]
+}

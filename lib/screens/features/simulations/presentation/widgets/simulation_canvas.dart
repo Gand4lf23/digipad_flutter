@@ -1,4 +1,5 @@
 import 'dart:ui' as ui;
+import 'package:digipad_flutter/common/utils/responsive_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -42,89 +43,100 @@ class _SimulationCanvasState extends State<SimulationCanvas> {
     final isMultifocal = widget.category.id == 'multifocal';
     final isLensMode = widget.state.isLensDraggingMode;
 
-    return GestureDetector(
-      onPanStart: isMultifocal
-          ? null
-          : (details) {
-              if (isLensMode) {
-                // Lens dragging mode
-                widget.onLensDragStart?.call(details.localPosition);
-              } else {
-                // Divider mode
-                setState(() {
-                  _draggingPosition = _calculateDividerPosition(
-                    details.localPosition,
-                  );
-                });
-                context.read<SimulationsCubit>().setDragging(true);
-              }
-            },
-      onPanUpdate: isMultifocal
-          ? null
-          : (details) {
-              if (isLensMode) {
-                // Lens dragging mode
-                widget.onLensDragUpdate?.call(details.localPosition);
-              } else {
-                // Divider mode
-                setState(() {
-                  _draggingPosition = _calculateDividerPosition(
-                    details.localPosition,
-                  );
-                });
-              }
-            },
-      onPanEnd: isMultifocal
-          ? null
-          : (_) {
-              if (isLensMode) {
-                // Lens dragging mode
-                widget.onLensDragEnd?.call();
-              } else {
-                // Divider mode
-                if (_draggingPosition != null) {
-                  context.read<SimulationsCubit>().moveDivider(
-                    _draggingPosition!,
-                  );
-                }
-                context.read<SimulationsCubit>().setDragging(false);
-                setState(() {
-                  _draggingPosition = null;
-                });
-              }
-            },
-      child: RepaintBoundary(
-        child: CustomPaint(
-          size: Size.infinite,
-          painter: SimulationPainter(
-            problemImage: widget.problemImage,
-            correctedImage: widget.correctedImage,
-            dividerPosition: dividerPos,
-            isVerticalDivider: widget.state.isVerticalDivider,
-            tintColor: widget.currentLens?.tintColor,
-            lensOpacity: widget.state.lensOpacity,
-            showFullCorrection: isMultifocal,
-            boxFit: BoxFit.contain,
-            // Lens dragging specific parameters
-            isLensDraggingMode: widget.state.isLensDraggingMode,
-            lensPosition: widget.state.lensPosition,
-            lensRadius: widget.state.lensRadius,
-          ),
-        ),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return OrientationBuilder(
+          builder: (context, orientation) {
+            final responsive = context.responsive(constraints, orientation);
+
+            return GestureDetector(
+              onPanStart: isMultifocal
+                  ? null
+                  : (details) {
+                      if (isLensMode) {
+                        // Lens dragging mode (HEAD Feature)
+                        widget.onLensDragStart?.call(details.localPosition);
+                      } else {
+                        // Divider mode (Responsive Calc)
+                        setState(() {
+                          _draggingPosition = _calculateDividerPosition(
+                            details.localPosition,
+                            constraints.biggest,
+                          );
+                        });
+                        context.read<SimulationsCubit>().setDragging(true);
+                      }
+                    },
+              onPanUpdate: isMultifocal
+                  ? null
+                  : (details) {
+                      if (isLensMode) {
+                        // Lens dragging mode
+                        widget.onLensDragUpdate?.call(details.localPosition);
+                      } else {
+                        // Divider mode
+                        setState(() {
+                          _draggingPosition = _calculateDividerPosition(
+                            details.localPosition,
+                            constraints.biggest,
+                          );
+                        });
+                      }
+                    },
+              onPanEnd: isMultifocal
+                  ? null
+                  : (_) {
+                      if (isLensMode) {
+                        // Lens dragging mode
+                        widget.onLensDragEnd?.call();
+                      } else {
+                        // Divider mode
+                        if (_draggingPosition != null) {
+                          context.read<SimulationsCubit>().moveDivider(
+                            _draggingPosition!,
+                          );
+                        }
+                        context.read<SimulationsCubit>().setDragging(false);
+                        setState(() {
+                          _draggingPosition = null;
+                        });
+                      }
+                    },
+              child: RepaintBoundary(
+                child: CustomPaint(
+                  size: Size.infinite,
+                  painter: SimulationPainter(
+                    problemImage: widget.problemImage,
+                    correctedImage: widget.correctedImage,
+                    dividerPosition: dividerPos,
+                    isVerticalDivider: widget.state.isVerticalDivider,
+                    tintColor: widget.currentLens?.tintColor,
+                    lensOpacity: widget.state.lensOpacity,
+                    showFullCorrection: isMultifocal,
+                    boxFit: BoxFit.contain,
+                    // Lens dragging specific parameters (HEAD)
+                    isLensDraggingMode: widget.state.isLensDraggingMode,
+                    lensPosition: widget.state.lensPosition,
+                    lensRadius: widget.state.lensRadius,
+                    // Responsive text size (Responsive)
+                    fontSize: responsive.fontSize(18),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
-  double _calculateDividerPosition(Offset localPosition) {
-    final size = context.size;
-    if (size == null) return widget.state.dividerPosition;
-
+  double _calculateDividerPosition(Offset localPosition, Size canvasSize) {
     if (widget.state.isVerticalDivider) {
-      // Vertical divider - calculate X position
-      return (localPosition.dx / size.width).clamp(0.0, 1.0);
+      // Vertical divider - calculate X position (full range 0-100%)
+      return (localPosition.dx / canvasSize.width).clamp(0.0, 1.0);
     } else {
-      // Horizontal divider - calculate Y position
-      return (localPosition.dy / size.height).clamp(0.0, 1.0);
+      // Horizontal divider - calculate Y position (full range 0-100%)
+      return (localPosition.dy / canvasSize.height).clamp(0.0, 1.0);
     }
   }
 }
