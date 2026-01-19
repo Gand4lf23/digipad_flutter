@@ -60,7 +60,7 @@ class Lenses3DScreen extends StatelessWidget {
                   ),
                 ),
 
-                // Bottom section (30%): Control panel
+                // Bottom section (30%): Control panel WITH ORIENTATION
                 const Expanded(flex: 3, child: Lenses3DControlPanel()),
               ],
             );

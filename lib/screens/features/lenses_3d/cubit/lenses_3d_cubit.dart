@@ -52,6 +52,20 @@ class Lenses3DCubit extends Cubit<Lenses3DState> {
     emit(state.copyWith(frameType: frameType));
   }
 
+  /// Update the orientation/angle.
+  void updateOrientation(LensOrientation orientation) {
+    emit(state.copyWith(orientation: orientation));
+  }
+
+  /// Update orientation by angle value (for slider).
+  void updateOrientationByAngle(int angle) {
+    final orientation = LensOrientation.values.firstWhere(
+      (o) => o.angle == angle,
+      orElse: () => LensOrientation.angle15, // Default to front
+    );
+    emit(state.copyWith(orientation: orientation));
+  }
+
   /// Set loading state.
   void setLoading(bool isLoading) {
     emit(state.copyWith(isLoading: isLoading));

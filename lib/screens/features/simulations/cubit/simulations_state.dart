@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 import '../models/simulation_scenario.dart';
 
 /// State for the simulations feature.
@@ -25,6 +27,15 @@ class SimulationsState {
   /// Whether the user is currently dragging the divider.
   final bool isDragging;
 
+  /// Position of the draggable lens (for lens dragging mode).
+  final Offset lensPosition;
+
+  /// Radius of the draggable lens.
+  final double lensRadius;
+
+  /// Whether we're in lens dragging mode (true) or divider mode (false).
+  final bool isLensDraggingMode;
+
   /// Loading state for images.
   final bool isLoading;
 
@@ -39,6 +50,9 @@ class SimulationsState {
     this.isVerticalDivider = true, // Default to vertical divider
     this.lensOpacity = 0.5,
     this.isDragging = false,
+    this.lensPosition = const Offset(200, 200), // Default lens position
+    this.lensRadius = 100, // Default lens radius
+    this.isLensDraggingMode = false, // Default to divider mode
     this.isLoading = false,
     this.errorMessage,
   });
@@ -76,6 +90,9 @@ class SimulationsState {
     bool? isVerticalDivider,
     double? lensOpacity,
     bool? isDragging,
+    Offset? lensPosition,
+    double? lensRadius,
+    bool? isLensDraggingMode,
     bool? isLoading,
     String? errorMessage,
     bool clearLens = false,
@@ -92,6 +109,9 @@ class SimulationsState {
       isVerticalDivider: isVerticalDivider ?? this.isVerticalDivider,
       lensOpacity: lensOpacity ?? this.lensOpacity,
       isDragging: isDragging ?? this.isDragging,
+      lensPosition: lensPosition ?? this.lensPosition,
+      lensRadius: lensRadius ?? this.lensRadius,
+      isLensDraggingMode: isLensDraggingMode ?? this.isLensDraggingMode,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );

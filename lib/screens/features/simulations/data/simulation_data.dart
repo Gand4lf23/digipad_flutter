@@ -13,14 +13,17 @@ class SimulationData {
   static final List<SimulationCategory> categories = [
     _myopiaCategory,
     _multifocalCategory,
-    //_presbyopiaCategory,
+    _presbyopiaCategory,
     _bifocalCategory,
     _polarizedCategory,
     _antiReflexCategory,
-    //_driveCategory, // Hidden for now
+    _driveCategory,
     _photochromicCategory,
     _solarCategory,
     _tintCategory,
+    _blueFilterCategory,
+    _asphericCategory,
+    _drivewearCategory,
   ];
 
   // ===================== MYOPIA (with Monofocal lenses) =====================
@@ -260,7 +263,7 @@ class SimulationData {
     ],
   );
 
-  /*// ===================== PRESBYOPIA =====================
+  // ===================== PRESBYOPIA =====================
   static final SimulationCategory _presbyopiaCategory = SimulationCategory(
     id: 'presbyopia',
     name: 'presbyopia',
@@ -314,7 +317,7 @@ class SimulationData {
         ],
       ),
     ],
-  );*/
+  );
 
   // ===================== BIFOCAL =====================
   static final SimulationCategory _bifocalCategory = SimulationCategory(
@@ -921,12 +924,12 @@ class SimulationData {
     ],
   );
 
-  // ===================== PHOTOCHROMIC =====================
+  // ===================== PHOTOCHROMIC (FOTOCROMÁTICO) =====================
   static final SimulationCategory _photochromicCategory = SimulationCategory(
     id: 'photochromic',
-    name: 'photochromic',
-    displayName: 'Photochromic',
-    description: 'Lenses that adapt to light conditions',
+    name: 'fotocromático',
+    displayName: 'Fotocromático',
+    description: 'Lentes que se adaptan a las condiciones de luz',
     scenarios: [
       // Indoor (Optic)
       SimulationScenario(
@@ -1044,27 +1047,28 @@ class SimulationData {
     id: 'solar',
     name: 'solar',
     displayName: 'Solar',
-    description: 'Sun protection with anti-reflective coating',
+    description:
+        'Sun protection lenses with and without anti-reflective coating',
     scenarios: [
-      // Beach
+      // Beach - Without Solar vs With Solar
       SimulationScenario(
-        id: 'solar_beach',
+        id: 'solar_beach_no_ar',
         sceneName: 'beach',
         displayName: 'Beach',
         problemImagePath: '$_basePath/solar/solar_beach_without.webp',
         correctionLenses: [
           CorrectionLens(
-            id: 'solar_beach_ar',
-            name: 'anti_reflective',
-            displayName: 'With AR',
+            id: 'solar_beach_solar',
+            name: 'solar',
+            displayName: 'With Solar',
             correctedImagePath: '$_basePath/solar/solar_beach_withAr.webp',
-            quality: LensQuality.premium,
+            quality: LensQuality.standard,
           ),
         ],
       ),
-      // Beach 2
+      // Beach 2 - Solar vs Solar + AR
       SimulationScenario(
-        id: 'solar_beach2',
+        id: 'solar_beach_ar',
         sceneName: 'beach2',
         displayName: 'Beach 2',
         problemImagePath: '$_basePath/solar/solar_beach2_without.webp',
@@ -1078,115 +1082,123 @@ class SimulationData {
           ),
         ],
       ),
-      // Car
+      // Car - Without Solar vs With Solar
       SimulationScenario(
-        id: 'solar_car',
+        id: 'solar_car_no_ar',
         sceneName: 'car',
         displayName: 'Car',
         problemImagePath: '$_basePath/solar/solar_car_without.webp',
         correctionLenses: [
           CorrectionLens(
-            id: 'solar_car_ar',
-            name: 'anti_reflective',
-            displayName: 'With AR',
+            id: 'solar_car_solar',
+            name: 'solar',
+            displayName: 'With Solar',
             correctedImagePath: '$_basePath/solar/solar_car_withAr.webp',
-            quality: LensQuality.premium,
+            quality: LensQuality.standard,
           ),
         ],
       ),
-      // Driving
+      // Driving - Without Solar vs With Solar
       SimulationScenario(
-        id: 'solar_driving',
+        id: 'solar_driving_no_ar',
         sceneName: 'driving',
         displayName: 'Driving',
         problemImagePath: '$_basePath/solar/solar_driving_without.webp',
         correctionLenses: [
           CorrectionLens(
-            id: 'solar_driving_ar',
-            name: 'anti_reflective',
-            displayName: 'With AR',
-            correctedImagePath: '$_basePath/solar/solar_driving_withAr.webp',
-            quality: LensQuality.premium,
+            id: 'solar_driving_solar',
+            name: 'solar',
+            displayName: 'With Solar',
+            correctedImagePath:
+                '$_basePath/simulation/solar/solar_driving_withAr.webp',
+            quality: LensQuality.standard,
           ),
         ],
       ),
-      // Golf
+      // Golf - Without Solar vs With Solar
       SimulationScenario(
-        id: 'solar_golf',
+        id: 'solar_golf_no_ar',
         sceneName: 'golf',
         displayName: 'Golf',
-        problemImagePath: '$_basePath/solar/solar_golf_without.webp',
+        problemImagePath: '$_basePath/simulation/solar/solar_golf_without.webp',
         correctionLenses: [
           CorrectionLens(
-            id: 'solar_golf_ar',
-            name: 'anti_reflective',
-            displayName: 'With AR',
-            correctedImagePath: '$_basePath/solar/solar_golf_withAr.webp',
-            quality: LensQuality.premium,
+            id: 'solar_golf_solar',
+            name: 'solar',
+            displayName: 'With Solar',
+            correctedImagePath:
+                '$_basePath/simulation/solar/solar_golf_withAr.webp',
+            quality: LensQuality.standard,
           ),
         ],
       ),
-      // Lake
+      // Lake - Without Solar vs With Solar
       SimulationScenario(
-        id: 'solar_lake',
+        id: 'solar_lake_no_ar',
         sceneName: 'lake',
         displayName: 'Lake',
-        problemImagePath: '$_basePath/solar/solar_lake_without.webp',
+        problemImagePath: '$_basePath/simulation/solar/solar_lake_without.webp',
         correctionLenses: [
           CorrectionLens(
-            id: 'solar_lake_ar',
-            name: 'anti_reflective',
-            displayName: 'With AR',
-            correctedImagePath: '$_basePath/solar/solar_lake_withAr.webp',
-            quality: LensQuality.premium,
+            id: 'solar_lake_solar',
+            name: 'solar',
+            displayName: 'With Solar',
+            correctedImagePath:
+                '$_basePath/simulation/solar/solar_lake_withAr.webp',
+            quality: LensQuality.standard,
           ),
         ],
       ),
-      // Motorcycle
+      // Motorcycle - Without Solar vs With Solar
       SimulationScenario(
-        id: 'solar_moto',
+        id: 'solar_moto_no_ar',
         sceneName: 'motorcycle',
         displayName: 'Motorcycle',
-        problemImagePath: '$_basePath/solar/solar_moto_without.webp',
+        problemImagePath: '$_basePath/simulation/solar/solar_moto_without.webp',
         correctionLenses: [
           CorrectionLens(
-            id: 'solar_moto_ar',
-            name: 'anti_reflective',
-            displayName: 'With AR',
-            correctedImagePath: '$_basePath/solar/solar_moto_withAr.webp',
-            quality: LensQuality.premium,
+            id: 'solar_moto_solar',
+            name: 'solar',
+            displayName: 'With Solar',
+            correctedImagePath:
+                '$_basePath/simulation/solar/solar_moto_withAr.webp',
+            quality: LensQuality.standard,
           ),
         ],
       ),
-      // Tennis
+      // Tennis - Without Solar vs With Solar
       SimulationScenario(
-        id: 'solar_tennis',
+        id: 'solar_tennis_no_ar',
         sceneName: 'tennis',
         displayName: 'Tennis',
-        problemImagePath: '$_basePath/solar/solar_tennis_without.webp',
+        problemImagePath:
+            '$_basePath/simulation/solar/solar_tennis_without.webp',
         correctionLenses: [
           CorrectionLens(
-            id: 'solar_tennis_ar',
-            name: 'anti_reflective',
-            displayName: 'With AR',
-            correctedImagePath: '$_basePath/solar/solar_tennis_withAr.webp',
-            quality: LensQuality.premium,
+            id: 'solar_tennis_solar',
+            name: 'solar',
+            displayName: 'With Solar',
+            correctedImagePath:
+                '$_basePath/simulation/solar/solar_tennis_withAr.webp',
+            quality: LensQuality.standard,
           ),
         ],
       ),
-      // Yacht
+      // Yacht - Without Solar vs With Solar
       SimulationScenario(
-        id: 'solar_yacht',
+        id: 'solar_yacht_no_ar',
         sceneName: 'yacht',
         displayName: 'Yacht',
-        problemImagePath: '$_basePath/solar/solar_yacht_without.webp',
+        problemImagePath:
+            '$_basePath/simulation/solar/solar_yacht_without.webp',
         correctionLenses: [
           CorrectionLens(
-            id: 'solar_yacht_ar',
-            name: 'anti_reflective',
-            displayName: 'With AR',
-            correctedImagePath: '$_basePath/solar/solar_yacht_withAr.webp',
-            quality: LensQuality.premium,
+            id: 'solar_yacht_solar',
+            name: 'solar',
+            displayName: 'With Solar',
+            correctedImagePath:
+                '$_basePath/simulation/solar/solar_yacht_withAr.webp',
+            quality: LensQuality.standard,
           ),
         ],
       ),
@@ -1364,4 +1376,253 @@ class SimulationData {
       return null;
     }
   }
+
+  // ===================== BLUE FILTER =====================
+  static final SimulationCategory _blueFilterCategory = SimulationCategory(
+    id: 'blue_filter',
+    name: 'blue_filter',
+    displayName: 'Blue Filter',
+    description: 'Protection against blue light from digital screens',
+    scenarios: [
+      SimulationScenario(
+        id: 'blue_filter_office',
+        sceneName: 'office',
+        displayName: 'Office',
+        problemImagePath:
+            '$_basePath/blue_filter/blue_filter_office_noLens.webp',
+        correctionLenses: [
+          CorrectionLens(
+            id: 'blue_filter_office_standard',
+            name: 'standard',
+            displayName: 'Standard Blue Filter',
+            correctedImagePath:
+                '$_basePath/blue_filter/blue_filter_office_standard.webp',
+            quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'blue_filter_office_premium',
+            name: 'premium',
+            displayName: 'Premium Blue Filter',
+            correctedImagePath:
+                '$_basePath/blue_filter/blue_filter_office_premium.webp',
+            quality: LensQuality.premium,
+          ),
+        ],
+      ),
+      SimulationScenario(
+        id: 'blue_filter_home',
+        sceneName: 'home',
+        displayName: 'Home',
+        problemImagePath: '$_basePath/blue_filter/blue_filter_home_noLens.webp',
+        correctionLenses: [
+          CorrectionLens(
+            id: 'blue_filter_home_standard',
+            name: 'standard',
+            displayName: 'Standard Blue Filter',
+            correctedImagePath:
+                '$_basePath/blue_filter/blue_filter_home_standard.webp',
+            quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'blue_filter_home_premium',
+            name: 'premium',
+            displayName: 'Premium Blue Filter',
+            correctedImagePath:
+                '$_basePath/blue_filter/blue_filter_home_premium.webp',
+            quality: LensQuality.premium,
+          ),
+        ],
+      ),
+      SimulationScenario(
+        id: 'blue_filter_mobile',
+        sceneName: 'mobile',
+        displayName: 'Mobile Use',
+        problemImagePath:
+            '$_basePath/blue_filter/blue_filter_mobile_noLens.webp',
+        correctionLenses: [
+          CorrectionLens(
+            id: 'blue_filter_mobile_standard',
+            name: 'standard',
+            displayName: 'Standard Blue Filter',
+            correctedImagePath:
+                '$_basePath/blue_filter/blue_filter_mobile_standard.webp',
+            quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'blue_filter_mobile_premium',
+            name: 'premium',
+            displayName: 'Premium Blue Filter',
+            correctedImagePath:
+                '$_basePath/blue_filter/blue_filter_mobile_premium.webp',
+            quality: LensQuality.premium,
+          ),
+        ],
+      ),
+    ],
+  );
+
+  // ===================== ASPHERIC =====================
+  static final SimulationCategory _asphericCategory = SimulationCategory(
+    id: 'aspheric',
+    name: 'aspheric',
+    displayName: 'Aspheric',
+    description: 'Slimmer and flatter lens design for better aesthetics',
+    scenarios: [
+      SimulationScenario(
+        id: 'aspheric_strong_prescription',
+        sceneName: 'strong_prescription',
+        displayName: 'Strong Prescription',
+        problemImagePath: '$_basePath/aspheric/aspheric_strong_noLens.webp',
+        correctionLenses: [
+          CorrectionLens(
+            id: 'aspheric_strong_standard',
+            name: 'standard',
+            displayName: 'Standard Lens',
+            correctedImagePath:
+                '$_basePath/aspheric/aspheric_strong_standard.webp',
+            quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'aspheric_strong_aspheric',
+            name: 'aspheric',
+            displayName: 'Aspheric Lens',
+            correctedImagePath:
+                '$_basePath/aspheric/aspheric_strong_aspheric.webp',
+            quality: LensQuality.premium,
+          ),
+        ],
+      ),
+      SimulationScenario(
+        id: 'aspheric_moderate_prescription',
+        sceneName: 'moderate_prescription',
+        displayName: 'Moderate Prescription',
+        problemImagePath: '$_basePath/aspheric/aspheric_moderate_noLens.webp',
+        correctionLenses: [
+          CorrectionLens(
+            id: 'aspheric_moderate_standard',
+            name: 'standard',
+            displayName: 'Standard Lens',
+            correctedImagePath:
+                '$_basePath/aspheric/aspheric_moderate_standard.webp',
+            quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'aspheric_moderate_aspheric',
+            name: 'aspheric',
+            displayName: 'Aspheric Lens',
+            correctedImagePath:
+                '$_basePath/aspheric/aspheric_moderate_aspheric.webp',
+            quality: LensQuality.premium,
+          ),
+        ],
+      ),
+      SimulationScenario(
+        id: 'aspheric_daily_wear',
+        sceneName: 'daily_wear',
+        displayName: 'Daily Wear',
+        problemImagePath: '$_basePath/aspheric/aspheric_daily_noLens.webp',
+        correctionLenses: [
+          CorrectionLens(
+            id: 'aspheric_daily_standard',
+            name: 'standard',
+            displayName: 'Standard Lens',
+            correctedImagePath:
+                '$_basePath/aspheric/aspheric_daily_standard.webp',
+            quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'aspheric_daily_aspheric',
+            name: 'aspheric',
+            displayName: 'Aspheric Lens',
+            correctedImagePath:
+                '$_basePath/aspheric/aspheric_daily_aspheric.webp',
+            quality: LensQuality.premium,
+          ),
+        ],
+      ),
+    ],
+  );
+
+  // ===================== DRIVEWEAR =====================
+  static final SimulationCategory _drivewearCategory = SimulationCategory(
+    id: 'drivewear',
+    name: 'drivewear',
+    displayName: 'Drivewear®',
+    description:
+        'Photochromic polarized lenses specifically designed for driving',
+    scenarios: [
+      SimulationScenario(
+        id: 'drivewear_bright_day',
+        sceneName: 'bright_day',
+        displayName: 'Bright Day',
+        problemImagePath: '$_basePath/drivewear/drivewear_bright_noLens.webp',
+        correctionLenses: [
+          CorrectionLens(
+            id: 'drivewear_bright_drivewear',
+            name: 'drivewear',
+            displayName: 'Drivewear®',
+            correctedImagePath:
+                '$_basePath/drivewear/drivewear_bright_drivewear.webp',
+            quality: LensQuality.premium,
+          ),
+          CorrectionLens(
+            id: 'drivewear_bright_polarized',
+            name: 'polarized',
+            displayName: 'Standard Polarized',
+            correctedImagePath:
+                '$_basePath/drivewear/drivewear_bright_polarized.webp',
+            quality: LensQuality.good,
+          ),
+        ],
+      ),
+      SimulationScenario(
+        id: 'drivewear_overcast',
+        sceneName: 'overcast',
+        displayName: 'Overcast',
+        problemImagePath: '$_basePath/drivewear/drivewear_overcast_noLens.webp',
+        correctionLenses: [
+          CorrectionLens(
+            id: 'drivewear_overcast_drivewear',
+            name: 'drivewear',
+            displayName: 'Drivewear®',
+            correctedImagePath:
+                '$_basePath/drivewear/drivewear_overcast_drivewear.webp',
+            quality: LensQuality.premium,
+          ),
+          CorrectionLens(
+            id: 'drivewear_overcast_polarized',
+            name: 'polarized',
+            displayName: 'Standard Polarized',
+            correctedImagePath:
+                '$_basePath/drivewear/drivewear_overcast_polarized.webp',
+            quality: LensQuality.good,
+          ),
+        ],
+      ),
+      SimulationScenario(
+        id: 'drivewear_night',
+        sceneName: 'night',
+        displayName: 'Night Driving',
+        problemImagePath: '$_basePath/drivewear/drivewear_night_noLens.webp',
+        correctionLenses: [
+          CorrectionLens(
+            id: 'drivewear_night_drivewear',
+            name: 'drivewear',
+            displayName: 'Drivewear®',
+            correctedImagePath:
+                '$_basePath/drivewear/drivewear_night_drivewear.webp',
+            quality: LensQuality.premium,
+          ),
+          CorrectionLens(
+            id: 'drivewear_night_clear',
+            name: 'clear',
+            displayName: 'Clear Lens',
+            correctedImagePath:
+                '$_basePath/drivewear/drivewear_night_clear.webp',
+            quality: LensQuality.standard,
+          ),
+        ],
+      ),
+    ],
+  );
 }

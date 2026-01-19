@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:digipad_flutter/common/components/d_image.dart';
 import 'package:digipad_flutter/data/local/gallery_storage.dart';
+import 'package:digipad_flutter/screens/features/lenses_3d/cubit/lenses_3d_cubit.dart';
 import 'package:digipad_flutter/screens/features/lenses_3d/presentation/lenses_3d_screen.dart';
 import 'package:digipad_flutter/screens/features/simulations/presentation/main_simulations_grid_screen.dart';
 import 'package:digipad_flutter/screens/features/virtual_mirror/cubit/virtual_mirror_cubit.dart';
@@ -255,7 +256,12 @@ class HomeScreen extends StatelessWidget {
     } else if (moduleId == 'lenses_3d') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const Lenses3DScreen()),
+        MaterialPageRoute(
+          builder: (context) => BlocProvider(
+            create: (context) => Lenses3DCubit(),
+            child: const Lenses3DScreen(),
+          ),
+        ),
       );
     } else if (moduleId == 'cosmetic_lenses') {
       Navigator.push(

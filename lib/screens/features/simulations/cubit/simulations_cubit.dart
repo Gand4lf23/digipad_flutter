@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../data/simulation_data.dart';
@@ -65,6 +67,31 @@ class SimulationsCubit extends Cubit<SimulationsState> {
   /// Set dragging state.
   void setDragging(bool isDragging) {
     emit(state.copyWith(isDragging: isDragging));
+  }
+
+  /// Move the draggable lens to a new position.
+  void moveLens(Offset position) {
+    emit(state.copyWith(lensPosition: position));
+  }
+
+  /// Set lens position.
+  void setLensPosition(Offset position) {
+    emit(state.copyWith(lensPosition: position));
+  }
+
+  /// Set lens radius.
+  void setLensRadius(double radius) {
+    emit(state.copyWith(lensRadius: radius.clamp(50.0, 200.0)));
+  }
+
+  /// Toggle between lens dragging mode and divider mode.
+  void toggleInteractionMode() {
+    emit(state.copyWith(isLensDraggingMode: !state.isLensDraggingMode));
+  }
+
+  /// Set interaction mode (true = lens dragging, false = divider).
+  void setInteractionMode(bool isLensMode) {
+    emit(state.copyWith(isLensDraggingMode: isLensMode));
   }
 
   /// Set loading state.

@@ -9,6 +9,8 @@ class SimulationTopBar extends StatelessWidget {
   final SimulationCategory category;
   final Color categoryColor;
   final VoidCallback onBack;
+  final VoidCallback? onToggleMode;
+  final bool isLensMode;
 
   const SimulationTopBar({
     super.key,
@@ -16,6 +18,8 @@ class SimulationTopBar extends StatelessWidget {
     required this.category,
     required this.categoryColor,
     required this.onBack,
+    this.onToggleMode,
+    this.isLensMode = false,
   });
 
   @override
@@ -87,6 +91,16 @@ class SimulationTopBar extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (onToggleMode != null && scenario.correctionLenses.isNotEmpty)
+                  IconButton(
+                    icon: Icon(
+                      isLensMode ? Icons.circle_outlined : Icons.drag_handle,
+                      color: Colors.white,
+                      size: 32,
+                    ),
+                    onPressed: onToggleMode,
+                    tooltip: isLensMode ? 'Switch to divider mode' : 'Switch to lens dragging mode',
+                  ),
               ],
             ),
           ),

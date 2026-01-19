@@ -13,6 +13,9 @@ class SimulationCanvas extends StatefulWidget {
   final ui.Image problemImage;
   final ui.Image? correctedImage;
   final CorrectionLens? currentLens;
+  final Function(Offset)? onLensDragStart;
+  final Function(Offset)? onLensDragUpdate;
+  final Function()? onLensDragEnd;
 
   const SimulationCanvas({
     super.key,
@@ -21,6 +24,9 @@ class SimulationCanvas extends StatefulWidget {
     required this.problemImage,
     this.correctedImage,
     this.currentLens,
+    this.onLensDragStart,
+    this.onLensDragUpdate,
+    this.onLensDragEnd,
   });
 
   @override
@@ -34,39 +40,58 @@ class _SimulationCanvasState extends State<SimulationCanvas> {
   Widget build(BuildContext context) {
     final dividerPos = _draggingPosition ?? widget.state.dividerPosition;
     final isMultifocal = widget.category.id == 'multifocal';
+    final isLensMode = widget.state.isLensDraggingMode;
 
     return GestureDetector(
       onPanStart: isMultifocal
           ? null
           : (details) {
-              setState(() {
-                _draggingPosition = _calculateDividerPosition(
-                  details.localPosition,
-                );
-              });
-              context.read<SimulationsCubit>().setDragging(true);
+              if (isLensMode) {
+                // Lens dragging mode
+                widget.onLensDragStart?.call(details.localPosition);
+              } else {
+                // Divider mode
+                setState(() {
+                  _draggingPosition = _calculateDividerPosition(
+                    details.localPosition,
+                  );
+                });
+                context.read<SimulationsCubit>().setDragging(true);
+              }
             },
       onPanUpdate: isMultifocal
           ? null
           : (details) {
-              setState(() {
-                _draggingPosition = _calculateDividerPosition(
-                  details.localPosition,
-                );
-              });
+              if (isLensMode) {
+                // Lens dragging mode
+                widget.onLensDragUpdate?.call(details.localPosition);
+              } else {
+                // Divider mode
+                setState(() {
+                  _draggingPosition = _calculateDividerPosition(
+                    details.localPosition,
+                  );
+                });
+              }
             },
       onPanEnd: isMultifocal
           ? null
           : (_) {
-              if (_draggingPosition != null) {
-                context.read<SimulationsCubit>().moveDivider(
-                  _draggingPosition!,
-                );
+              if (isLensMode) {
+                // Lens dragging mode
+                widget.onLensDragEnd?.call();
+              } else {
+                // Divider mode
+                if (_draggingPosition != null) {
+                  context.read<SimulationsCubit>().moveDivider(
+                    _draggingPosition!,
+                  );
+                }
+                context.read<SimulationsCubit>().setDragging(false);
+                setState(() {
+                  _draggingPosition = null;
+                });
               }
-              context.read<SimulationsCubit>().setDragging(false);
-              setState(() {
-                _draggingPosition = null;
-              });
             },
       child: RepaintBoundary(
         child: CustomPaint(
@@ -80,6 +105,10 @@ class _SimulationCanvasState extends State<SimulationCanvas> {
             lensOpacity: widget.state.lensOpacity,
             showFullCorrection: isMultifocal,
             boxFit: BoxFit.contain,
+            // Lens dragging specific parameters
+            isLensDraggingMode: widget.state.isLensDraggingMode,
+            lensPosition: widget.state.lensPosition,
+            lensRadius: widget.state.lensRadius,
           ),
         ),
       ),

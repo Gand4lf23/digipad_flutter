@@ -15,43 +15,51 @@ class Lenses3DControlPanel extends StatelessWidget {
 
         return Container(
           color: Colors.grey.shade900,
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Title
-              Text(
-                context.l10n.lensConfiguration,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24,
+          padding: const EdgeInsets.all(16),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title
+                Text(
+                  context.l10n.lensConfiguration,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
-              Expanded(
-                child: Row(
+                // Material Index + Prescription + Frame in a Row
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Material Index Selection
+                    // Material Index
                     Expanded(
                       child: _buildMaterialSelector(context, state, cubit),
                     ),
-                    const SizedBox(width: 24),
+                    const SizedBox(width: 12),
 
-                    // Prescription Control
+                    // Prescription
                     Expanded(
                       child: _buildPrescriptionControl(context, state, cubit),
                     ),
-                    const SizedBox(width: 24),
+                    const SizedBox(width: 12),
 
-                    // Frame Type Selection
+                    // Frame Type
                     Expanded(child: _buildFrameSelector(context, state, cubit)),
                   ],
                 ),
-              ),
-            ],
+
+                const SizedBox(height: 12),
+                const Divider(color: Colors.white24, height: 1),
+                const SizedBox(height: 12),
+
+                // Orientation Control (Full Width)
+                _buildOrientationControl(context, state, cubit),
+              ],
+            ),
           ),
         );
       },
@@ -65,43 +73,44 @@ class Lenses3DControlPanel extends StatelessWidget {
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           context.l10n.materialIndex,
           style: const TextStyle(
             color: Colors.white70,
-            fontSize: 18,
+            fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 6),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: 6,
+          runSpacing: 6,
           children: LensMaterialIndex.values.map((material) {
             final isSelected = state.materialIndex == material;
             return GestureDetector(
               onTap: () => cubit.updateMaterialIndex(material),
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
+                  horizontal: 10,
+                  vertical: 6,
                 ),
                 decoration: BoxDecoration(
                   color: isSelected ? Colors.blueAccent : Colors.grey.shade800,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(6),
                   border: Border.all(
                     color: isSelected
                         ? Colors.blueAccent.shade200
                         : Colors.grey.shade700,
-                    width: 2,
+                    width: 1.5,
                   ),
                 ),
                 child: Text(
                   material.displayName,
                   style: TextStyle(
                     color: isSelected ? Colors.white : Colors.white70,
-                    fontSize: 20,
+                    fontSize: 14,
                     fontWeight: isSelected
                         ? FontWeight.bold
                         : FontWeight.normal,
@@ -110,11 +119,6 @@ class Lenses3DControlPanel extends StatelessWidget {
               ),
             );
           }).toList(),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          context.l10n.higherIndexHint,
-          style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
         ),
       ],
     );
@@ -127,51 +131,46 @@ class Lenses3DControlPanel extends StatelessWidget {
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           context.l10n.prescription,
           style: const TextStyle(
             color: Colors.white70,
-            fontSize: 18,
+            fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 6),
         Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Decrement button
             _buildCircleButton(
               icon: Icons.remove,
               onTap: state.prescription > state.minPrescription
                   ? cubit.decrementPrescription
                   : null,
             ),
-            const SizedBox(width: 16),
-
-            // Prescription value display
+            const SizedBox(width: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              width: 50,
+              padding: const EdgeInsets.symmetric(vertical: 6),
               decoration: BoxDecoration(
                 color: Colors.grey.shade800,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blueAccent, width: 2),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: Colors.blueAccent, width: 1.5),
               ),
-              child: SizedBox(
-                width: 50,
-                child: Text(
-                  '${state.prescription} D',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
+              child: Text(
+                '${state.prescription}D',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-            const SizedBox(width: 16),
-
-            // Increment button
+            const SizedBox(width: 8),
             _buildCircleButton(
               icon: Icons.add,
               onTap: state.prescription < state.maxPrescription
@@ -180,24 +179,14 @@ class Lenses3DControlPanel extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        Text(
-          context.l10n.rangeDiopters(
-            state.minPrescription,
-            state.maxPrescription,
-          ),
-          style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-        ),
-        const SizedBox(height: 12),
-
-        // Slider for quick adjustment
+        const SizedBox(height: 6),
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
             activeTrackColor: Colors.blueAccent,
             inactiveTrackColor: Colors.grey.shade700,
             thumbColor: Colors.blueAccent,
             overlayColor: Colors.blueAccent.withValues(alpha: 0.3),
-            trackHeight: 6,
+            trackHeight: 3,
           ),
           child: Slider(
             value: state.prescription.toDouble(),
@@ -218,43 +207,44 @@ class Lenses3DControlPanel extends StatelessWidget {
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           context.l10n.frameType,
           style: const TextStyle(
             color: Colors.white70,
-            fontSize: 18,
+            fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 6),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: 6,
+          runSpacing: 6,
           children: LensFrameType.values.map((frame) {
             final isSelected = state.frameType == frame;
             return GestureDetector(
               onTap: () => cubit.updateFrameType(frame),
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
+                  horizontal: 10,
+                  vertical: 6,
                 ),
                 decoration: BoxDecoration(
                   color: isSelected ? Colors.blueAccent : Colors.grey.shade800,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(6),
                   border: Border.all(
                     color: isSelected
                         ? Colors.blueAccent.shade200
                         : Colors.grey.shade700,
-                    width: 2,
+                    width: 1.5,
                   ),
                 ),
                 child: Text(
                   frame.displayName,
                   style: TextStyle(
                     color: isSelected ? Colors.white : Colors.white70,
-                    fontSize: 20,
+                    fontSize: 14,
                     fontWeight: isSelected
                         ? FontWeight.bold
                         : FontWeight.normal,
@@ -264,13 +254,127 @@ class Lenses3DControlPanel extends StatelessWidget {
             );
           }).toList(),
         ),
-        const SizedBox(height: 8),
-        Text(
-          context.l10n.lensTreatments,
-          style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+      ],
+    );
+  }
+
+  Widget _buildOrientationControl(
+    BuildContext context,
+    Lenses3DState state,
+    Lenses3DCubit cubit,
+  ) {
+    final angles = LensOrientation.values.map((o) => o.angle).toList()..sort();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.threesixty, color: Colors.greenAccent, size: 16),
+            const SizedBox(width: 6),
+            const Text(
+              'Orientación',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const Spacer(),
+            // Current orientation badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: Colors.greenAccent.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.greenAccent, width: 1),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _getOrientationIcon(state.orientation.angle),
+                  const SizedBox(width: 4),
+                  Text(
+                    state.orientation.shortName,
+                    style: const TextStyle(
+                      color: Colors.greenAccent,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            activeTrackColor: Colors.greenAccent,
+            inactiveTrackColor: Colors.grey.shade700,
+            thumbColor: Colors.greenAccent,
+            overlayColor: Colors.greenAccent.withOpacity(0.2),
+            trackHeight: 3,
+            showValueIndicator: ShowValueIndicator.always,
+            valueIndicatorColor: Colors.greenAccent,
+            valueIndicatorTextStyle: const TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+          child: Slider(
+            value: state.orientation.angle.toDouble(),
+            min: 1,
+            max: 20,
+            divisions: 19, // 20 positions (1-20)
+            label: state.orientation.angle.toString(),
+            onChanged: (value) {
+              cubit.updateOrientationByAngle(value.round());
+            },
+          ),
+        ),
+        // Labels below slider
+        Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Lateral',
+                style: TextStyle(color: Colors.white54, fontSize: 9),
+              ),
+              Text(
+                'Frente',
+                style: TextStyle(color: Colors.white54, fontSize: 9),
+              ),
+              Text(
+                'Arriba',
+                style: TextStyle(color: Colors.white54, fontSize: 9),
+              ),
+            ],
+          ),
         ),
       ],
     );
+  }
+
+  Widget _getOrientationIcon(int angle) {
+    if (angle < 15) {
+      // Left side view (1-14)
+      return const Icon(Icons.arrow_back, color: Colors.greenAccent, size: 14);
+    } else if (angle == 15) {
+      // Front view (15)
+      return const Icon(Icons.face, color: Colors.greenAccent, size: 14);
+    } else {
+      // Top view (16-20)
+      return const Icon(
+        Icons.keyboard_arrow_down,
+        color: Colors.greenAccent,
+        size: 14,
+      );
+    }
   }
 
   Widget _buildCircleButton({required IconData icon, VoidCallback? onTap}) {
@@ -278,8 +382,8 @@ class Lenses3DControlPanel extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 48,
-        height: 48,
+        width: 32,
+        height: 32,
         decoration: BoxDecoration(
           color: isEnabled ? Colors.blueAccent : Colors.grey.shade800,
           shape: BoxShape.circle,
@@ -287,7 +391,7 @@ class Lenses3DControlPanel extends StatelessWidget {
         child: Icon(
           icon,
           color: isEnabled ? Colors.white : Colors.grey.shade600,
-          size: 28,
+          size: 20,
         ),
       ),
     );

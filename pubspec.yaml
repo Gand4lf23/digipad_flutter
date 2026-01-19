@@ -69,6 +69,7 @@ dependencies:
   widget_zoom: 0.0.4
   provider: 6.1.5+1
   intl: 0.20.2
+  share_plus: ^12.0.1
 
 dev_dependencies:
   flutter_test:
@@ -106,6 +107,9 @@ flutter:
     - assets/images/simulations/photochromic/
     - assets/images/simulations/polarized/
     - assets/images/simulations/presbicia/
+    - assets/images/simulations/blue_filter/
+    - assets/images/simulations/aspheric/
+    - assets/images/simulations/drivewear/
     - assets/images/simulations/solar/
     - assets/images/simulations/tint/
     - assets/images/lenses_3d/

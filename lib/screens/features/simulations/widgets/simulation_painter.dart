@@ -12,6 +12,11 @@ class SimulationPainter extends CustomPainter {
   final Color? tintColor;
   final bool showFullCorrection;
   final BoxFit boxFit;
+  
+  // Lens dragging mode parameters
+  final bool isLensDraggingMode;
+  final Offset lensPosition;
+  final double lensRadius;
 
   SimulationPainter({
     required this.problemImage,
@@ -22,6 +27,9 @@ class SimulationPainter extends CustomPainter {
     this.lensOpacity = 0.5,
     this.showFullCorrection = false,
     this.boxFit = BoxFit.contain,
+    this.isLensDraggingMode = false,
+    this.lensPosition = const Offset(200, 200),
+    this.lensRadius = 100,
   });
 
   @override
@@ -87,15 +95,21 @@ class SimulationPainter extends CustomPainter {
       return;
     }
 
-    // Draw split-screen comparison
-    if (isVerticalDivider) {
-      _drawVerticalSplit(canvas, size, problemSrcRect, problemDstRect);
+    // Check if we're in lens dragging mode
+    if (isLensDraggingMode && correctedImage != null) {
+      // Draw lens dragging mode
+      _drawLensDraggingMode(canvas, size, problemSrcRect, problemDstRect);
     } else {
-      _drawHorizontalSplit(canvas, size, problemSrcRect, problemDstRect);
-    }
+      // Draw split-screen comparison (existing behavior)
+      if (isVerticalDivider) {
+        _drawVerticalSplit(canvas, size, problemSrcRect, problemDstRect);
+      } else {
+        _drawHorizontalSplit(canvas, size, problemSrcRect, problemDstRect);
+      }
 
-    // Draw the divider line
-    _drawDividerLine(canvas, size);
+      // Draw the divider line
+      _drawDividerLine(canvas, size);
+    }
   }
 
   void _drawVerticalSplit(
@@ -375,12 +389,126 @@ class SimulationPainter extends CustomPainter {
     );
   }
 
+  void _drawLensDraggingMode(
+    Canvas canvas,
+    Size size,
+    Rect problemSrcRect,
+    Rect problemDstRect,
+  ) {
+    // Draw the full problem image first
+    canvas.drawImageRect(problemImage, problemSrcRect, problemDstRect, Paint());
+
+    // Calculate corrected image positioning
+    final correctedSrcSize = Size(
+      correctedImage!.width.toDouble(),
+      correctedImage!.height.toDouble(),
+    );
+    final correctedFittedSizes = applyBoxFit(boxFit, correctedSrcSize, size);
+    final correctedSrcRect = Alignment.center.inscribe(
+      correctedFittedSizes.source,
+      Offset.zero & correctedSrcSize,
+    );
+    final correctedDstRect = Alignment.center.inscribe(
+      correctedFittedSizes.destination,
+      Offset.zero & size,
+    );
+
+    // Create circular clip for lens
+    final lensPath = Path()
+      ..addOval(Rect.fromCircle(
+        center: lensPosition,
+        radius: lensRadius,
+      ));
+
+    // Draw corrected image within the lens circle
+    canvas.save();
+    canvas.clipPath(lensPath);
+    canvas.drawImageRect(
+      correctedImage!,
+      correctedSrcRect,
+      correctedDstRect,
+      Paint(),
+    );
+
+    // Apply tint overlay if available
+    if (tintColor != null) {
+      final tintPaint = Paint()
+        ..color = tintColor!.withValues(alpha: lensOpacity)
+        ..style = PaintingStyle.fill
+        ..blendMode = BlendMode.srcOver;
+      canvas.drawPath(lensPath, tintPaint);
+    }
+
+    canvas.restore();
+
+    // Draw lens border
+    final borderPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.8)
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
+
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.3)
+      ..strokeWidth = 6
+      ..style = PaintingStyle.stroke
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+
+    canvas.drawPath(lensPath, shadowPaint);
+    canvas.drawPath(lensPath, borderPaint);
+
+    // Draw lens handle
+    _drawLensHandle(canvas);
+  }
+
+  void _drawLensHandle(Canvas canvas) {
+    final handlePaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+
+    final handleShadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.4)
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+
+    final handleRect = Rect.fromCircle(
+      center: lensPosition,
+      radius: 20,
+    );
+    final handleRRect = RRect.fromRectAndRadius(
+      handleRect,
+      const Radius.circular(10),
+    );
+
+    // Draw shadow
+    canvas.drawRRect(handleRRect.shift(const Offset(0, 2)), handleShadowPaint);
+    // Draw handle
+    canvas.drawRRect(handleRRect, handlePaint);
+
+    // Draw grip icon
+    final gripPaint = Paint()
+      ..color = Colors.grey.shade700
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+
+    // Draw drag icon (four dots)
+    for (int i = -1; i <= 1; i++) {
+      for (int j = -1; j <= 1; j++) {
+        final offset = Offset(i * 4.0, j * 4.0);
+        canvas.drawCircle(lensPosition + offset, 1, gripPaint..style = PaintingStyle.fill);
+      }
+    }
+  }
+
   @override
   bool shouldRepaint(covariant SimulationPainter oldDelegate) {
     return oldDelegate.dividerPosition != dividerPosition ||
         oldDelegate.isVerticalDivider != isVerticalDivider ||
         oldDelegate.lensOpacity != lensOpacity ||
         oldDelegate.problemImage != problemImage ||
-        oldDelegate.correctedImage != correctedImage;
+        oldDelegate.correctedImage != correctedImage ||
+        oldDelegate.isLensDraggingMode != isLensDraggingMode ||
+        oldDelegate.lensPosition != lensPosition ||
+        oldDelegate.lensRadius != lensRadius;
   }
 }

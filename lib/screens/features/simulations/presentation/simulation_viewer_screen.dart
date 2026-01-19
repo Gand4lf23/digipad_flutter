@@ -38,6 +38,9 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
   late Animation<double> _pulseAnimation;
 
   CorrectionLens? _currentLens;
+  
+  // Lens dragging local state for smoothness
+  Offset? _draggingLensPosition;
 
   @override
   void initState() {
@@ -120,6 +123,42 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
     }
   }
 
+  void _onToggleInteractionMode() {
+    context.read<SimulationsCubit>().toggleInteractionMode();
+  }
+
+  void _onLensDragStart(Offset position) {
+    setState(() {
+      _draggingLensPosition = position;
+    });
+    context.read<SimulationsCubit>().setDragging(true);
+  }
+
+  void _onLensDragUpdate(Offset position) {
+    final size = MediaQuery.of(context).size;
+    final lensRadius = context.read<SimulationsCubit>().state.lensRadius;
+    
+    // Clamp position within screen bounds
+    final clampedPosition = Offset(
+      position.dx.clamp(lensRadius, size.width - lensRadius),
+      position.dy.clamp(lensRadius, size.height - lensRadius),
+    );
+    
+    setState(() {
+      _draggingLensPosition = clampedPosition;
+    });
+  }
+
+  void _onLensDragEnd() {
+    if (_draggingLensPosition != null) {
+      context.read<SimulationsCubit>().moveLens(_draggingLensPosition!);
+    }
+    context.read<SimulationsCubit>().setDragging(false);
+    setState(() {
+      _draggingLensPosition = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -157,6 +196,9 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
               problemImage: _problemImage!,
               correctedImage: _correctedImage,
               currentLens: _currentLens,
+              onLensDragStart: _onLensDragStart,
+              onLensDragUpdate: _onLensDragUpdate,
+              onLensDragEnd: _onLensDragEnd,
             ),
 
             // Top gradient and back button
@@ -165,6 +207,8 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
               category: widget.category,
               categoryColor: _getCategoryColor(widget.category.id),
               onBack: () => Navigator.pop(context),
+              onToggleMode: _onToggleInteractionMode,
+              isLensMode: state.isLensDraggingMode,
             ),
 
             // Bottom control panel
@@ -185,7 +229,7 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
             if (!state.isDragging &&
                 _correctedImage != null &&
                 widget.category.id != 'multifocal')
-              _buildInstructionOverlay(state),
+              _buildInstructionOverlay(state, context),
           ],
         );
       },
@@ -257,20 +301,24 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
     );
   }
 
-  Widget _buildInstructionOverlay(SimulationsState state) {
+  Widget _buildInstructionOverlay(SimulationsState state, BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final position = state.isVerticalDivider
-        ? Offset(size.width * state.dividerPosition, size.height / 2)
-        : Offset(size.width / 2, size.height * state.dividerPosition);
+    final position = state.isLensDraggingMode
+        ? state.lensPosition
+        : (state.isVerticalDivider
+            ? Offset(size.width * state.dividerPosition, size.height / 2)
+            : Offset(size.width / 2, size.height * state.dividerPosition));
 
     return AnimatedBuilder(
       animation: _pulseAnimation,
       builder: (context, child) {
         return Positioned(
-          left: state.isVerticalDivider
+          left: state.isLensDraggingMode
               ? position.dx - 100
-              : size.width / 2 - 100,
-          top: state.isVerticalDivider ? position.dy - 100 : position.dy - 80,
+              : (state.isVerticalDivider ? position.dx - 100 : size.width / 2 - 100),
+          top: state.isLensDraggingMode
+              ? position.dy - 80
+              : (state.isVerticalDivider ? position.dy - 100 : position.dy - 80),
           child: Opacity(
             opacity: _pulseAnimation.value,
             child: Container(
@@ -284,15 +332,19 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    state.isVerticalDivider
-                        ? Icons.swap_horiz_outlined
-                        : Icons.swap_vert_outlined,
+                    state.isLensDraggingMode
+                        ? Icons.touch_app_outlined
+                        : (state.isVerticalDivider
+                            ? Icons.swap_horiz_outlined
+                            : Icons.swap_vert_outlined),
                     color: Colors.white.withValues(alpha: 0.9),
                     size: 20,
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    context.l10n.dragDivider,
+                    state.isLensDraggingMode
+                        ? 'Drag the lens around'
+                        : context.l10n.dragDivider,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.9),
                       fontSize: 18,

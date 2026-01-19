@@ -12,7 +12,8 @@ class OpticalPainter extends CustomPainter {
   final double calcRadiusPxR; // Calculated from L positions
   final double calcRadiusPxL; // Calculated from L positions
 
-  final double pixelFactor;
+  final double pixelFactorX; // Horizontal
+  final double pixelFactorY; // Vertical
   final bool isBifocal;
   final double bifocalOffset;
 
@@ -28,7 +29,8 @@ class OpticalPainter extends CustomPainter {
     required this.refDiameterMm,
     required this.calcRadiusPxR,
     required this.calcRadiusPxL,
-    required this.pixelFactor,
+    required this.pixelFactorX,
+    required this.pixelFactorY,
     required this.isBifocal,
     required this.bifocalOffset,
   });
@@ -42,28 +44,26 @@ class OpticalPainter extends CustomPainter {
     Offset? p1 = _getPos(DetectionType.pupilRight);
     Offset? p2 = _getPos(DetectionType.pupilLeft);
 
-    // --- 1. CIRCLES (Reference & Calculated) ---
-    if (showCircles && pixelFactor > 0) {
+    // --- 1. CIRCLES (Reference & Calculated) - MÁS FINOS ---
+    if (showCircles && pixelFactorX > 0) {
       // A. Reference Circle (White/Grey) - Controlled by Slider
-      double refRadiusPx = (refDiameterMm / pixelFactor) / 2;
+      double refRadiusPx = (refDiameterMm / pixelFactorX) / 2;
       Paint refPaint = Paint()
-        ..color = Colors.white.withOpacity(0.3)
+        ..color = Colors.white.withOpacity(0.25)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0 / scale;
+        ..strokeWidth = 0.8 / scale; // MÁS FINO
 
       if (p1 != null) canvas.drawCircle(p1, refRadiusPx, refPaint);
       if (p2 != null) canvas.drawCircle(p2, refRadiusPx, refPaint);
 
-      // B. Calculated Diameter (Cyan) - Controlled by L position
-      // Formula included +1mm, so visually we add that small buffer or draw exactly what math says
-      // Visual Radius = (CalculatedDiameter - 1) / 2 / PixelFactor -> This returns us to calcRadiusPx
-      // But to represent the FINAL result (+1mm), we add 0.5mm in pixels
-      double bufferPx = 0.5 / pixelFactor;
+      // B. Calculated Diameter (Cyan) - EXACTO según fórmula
+      // El diámetro ya incluye el +1mm, así que mostramos el radio calculado + 0.5mm
+      double bufferPx = 0.5 / pixelFactorX;
 
       Paint calcPaint = Paint()
-        ..color = Colors.cyanAccent.withOpacity(0.9)
+        ..color = Colors.cyanAccent.withOpacity(0.85)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.0 / scale;
+        ..strokeWidth = 1.2 / scale; // MÁS FINO
 
       if (p1 != null && calcRadiusPxR > 0) {
         _drawDashedCircle(canvas, p1, calcRadiusPxR + bufferPx, calcPaint);
@@ -73,75 +73,98 @@ class OpticalPainter extends CustomPainter {
       }
     }
 
-    // --- 2. POINTS & L CORNERS ---
+    // --- 2. POINTS & L CORNERS (MEJORADOS) ---
     for (var p in points) {
       bool isSelected = (p.id == selectedPoint?.id);
+      bool isCorner = p.type.index >= DetectionType.lensRightTop.index;
+      bool isPupil =
+          p.type == DetectionType.pupilLeft ||
+          p.type == DetectionType.pupilRight;
 
       // Colors
       Color color = Colors.greenAccent;
-      if (p.type == DetectionType.pupilLeft ||
-          p.type == DetectionType.pupilRight) {
+      if (isPupil) {
         color = Colors.redAccent;
-      } else if (p.type.index >= DetectionType.lensRightTop.index) {
-        color = Colors.yellowAccent; // The Ls
+      } else if (isCorner) {
+        color = Colors.yellowAccent; // Las L (bordes ARO INTERNO)
       }
 
       if (isSelected) color = Colors.white;
 
-      Paint paint = Paint()
-        ..color = color
-        ..strokeWidth = (isSelected ? 3.0 : 2.0) / scale
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.square;
+      // L SHAPES - MÁS LARGAS Y FINAS
+      if (isCorner) {
+        double armLen = 60.0 / scale; // MÁS LARGAS (antes 25)
+        Paint lPaint = Paint()
+          ..color = color
+          ..strokeWidth =
+              (isSelected ? 2.0 : 1.2) /
+              scale // MÁS FINO
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.square;
 
-      // Draw "L" Shapes
-      double armLen = 25.0 / scale;
+        if (p.type == DetectionType.lensRightTop ||
+            p.type == DetectionType.lensLeftTop) {
+          // TOP-LEFT Corner (┌)
+          Path path = Path();
+          path.moveTo(p.position.dx, p.position.dy + armLen);
+          path.lineTo(p.position.dx, p.position.dy);
+          path.lineTo(p.position.dx + armLen, p.position.dy);
+          canvas.drawPath(path, lPaint);
 
-      if (p.type == DetectionType.lensRightTop ||
-          p.type == DetectionType.lensLeftTop) {
-        // TOP-LEFT Corner (┌)
-        Path path = Path();
-        path.moveTo(p.position.dx, p.position.dy + armLen); // Down
-        path.lineTo(p.position.dx, p.position.dy); // Corner
-        path.lineTo(p.position.dx + armLen, p.position.dy); // Right
-        canvas.drawPath(path, paint);
-      } else if (p.type == DetectionType.lensRightBottom ||
-          p.type == DetectionType.lensLeftBottom) {
-        // BOTTOM-RIGHT Corner (┘)
-        Path path = Path();
-        path.moveTo(p.position.dx - armLen, p.position.dy); // Left
-        path.lineTo(p.position.dx, p.position.dy); // Corner
-        path.lineTo(p.position.dx, p.position.dy - armLen); // Up
-        canvas.drawPath(path, paint);
+          // Pequeño círculo en el vértice
+          canvas.drawCircle(p.position, 2.0 / scale, Paint()..color = color);
+        } else if (p.type == DetectionType.lensRightBottom ||
+            p.type == DetectionType.lensLeftBottom) {
+          // BOTTOM-RIGHT Corner (┘)
+          Path path = Path();
+          path.moveTo(p.position.dx - armLen, p.position.dy);
+          path.lineTo(p.position.dx, p.position.dy);
+          path.lineTo(p.position.dx, p.position.dy - armLen);
+          canvas.drawPath(path, lPaint);
+
+          // Pequeño círculo en el vértice
+          canvas.drawCircle(p.position, 2.0 / scale, Paint()..color = color);
+        }
       } else {
-        // Standard Cross for Pupils/Calibration
-        double r = 8.0 / scale;
-        // Draw cross
+        // CRUCES para Pupils y Calibration - MÁS FINAS
+        Paint crossPaint = Paint()
+          ..color = color
+          ..strokeWidth =
+              (isSelected ? 1.5 : 1.0) /
+              scale // MÁS FINO
+          ..strokeCap = StrokeCap.round;
+
+        double r = isPupil ? 10.0 / scale : 8.0 / scale;
+
+        // Cruz
         canvas.drawLine(
           p.position - Offset(r, 0),
           p.position + Offset(r, 0),
-          paint..strokeWidth = 1.5 / scale,
+          crossPaint,
         );
         canvas.drawLine(
           p.position - Offset(0, r),
           p.position + Offset(0, r),
-          paint..strokeWidth = 1.5 / scale,
+          crossPaint,
         );
-        // Little dot center
-        canvas.drawCircle(p.position, 1.5 / scale, Paint()..color = color);
+
+        // Centro
+        canvas.drawCircle(
+          p.position,
+          isPupil ? 2.0 / scale : 1.5 / scale,
+          Paint()..color = color,
+        );
       }
     }
 
-    // --- 3. BIFOCAL LINE ---
-    if (isBifocal) {
+    // --- 3. BIFOCAL LINE (MÁS FINA) ---
+    if (isBifocal && pixelFactorY > 0) {
       Paint bifocalPaint = Paint()
-        ..color = Colors.orangeAccent
-        ..strokeWidth = 2.0 / scale;
+        ..color = Colors.orangeAccent.withOpacity(0.9)
+        ..strokeWidth = 1.5 / scale; // MÁS FINO
 
-      // Calculate Y position relative to pupil + offset
-      double drop =
-          (15.0 / (pixelFactor > 0 ? pixelFactor : 1)) +
-          (bifocalOffset / scale);
+      // Calculate Y position: 15mm below pupil + offset
+      double drop = (15.0 / pixelFactorY) + (bifocalOffset / scale);
 
       // Draw line constrained by the L's width
       if (p1 != null) {
@@ -164,7 +187,37 @@ class OpticalPainter extends CustomPainter {
       }
     }
 
+    // --- 4. MARCO ARO INTERNO (OPCIONAL - para visualizar) ---
+    _drawFrameOutline(canvas);
+
     canvas.restore();
+  }
+
+  void _drawFrameOutline(Canvas canvas) {
+    Offset? rTL = _getPos(DetectionType.lensRightTop);
+    Offset? rBR = _getPos(DetectionType.lensRightBottom);
+    Offset? lTL = _getPos(DetectionType.lensLeftTop);
+    Offset? lBR = _getPos(DetectionType.lensLeftBottom);
+
+    if (rTL == null || rBR == null || lTL == null || lBR == null) return;
+
+    Paint framePaint = Paint()
+      ..color = Colors.white.withOpacity(0.15)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.5 / scale;
+
+    // Right lens box
+    canvas.drawRect(Rect.fromPoints(rTL, rBR), framePaint);
+
+    // Left lens box
+    canvas.drawRect(Rect.fromPoints(lTL, lBR), framePaint);
+
+    // Bridge line
+    canvas.drawLine(
+      Offset(rBR.dx, (rTL.dy + rBR.dy) / 2),
+      Offset(lTL.dx, (lTL.dy + lBR.dy) / 2),
+      framePaint,
+    );
   }
 
   void _drawDashedCircle(
@@ -178,14 +231,13 @@ class OpticalPainter extends CustomPainter {
     for (ui.PathMetric pathMetric in pathMetrics) {
       double distance = 0.0;
       while (distance < pathMetric.length) {
+        double dashLength = 12.0 / scale; // Más cortos
+        double gapLength = 18.0 / scale; // Más espaciados
         canvas.drawPath(
-          pathMetric.extractPath(
-            distance,
-            distance + (15.0 / scale),
-          ), // Dash length
+          pathMetric.extractPath(distance, distance + dashLength),
           paint,
         );
-        distance += (25.0 / scale); // Gap length
+        distance += (dashLength + gapLength);
       }
     }
   }

@@ -2,13 +2,13 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 enum DetectionType {
-  refTL, // A1 (Calibration Top-Left)
-  refTR, // A2 (Calibration Top-Right)
-  refBL, // Calibration Bottom-Left
-  refBR, // Calibration Bottom-Right
+  refTL, // A1 (Calibration Top-Left) - VERTICAL
+  refTR, // A2 (Calibration Top-Right) - VERTICAL
+  refBL, // B1 (Calibration Bottom-Left) - HORIZONTAL
+  refBR, // B2 (Calibration Bottom-Right) - HORIZONTAL
   pupilRight, // P_1 (Patient Right Eye / Screen Left)
   pupilLeft, // P_2 (Patient Left Eye / Screen Right)
-  // CORNERS (The "L" shapes)
+  // CORNERS (The "L" shapes) - INTERNAL ARO EDGES
   // Right Eye Box (Screen Left)
   lensRightTop, // Defines RE_1 (Temporal) and RS_1 (Top)
   lensRightBottom, // Defines RC_1 (Nasal) and RI_1 (Bottom)
@@ -34,15 +34,17 @@ class DetectionPoint {
 class OpticalController extends ChangeNotifier {
   List<DetectionPoint> points = [];
 
-  // Configuration
-  double ajuste = 1.0;
+  // Configuration - SEPARAR CALIBRACION HORIZONTAL Y VERTICAL
+  double ajusteHorizontal = 1.0; // Para DI, DNP, Ancho Aro
+  double ajusteVertical = 1.0; // Para Alturas, Alto Aro
   double referenceCircleDiameter = 60.0; // Controlled by Slider
   bool showCircles = true;
   bool isBifocal = false;
   double bifocalLineOffset = 0.0;
 
   // Calculated Results
-  double pixelFactor = 0;
+  double pixelFactorX = 0; // Factor Horizontal (usa cruces INFERIORES)
+  double pixelFactorY = 0; // Factor Vertical (usa cruces SUPERIORES)
   double di = 0; // IPD
   double puente = 0; // Bridge
   double dnpRight = 0;
@@ -51,8 +53,8 @@ class OpticalController extends ChangeNotifier {
   double altLeft = 0;
   double aroAlt = 0;
   double aroAnc = 0;
-  double diametroRight = 0; // Calculated from L position
-  double diametroLeft = 0; // Calculated from L position
+  double diametroRight = 0;
+  double diametroLeft = 0;
 
   // Visual Helpers for Painter
   double calcRadiusPxRight = 0;
@@ -71,7 +73,7 @@ class OpticalController extends ChangeNotifier {
       return Offset(nx * imageSize.width, ny * imageSize.height);
     }
 
-    // 1. Process Calibration Circles (A1, A2...)
+    // 1. Process Calibration Circles (A1, A2, B1, B2)
     List<dynamic> rawCircles = detections['circles'] ?? [];
     List<Offset> circleOffsets = rawCircles.map((c) => toPixel(c)).toList();
 
@@ -95,12 +97,17 @@ class OpticalController extends ChangeNotifier {
       topRow.sort((a, b) => a.dx.compareTo(b.dx));
       bottomRow.sort((a, b) => a.dx.compareTo(b.dx));
 
+      // TOP ROW: A1, A2 (para calibración VERTICAL)
       if (topRow.isNotEmpty) _addPoint(topRow.first, DetectionType.refTL, "A1");
       if (topRow.length > 1) _addPoint(topRow.last, DetectionType.refTR, "A2");
-      if (bottomRow.isNotEmpty)
-        _addPoint(bottomRow.first, DetectionType.refBL, "BL");
-      if (bottomRow.length > 1)
-        _addPoint(bottomRow.last, DetectionType.refBR, "BR");
+
+      // BOTTOM ROW: B1, B2 (para calibración HORIZONTAL)
+      if (bottomRow.isNotEmpty) {
+        _addPoint(bottomRow.first, DetectionType.refBL, "B1");
+      }
+      if (bottomRow.length > 1) {
+        _addPoint(bottomRow.last, DetectionType.refBR, "B2");
+      }
     }
     _ensureCalibrationPointsExist(imageSize);
 
@@ -125,7 +132,7 @@ class OpticalController extends ChangeNotifier {
       );
     }
 
-    // 3. Initialize Lens Corners ("L" shapes)
+    // 3. Initialize Lens Corners ("L" shapes - BORDES INTERNOS DEL ARO)
     _initializeLensCorners(imageSize);
 
     calculateFormulas();
@@ -145,35 +152,52 @@ class OpticalController extends ChangeNotifier {
   }
 
   void _ensureCalibrationPointsExist(Size size) {
-    if (!points.any((p) => p.type == DetectionType.refTL))
+    // TOP ROW (Vertical calibration)
+    if (!points.any((p) => p.type == DetectionType.refTL)) {
       _addPoint(
         Offset(size.width * 0.2, size.height * 0.3),
         DetectionType.refTL,
         "A1",
       );
-    if (!points.any((p) => p.type == DetectionType.refTR))
+    }
+    if (!points.any((p) => p.type == DetectionType.refTR)) {
       _addPoint(
         Offset(size.width * 0.8, size.height * 0.3),
         DetectionType.refTR,
         "A2",
       );
+    }
+
+    // BOTTOM ROW (Horizontal calibration)
+    if (!points.any((p) => p.type == DetectionType.refBL)) {
+      _addPoint(
+        Offset(size.width * 0.2, size.height * 0.7),
+        DetectionType.refBL,
+        "B1",
+      );
+    }
+    if (!points.any((p) => p.type == DetectionType.refBR)) {
+      _addPoint(
+        Offset(size.width * 0.8, size.height * 0.7),
+        DetectionType.refBR,
+        "B2",
+      );
+    }
   }
 
   void _initializeLensCorners(Size size) {
     Offset p1 = getPoint(DetectionType.pupilRight);
     Offset p2 = getPoint(DetectionType.pupilLeft);
 
-    // Estimate initial box size (e.g., 50mm approx)
+    // Estimate initial box size (approx 50mm)
     double offsetVal = size.width * 0.08;
 
     // Right Eye (Screen Left)
-    // Top-Left L (Temporal/Top)
     _addPoint(
       p1 + Offset(-offsetVal, -offsetVal),
       DetectionType.lensRightTop,
       "R_TL",
     );
-    // Bottom-Right L (Nasal/Bottom)
     _addPoint(
       p1 + Offset(offsetVal, offsetVal),
       DetectionType.lensRightBottom,
@@ -181,13 +205,11 @@ class OpticalController extends ChangeNotifier {
     );
 
     // Left Eye (Screen Right)
-    // Top-Left L (Nasal/Top)
     _addPoint(
       p2 + Offset(-offsetVal, -offsetVal),
       DetectionType.lensLeftTop,
       "L_TL",
     );
-    // Bottom-Right L (Temporal/Bottom)
     _addPoint(
       p2 + Offset(offsetVal, offsetVal),
       DetectionType.lensLeftBottom,
@@ -199,7 +221,7 @@ class OpticalController extends ChangeNotifier {
 
   void handleTap(Offset localPosition, double scale, Offset translation) {
     final imgPos = (localPosition - translation) / scale;
-    final hitRadius = 30 / scale; // Larger radius for easier touching of Ls
+    final hitRadius = 35 / scale; // Increased for easier L selection
 
     try {
       // Priority: Corners > Pupils > Refs
@@ -247,6 +269,18 @@ class OpticalController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setAjusteHorizontal(double val) {
+    ajusteHorizontal = val;
+    calculateFormulas();
+    notifyListeners();
+  }
+
+  void setAjusteVertical(double val) {
+    ajusteVertical = val;
+    calculateFormulas();
+    notifyListeners();
+  }
+
   void toggleCircles(bool val) {
     showCircles = val;
     notifyListeners();
@@ -270,21 +304,26 @@ class OpticalController extends ChangeNotifier {
     }
   }
 
-  // --- MATH FORMULAS ---
+  // --- MATH FORMULAS (CORREGIDAS) ---
 
   void calculateFormulas() {
-    Offset A1 = getPoint(DetectionType.refTL);
-    Offset A2 = getPoint(DetectionType.refTR);
+    // Calibration Points
+    Offset A1 = getPoint(DetectionType.refTL); // Top-Left (Vertical)
+    Offset A2 = getPoint(DetectionType.refTR); // Top-Right (Vertical)
+    Offset B1 = getPoint(DetectionType.refBL); // Bottom-Left (Horizontal)
+    Offset B2 = getPoint(DetectionType.refBR); // Bottom-Right (Horizontal)
+
+    // Pupils
     Offset P_1 = getPoint(DetectionType.pupilRight);
     Offset P_2 = getPoint(DetectionType.pupilLeft);
 
-    // Get "L" Corners
+    // Lens Corners (L shapes - BORDES INTERNOS)
     Offset rTL = getPoint(DetectionType.lensRightTop);
     Offset rBR = getPoint(DetectionType.lensRightBottom);
     Offset lTL = getPoint(DetectionType.lensLeftTop);
     Offset lBR = getPoint(DetectionType.lensLeftBottom);
 
-    // Define Edges based on Ls
+    // Define Edges (INTERNAL ARO)
     // RE (Right Eye - Screen Left)
     double RE_1 = rTL.dx; // Temporal Edge
     double RS_1 = rTL.dy; // Top Edge
@@ -297,57 +336,72 @@ class OpticalController extends ChangeNotifier {
     double RE_2 = lBR.dx; // Temporal Edge
     double RI_2 = lBR.dy; // Bottom Edge
 
-    // 1. Pixel Factor Calculation
-    // Formula: Pixel = (130 / (A2.X – A1.X)) * Ajuste
-    double distA = (A2.dx - A1.dx).abs();
-    if (distA == 0) distA = 1;
-    pixelFactor = (130.0 / distA) * ajuste;
+    // ===== PIXEL FACTORS (SEPARADOS) =====
 
-    // 2. IPD (DI)
-    // Formula: DI = (P_2.X – P_1.X) * Pixel
-    di = (P_2.dx - P_1.dx) * pixelFactor;
+    // 1. HORIZONTAL: Usa cruces INFERIORES (B1, B2) - más cercanas a ojos/armazón
+    // Formula: PixelX = (130 / (B2.X – B1.X)) * AjusteHorizontal
+    double distHoriz = (B2.dx - B1.dx).abs();
+    if (distHoriz == 0) distHoriz = 1;
+    pixelFactorX = (130.0 / distHoriz) * ajusteHorizontal;
 
-    // 3. Bridge (Puente)
-    // Formula: Puente = (RC_2.X – RC_1.X) * Pixel
-    puente = (RC_2 - RC_1) * pixelFactor;
+    // 2. VERTICAL: Usa cruces SUPERIORES (A1, A2)
+    // Formula: PixelY = (130 / |A2.Y - A1.Y|) * AjusteVertical
+    // (Asumiendo que la distancia vertical también es conocida, o usa promedio Y de ambas filas)
+    // Si las cruces están alineadas horizontalmente, usa la distancia entre filas:
+    double distVert = ((B1.dy + B2.dy) / 2 - (A1.dy + A2.dy) / 2).abs();
+    if (distVert == 0) distVert = 1;
+    // Asumiendo distancia vertical conocida (ej: 85mm entre filas)
+    pixelFactorY = (85.0 / distVert) * ajusteVertical;
 
-    // 4. Center (Medio) & DNP
-    // Formula: Medio = (RC_1.X + (Puente / 2)) -> (RC_1 + RC_2) / 2
-    double medioPx = (RC_1 + RC_2) / 2.0;
+    // ===== MEDIDAS HORIZONTALES (usan pixelFactorX) =====
 
-    // Formula: DNP1 = (Centro - P_1.X) * Pixel
-    dnpRight = (medioPx - P_1.dx) * pixelFactor;
+    // 3. IPD (DI)
+    // Formula: DI = (P_2.X – P_1.X) * PixelX
+    di = (P_2.dx - P_1.dx) * pixelFactorX;
 
-    // Formula: DNP2 = (P_2.X - Centro) * Pixel
-    dnpLeft = (P_2.dx - medioPx) * pixelFactor;
+    // 4. Bridge (Puente)
+    // Formula: Puente = (RC_2.X – RC_1.X) * PixelX
+    puente = (RC_2 - RC_1) * pixelFactorX;
 
-    // 5. Heights (Alturas)
-    // Formula: ALT1 = (RI_1.Y - P_1.Y) * Pixel
-    altRight = (RI_1 - P_1.dy) * pixelFactor;
-    altLeft = (RI_2 - P_2.dy) * pixelFactor;
+    // 5. Center & DNP
+    // Formula: Centro = (RC_1 + RC_2) / 2
+    double centroPx = (RC_1 + RC_2) / 2.0;
 
-    // 6. Box Dimensions (Aro)
-    // Formula: Aro Alt. = (((RI_1.Y – RS_1.Y) + (RI_2.Y – RS_2.Y)) / 2) * Pixel
-    double h1 = RI_1 - RS_1;
-    double h2 = RI_2 - RS_2;
-    aroAlt = ((h1 + h2) / 2.0) * pixelFactor;
+    // Formula: DNP1 = (Centro - P_1.X) * PixelX
+    dnpRight = (centroPx - P_1.dx) * pixelFactorX;
 
-    // Formula: Aro Anc. = (((RC_1.X – RE_1.X) + (RE_2.X – RC_2.X)) / 2) * Pixel
+    // Formula: DNP2 = (P_2.X - Centro) * PixelX
+    dnpLeft = (P_2.dx - centroPx) * pixelFactorX;
+
+    // 6. Ancho Aro (ARO INTERNO)
+    // Formula: Aro Anc. = (((RC_1.X – RE_1.X) + (RE_2.X – RC_2.X)) / 2) * PixelX
     double w1 = RC_1 - RE_1;
     double w2 = RE_2 - RC_2;
-    aroAnc = ((w1 + w2) / 2.0) * pixelFactor;
+    aroAnc = ((w1 + w2) / 2.0) * pixelFactorX;
 
-    // 7. Calculated Diameters
-    // Formula: Diametro1= (((P_1.X – RE_1.X) * 2) * Pixel) + 1
-    // Note: We need the pixel radius first to draw it correctly
+    // 7. Diametros Calculados
+    // Formula: Diametro1 = (((P_1.X – RE_1.X) * 2) * PixelX) + 1
     double radPxR = (P_1.dx - RE_1).abs();
-    diametroRight = (radPxR * 2.0 * pixelFactor) + 1.0;
-    calcRadiusPxRight = radPxR; // Store for Painter
+    diametroRight = (radPxR * 2.0 * pixelFactorX) + 1.0;
+    calcRadiusPxRight = radPxR;
 
-    // Formula: Diametro2= (((RE_2.X – P_2.X) * 2) * Pixel) + 1
+    // Formula: Diametro2 = (((RE_2.X – P_2.X) * 2) * PixelX) + 1
     double radPxL = (RE_2 - P_2.dx).abs();
-    diametroLeft = (radPxL * 2.0 * pixelFactor) + 1.0;
-    calcRadiusPxLeft = radPxL; // Store for Painter
+    diametroLeft = (radPxL * 2.0 * pixelFactorX) + 1.0;
+    calcRadiusPxLeft = radPxL;
+
+    // ===== MEDIDAS VERTICALES (usan pixelFactorY) =====
+
+    // 8. Alturas (Heights)
+    // Formula: ALT1 = (RI_1.Y - P_1.Y) * PixelY
+    altRight = (RI_1 - P_1.dy) * pixelFactorY;
+    altLeft = (RI_2 - P_2.dy) * pixelFactorY;
+
+    // 9. Alto Aro (ARO INTERNO)
+    // Formula: Aro Alt. = (((RI_1.Y – RS_1.Y) + (RI_2.Y – RS_2.Y)) / 2) * PixelY
+    double h1 = RI_1 - RS_1;
+    double h2 = RI_2 - RS_2;
+    aroAlt = ((h1 + h2) / 2.0) * pixelFactorY;
 
     notifyListeners();
   }
