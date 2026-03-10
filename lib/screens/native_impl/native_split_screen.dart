@@ -23,13 +23,11 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
   bool _torchEnabled = false;
   bool _frontCamera = false;
   bool _overlayVisible = true;
-
   bool _streamDetections = false;
 
   String? _lastPhotoPath;
   bool _lastPhotoWasFront = false;
-  // Store detections specifically for the last captured/picked photo
-  Map<String, dynamic>? _lastPhotoDetections; // Make it nullable
+  Map<String, dynamic>? _lastPhotoDetections;
 
   bool _hasPermission = false;
   bool _isCheckingPermission = true;
@@ -66,7 +64,6 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
           _hasPermission = status.isGranted;
           _isCheckingPermission = false;
         });
-
         if (status.isDenied) {
           await _requestCameraPermission();
         }
@@ -80,10 +77,8 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
   Future<void> _requestCameraPermission() async {
     try {
       final status = await Permission.camera.request();
-
       if (mounted) {
         setState(() => _hasPermission = status.isGranted);
-
         if (status.isPermanentlyDenied) {
           _showSettingsDialog();
         }
@@ -141,7 +136,6 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
     }
 
     const viewType = 'native-left-view';
-
     final Map<String, dynamic> creationParams = <String, dynamic>{
       'modelPath': 'assets/model3.tflite',
       'labelPath': 'assets/labels.txt',
@@ -209,7 +203,7 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
   Widget _buildGuideBox() {
     final width = MediaQuery.of(context).size.width >= 768
         ? 400.0
-        : (MediaQuery.of(context).size.width * 0.57);
+        : (MediaQuery.of(context).size.width * 0.8);
 
     return Positioned(
       top: MediaQuery.of(context).size.width >= 768
@@ -290,7 +284,6 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
       if (call.method == 'onDetections') {
         try {
           final data = Map<String, dynamic>.from(call.arguments);
-          // Update the live detections
           setState(() {});
         } catch (e) {
           debugPrint("Error parsing detection data: $e");
@@ -314,7 +307,6 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
 
   List<Map<String, double>> _inflateDetections(dynamic rawList) {
     if (rawList == null) return [];
-
     final List<double> list = (rawList is List)
         ? rawList.map((e) => (e as num).toDouble()).toList()
         : (rawList as List<double>);
@@ -495,7 +487,6 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
   }
 
   Widget _buildLastPhotoThumbnail() {
-    // Only show thumbnail if a photo path is set AND its detections are available
     if (_lastPhotoPath == null || _lastPhotoDetections == null) {
       return const SizedBox(width: 48, height: 48);
     }
@@ -536,12 +527,10 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
       final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
       if (image == null) return;
 
-      // Show loading
       setState(() => _isCapturing = true);
 
-      final String path = image.path;
       final result = await _channel?.invokeMethod('detectFromImage', {
-        'path': path,
+        'path': image.path,
       });
 
       if (result != null) {
@@ -553,28 +542,26 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
         };
 
         if (mounted) {
+          final List circles = detections['circles'] as List;
+
           setState(() {
-            _lastPhotoPath = path;
+            _lastPhotoPath = image.path;
             _lastPhotoWasFront = false;
-            _lastPhotoDetections = detections; // Store specific detections
+            _lastPhotoDetections = detections;
             _isCapturing = false;
           });
 
-          final List circles = detections['circles'] as List;
-
-          // With the threshold lowered in Android, we should find 4 circles more often
           if (circles.length == 4) {
             Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (_) => OpticalEditorScreen(
-                  imagePath: path,
+                  imagePath: image.path,
                   detections: detections,
                   isFrontCamera: false,
                 ),
               ),
             );
           } else {
-            // Helpful error message for debugging
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(context.l10n.detectionIncomplete(circles.length)),
@@ -618,28 +605,25 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
             setState(() {
               _lastPhotoPath = nativePath;
               _lastPhotoWasFront = wasFront;
-              // Store the detections for this captured image
               _lastPhotoDetections = detectionsSnapshot;
             });
 
-            // CHECK: Only navigate if exactly 4 circles are found
             final List circles = detectionsSnapshot['circles'] as List;
             if (circles.length == 4) {
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => OpticalEditorScreen(
                     imagePath: nativePath,
-                    detections: detectionsSnapshot, // This is already correct
+                    detections: detectionsSnapshot,
                     isFrontCamera: wasFront,
                   ),
                 ),
               );
             } else {
-              // Show error if circles != 4
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                    "Capture failed: Found ${circles.length} circles (4 required). Try adjusting lighting or distance.",
+                    "Se encontraron ${circles.length} cruces de 4 requeridas",
                   ),
                   backgroundColor: Colors.redAccent,
                   duration: const Duration(seconds: 3),

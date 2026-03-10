@@ -148,6 +148,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dividerLabel => 'Divider';
 
   @override
+  String get lensLabel => 'Lens';
+
+  @override
   String get verticalLabel => 'Vertical';
 
   @override
@@ -161,6 +164,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get goBack => 'Go Back';
+
+  @override
+  String get info => 'Info';
+
+  @override
+  String get measurementsModuleTitle => 'Measurements Module';
+
+  @override
+  String get measurementsModuleSubtitle => 'Measurement functionality will be implemented here';
 
   @override
   String get cameraRequiredTitle => 'Camera Required';
@@ -242,6 +254,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String diamShort(String value) {
     return 'Diam: $value';
   }
+
+  @override
+  String get shareResults => 'Share Results';
+
+  @override
+  String get calibration => 'Calibration';
+
+  @override
+  String get editMode => 'Edit Mode';
+
+  @override
+  String get zoomMode => 'Zoom Mode';
+
+  @override
+  String get resetZoom => 'Reset Zoom';
+
+  @override
+  String get horizontalAdjustment => 'Horizontal Adjustment';
+
+  @override
+  String get verticalAdjustment => 'Vertical Adjustment';
+
+  @override
+  String get measurementsResultsTitle => 'Results';
+
+  @override
+  String get copyLabel => 'Copy';
+
+  @override
+  String get shareLabel => 'Share';
+
+  @override
+  String get measurementsShareSubject => 'Measurements';
 
   @override
   String get leftEye => 'Left Eye';
@@ -485,4 +530,51 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get simColorRed => 'Red';
+
+  @override
+  String get activationTitle => 'Device Activation';
+
+  @override
+  String get activationEnterEmail => 'Please enter your email to request access.';
+
+  @override
+  String get activationEmailLabel => 'Email';
+
+  @override
+  String get activationRequestAccess => 'Request Access';
+
+  @override
+  String get activationAwaitingApproval => 'Awaiting Approval';
+
+  @override
+  String activationPendingMessage(String email) {
+    return 'Your request for device activation is pending approval.\nEmail: $email';
+  }
+
+  @override
+  String get activationRefreshStatus => 'Refresh';
+
+  @override
+  String get activationConnectionRequired => 'Connection Required';
+
+  @override
+  String get activationOfflineLimitReached => 'Offline usage limit reached.';
+
+  @override
+  String get activationRetryConnection => 'Retry Connection';
+
+  @override
+  String get activationErrorTitle => 'Error';
+
+  @override
+  String get activationEmailInvalid => 'Please enter a valid email';
+
+  @override
+  String get activationRequestExists => 'Request already exists for this email.';
+
+  @override
+  String get activationNoInternet => 'No internet connection and not previously activated.';
+
+  @override
+  String get activationConnectionTimeout => 'Connection timed out. Please check your internet.';
 }

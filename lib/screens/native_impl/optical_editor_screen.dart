@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'dart:ui';
 import 'dart:async';
+import 'dart:math' as math;
+import 'package:digipad_flutter/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -29,12 +31,15 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
   late OpticalController _controller;
   late File _imageFile;
   Size? _imageSize;
+  Size? _viewportSize;
   final TransformationController _transformationController =
       TransformationController();
 
   bool _isMoveMode = false;
   bool _showAjustePanel = false;
   Timer? _holdTimer;
+
+  double _imageRotation = 0.0;
 
   @override
   void initState() {
@@ -65,10 +70,144 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
           );
           _controller.initialize(widget.detections, _imageSize!);
         });
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _applyAutoRotation();
+          _applyAutoZoom();
+        });
       }
     } catch (e) {
       debugPrint("Error: $e");
     }
+  }
+
+  void _applyAutoRotation() {
+    Offset? pRight;
+    Offset? pLeft;
+
+    for (var p in _controller.points) {
+      if (p.type == DetectionType.pupilRight) pRight = p.position;
+      if (p.type == DetectionType.pupilLeft) pLeft = p.position;
+    }
+
+    if (pRight == null || pLeft == null) return;
+
+    final double dy = pLeft.dy - pRight.dy;
+    final double dx = pLeft.dx - pRight.dx;
+
+    double angle = math.atan2(dy, dx);
+
+    if (angle > math.pi / 2) {
+      angle -= math.pi;
+    } else if (angle < -math.pi / 2) {
+      angle += math.pi;
+    }
+
+    if (angle.abs() > 0.01) {
+      setState(() {
+        _imageRotation = -angle;
+      });
+      debugPrint(
+        "🔄 Auto-rotation: ${(_imageRotation * 180 / math.pi).toStringAsFixed(1)}° applied",
+      );
+    } else {
+      setState(() => _imageRotation = 0.0);
+    }
+  }
+
+  void _applyAutoZoom() {
+    final targetTypes = [
+      DetectionType.lensRightTop,
+      DetectionType.lensLeftTop,
+      DetectionType.lensRightBottom,
+      DetectionType.lensLeftBottom,
+      DetectionType.pupilRight,
+      DetectionType.pupilLeft,
+    ];
+
+    final points = _controller.points
+        .where((p) => targetTypes.contains(p.type))
+        .map((p) => p.position)
+        .toList();
+
+    if (points.length < 2) return;
+
+    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
+    if (renderBox == null || _imageSize == null) return;
+
+    final Size viewportSize = renderBox.size;
+
+    double minX = points.map((p) => p.dx).reduce(math.min);
+    double maxX = points.map((p) => p.dx).reduce(math.max);
+    double minY = points.map((p) => p.dy).reduce(math.min);
+    double maxY = points.map((p) => p.dy).reduce(math.max);
+
+    final double rawCenterX = (minX + maxX) / 2;
+    final double rawCenterY = (minY + maxY) / 2;
+    final double rawWidth = maxX - minX;
+
+    final double scaleX = viewportSize.width / _imageSize!.width;
+    final double scaleY = viewportSize.height / _imageSize!.height;
+    final double fitScale = math.min(scaleX, scaleY);
+
+    final double offsetX =
+        (viewportSize.width - (_imageSize!.width * fitScale)) / 2;
+    final double offsetY =
+        (viewportSize.height - (_imageSize!.height * fitScale)) / 2;
+
+    final double currentVisualX = (rawCenterX * fitScale) + offsetX;
+    final double currentVisualY = (rawCenterY * fitScale) + offsetY;
+
+    final double calculatedZoom =
+        (viewportSize.width * 0.85) / (rawWidth * fitScale);
+    final double targetZoom = calculatedZoom.clamp(1.5, 4.0);
+    final isTablet = MediaQuery.of(context).size.shortestSide >= 600;
+
+    final double screenTargetX = viewportSize.width * 0.5;
+    final double screenTargetY = viewportSize.height * (isTablet ? 0.7 : 0.7);
+
+    final double translationX = screenTargetX - (currentVisualX * targetZoom);
+    final double translationY = screenTargetY - (currentVisualY * targetZoom);
+
+    final Matrix4 matrix = Matrix4.identity();
+    matrix[0] = targetZoom;
+    matrix[5] = targetZoom;
+    matrix[12] = translationX;
+    matrix[13] = translationY;
+
+    _transformationController.value = matrix;
+  }
+
+  void _resetZoom() {
+    setState(() => _imageRotation = 0.0);
+    _transformationController.value = Matrix4.identity();
+  }
+
+  /// Un-rotate a touch position from the rotated widget's local space
+  /// back to the original image-aligned coordinate space.
+  ///
+  /// The GestureDetector lives inside Transform.rotate, so Flutter already
+  /// delivers localPosition in the rotated frame. We need to reverse that
+  /// rotation around the widget center before passing to the controller,
+  /// which works entirely in original image pixel coordinates.
+  Offset _unrotatePosition(Offset rotatedPos, BoxConstraints constraints) {
+    if (_imageRotation == 0.0) return rotatedPos;
+    final center = Offset(constraints.maxWidth / 2, constraints.maxHeight / 2);
+    final d = rotatedPos - center;
+    final cos = math.cos(-_imageRotation);
+    final sin = math.sin(-_imageRotation);
+    return center + Offset(d.dx * cos - d.dy * sin, d.dx * sin + d.dy * cos);
+  }
+
+  /// Un-rotate a drag delta vector from screen space to image space.
+  Offset _unrotateDelta(Offset delta) {
+    if (_imageRotation == 0.0) return delta;
+    final cos = math.cos(-_imageRotation);
+    final sin = math.sin(-_imageRotation);
+    return Offset(
+      delta.dx * cos - delta.dy * sin,
+      delta.dx * sin + delta.dy * cos,
+    );
   }
 
   @override
@@ -85,17 +224,21 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
       child: Scaffold(
         backgroundColor: Colors.black,
         appBar: AppBar(
-          title: const Text("Ajuste Medidas"),
+          title: Text(context.l10n.measureAdjustments),
           backgroundColor: const Color(0xFF1C1C1E),
           actions: [
-            // Botón Compartir
+            TextButton(
+              onPressed: _resetZoom,
+              child: Text(
+                context.l10n.resetZoom,
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
             IconButton(
               icon: const Icon(Icons.share, color: Colors.white),
               onPressed: _showResultsSheet,
-              tooltip: 'Compartir Resultados',
+              tooltip: context.l10n.shareResults,
             ),
-
-            // Botón Calibración
             IconButton(
               icon: Icon(
                 Icons.tune,
@@ -103,20 +246,19 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
               ),
               onPressed: () =>
                   setState(() => _showAjustePanel = !_showAjustePanel),
-              tooltip: 'Calibración',
+              tooltip: context.l10n.calibration,
             ),
-
-            // Botón Move/Zoom
             IconButton(
               icon: Icon(
                 _isMoveMode ? Icons.pan_tool : Icons.zoom_in,
                 color: _isMoveMode ? Colors.greenAccent : Colors.white,
               ),
               onPressed: () => setState(() => _isMoveMode = !_isMoveMode),
-              tooltip: _isMoveMode ? 'Modo Edición' : 'Modo Zoom',
+              tooltip: _isMoveMode
+                  ? context.l10n.editMode
+                  : context.l10n.zoomMode,
             ),
 
-            // Botón Confirmar
             Builder(
               builder: (context) {
                 if (_isMoveMode || _controller.selectedPoint != null) {
@@ -139,21 +281,14 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
         ),
         body: Column(
           children: [
-            // PANEL DE CONTROLES SUPERIOR
             _buildTopControls(),
-
-            // PANEL DE CALIBRACION (expandible)
             if (_showAjustePanel) _buildCalibrationPanel(),
-
-            // IMAGEN CON OVERLAY
             Expanded(
               flex: 3,
               child: Stack(
                 children: [_buildImageViewer(), _buildNudgeControls()],
               ),
             ),
-
-            // PANEL DE RESULTADOS INFERIOR
             Expanded(flex: 2, child: _buildInfoPanel()),
           ],
         ),
@@ -161,63 +296,216 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
     );
   }
 
+  Widget _buildImageViewer() {
+    return Consumer<OpticalController>(
+      builder: (context, controller, _) {
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (_viewportSize !=
+                  Size(constraints.maxWidth, constraints.maxHeight)) {
+                setState(() {
+                  _viewportSize = Size(
+                    constraints.maxWidth,
+                    constraints.maxHeight,
+                  );
+                });
+              }
+            });
+
+            return InteractiveViewer(
+              transformationController: _transformationController,
+              maxScale: 5.0,
+              minScale: 1.0,
+              panEnabled: _isMoveMode,
+              scaleEnabled: _isMoveMode,
+              child: Transform.rotate(
+                angle: _imageRotation,
+                alignment: Alignment.center,
+                child: _buildImageContent(constraints, controller),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildImageContent(
+    BoxConstraints constraints,
+    OpticalController controller,
+  ) {
+    final double scaleX = constraints.maxWidth / _imageSize!.width;
+    final double scaleY = constraints.maxHeight / _imageSize!.height;
+    final double scale = scaleX < scaleY ? scaleX : scaleY;
+    final double displayW = _imageSize!.width * scale;
+    final double displayH = _imageSize!.height * scale;
+    final double offsetX = (constraints.maxWidth - displayW) / 2;
+    final double offsetY = (constraints.maxHeight - displayH) / 2;
+
+    return GestureDetector(
+      onPanDown: _isMoveMode
+          ? null
+          : (details) {
+              // Flutter delivers localPosition already in the rotated widget's
+              // coordinate frame (because the GestureDetector is a child of
+              // Transform.rotate). We must un-rotate it back to image space
+              // before passing to the controller.
+              final unrotated = _unrotatePosition(
+                details.localPosition,
+                constraints,
+              );
+              controller.handleTap(unrotated, scale, Offset(offsetX, offsetY));
+            },
+      onPanUpdate: _isMoveMode
+          ? null
+          : (details) {
+              // delta is in screen space — un-rotate so the point follows the
+              // finger correctly even when the image is tilted.
+              final unrotatedDelta = _unrotateDelta(details.delta);
+              controller.handleDrag(unrotatedDelta, scale);
+            },
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Transform.flip(
+            flipX: widget.isFrontCamera,
+            child: Image.file(_imageFile),
+          ),
+          CustomPaint(
+            size: Size(constraints.maxWidth, constraints.maxHeight),
+            painter: OpticalPainter(
+              rotation: _imageRotation,
+              points: controller.points,
+              selectedPoint: controller.selectedPoint,
+              scale: scale,
+              offset: Offset(offsetX, offsetY),
+              showCircles: controller.showCircles,
+              refDiameterMmRight: controller.referenceCircleDiameterRight,
+              refDiameterMmLeft: controller.referenceCircleDiameterLeft,
+              calcRadiusPxR: controller.calcRadiusPxRight,
+              calcRadiusPxL: controller.calcRadiusPxLeft,
+              pixelFactorX: controller.pixelFactorX,
+              pixelFactorY: controller.pixelFactorY,
+              isBifocal: controller.isBifocal,
+              bifocalOffset: controller.bifocalLineOffset,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTopControls() {
     return Container(
-      height: 50,
+      height: 80,
       color: Colors.grey[900],
       child: Consumer<OpticalController>(
-        builder: (context, ctrl, _) => Row(
+        builder: (context, ctrl, _) => Column(
           children: [
-            // Toggle Círculos
-            Checkbox(
-              value: ctrl.showCircles,
-              activeColor: Colors.cyanAccent,
-              onChanged: (v) => ctrl.toggleCircles(v!),
+            Row(
+              children: [
+                Checkbox(
+                  value: ctrl.showCircles,
+                  activeColor: Colors.cyanAccent,
+                  onChanged: (v) => ctrl.toggleCircles(v!),
+                ),
+                Text(
+                  context.l10n.guides,
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                ),
+                const Spacer(),
+                Switch(
+                  value: ctrl.isBifocal,
+                  activeColor: Colors.orangeAccent,
+                  onChanged: (v) => ctrl.toggleBifocal(v),
+                ),
+                if (ctrl.isBifocal) ...[
+                  IconButton(
+                    icon: const Icon(Icons.arrow_drop_up, color: Colors.white),
+                    onPressed: () => ctrl.adjustBifocalLine(-5),
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.arrow_drop_down,
+                      color: Colors.white,
+                    ),
+                    onPressed: () => ctrl.adjustBifocalLine(5),
+                  ),
+                ],
+              ],
             ),
-            if (!ctrl.showCircles)
-              const Text(
-                "Guías",
-                style: TextStyle(color: Colors.white, fontSize: 12),
-              ),
-
-            // Slider Diámetro Referencia
-            if (ctrl.showCircles) ...[
+            if (ctrl.showCircles)
               Expanded(
-                child: Slider(
-                  value: ctrl.referenceCircleDiameter,
-                  min: 40,
-                  max: 90,
-                  divisions: 50,
-                  activeColor: Colors.white,
-                  inactiveColor: Colors.white24,
-                  onChanged: (v) => ctrl.setReferenceDiameter(v),
+                child: Row(
+                  children: [
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Text(
+                            "👁️ ${context.l10n.rightEyeP1}:",
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 11,
+                            ),
+                          ),
+                          Expanded(
+                            child: Slider(
+                              value: ctrl.referenceCircleDiameterRight,
+                              min: 40,
+                              max: 90,
+                              divisions: 50,
+                              activeColor: Colors.cyanAccent,
+                              onChanged: (v) =>
+                                  ctrl.setReferenceDiameterRight(v),
+                            ),
+                          ),
+                          Text(
+                            "${ctrl.referenceCircleDiameterRight.round()}",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Text(
+                            "👁️ ${context.l10n.leftEyeP2}:",
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 11,
+                            ),
+                          ),
+                          Expanded(
+                            child: Slider(
+                              value: ctrl.referenceCircleDiameterLeft,
+                              min: 40,
+                              max: 90,
+                              divisions: 50,
+                              activeColor: Colors.greenAccent,
+                              onChanged: (v) =>
+                                  ctrl.setReferenceDiameterLeft(v),
+                            ),
+                          ),
+                          Text(
+                            "${ctrl.referenceCircleDiameterLeft.round()}",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                 ),
               ),
-              Text(
-                "Ref: ${ctrl.referenceCircleDiameter.round()}",
-                style: const TextStyle(color: Colors.white, fontSize: 12),
-              ),
-              const SizedBox(width: 8),
-            ],
-
-            const VerticalDivider(color: Colors.white24, width: 20),
-
-            // Toggle Bifocal
-            Switch(
-              value: ctrl.isBifocal,
-              activeColor: Colors.orangeAccent,
-              onChanged: (v) => ctrl.toggleBifocal(v),
-            ),
-            if (ctrl.isBifocal) ...[
-              IconButton(
-                icon: const Icon(Icons.arrow_drop_up, color: Colors.white),
-                onPressed: () => ctrl.adjustBifocalLine(-5),
-              ),
-              IconButton(
-                icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
-                onPressed: () => ctrl.adjustBifocalLine(5),
-              ),
-            ],
           ],
         ),
       ),
@@ -232,26 +520,18 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
         builder: (context, ctrl, _) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "⚙️ Calibración de Medidas",
-              style: TextStyle(
+            Text(
+              "⚙️ ${context.l10n.calibration}",
+              style: const TextStyle(
                 color: Colors.orangeAccent,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 12),
-
-            // Ajuste Horizontal
             Row(
               children: [
-                const SizedBox(
-                  width: 140,
-                  child: Text(
-                    "Ajuste Horizontal:",
-                    style: TextStyle(color: Colors.white, fontSize: 13),
-                  ),
-                ),
+                const SizedBox(width: 140, child: SizedBox.shrink()),
                 Expanded(
                   child: Slider(
                     value: ctrl.ajusteHorizontal,
@@ -271,60 +551,40 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
                 ),
               ],
             ),
-            const Text(
-              "  Afecta: DI, DNP, Puente, Ancho Aro, Diámetro",
-              style: TextStyle(color: Colors.white54, fontSize: 11),
-            ),
-
-            const SizedBox(height: 8),
-
-            // Ajuste Vertical
             Row(
               children: [
-                const SizedBox(
-                  width: 140,
-                  child: Text(
-                    "Ajuste Vertical:",
-                    style: TextStyle(color: Colors.white, fontSize: 13),
-                  ),
-                ),
+                const SizedBox(width: 140, child: SizedBox.shrink()),
                 Expanded(
-                  child: Slider(
-                    value: ctrl.ajusteVertical,
-                    min: 0.8,
-                    max: 1.2,
-                    divisions: 40,
-                    activeColor: Colors.greenAccent,
-                    onChanged: (v) => ctrl.setAjusteVertical(v),
-                  ),
-                ),
-                SizedBox(
-                  width: 50,
-                  child: Text(
-                    ctrl.ajusteVertical.toStringAsFixed(2),
-                    style: const TextStyle(color: Colors.white),
+                  child: Row(
+                    children: [
+                      Text(
+                        context.l10n.verticalAdjustment,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                        ),
+                      ),
+                      Expanded(
+                        child: Slider(
+                          value: ctrl.ajusteVertical,
+                          min: 0.8,
+                          max: 1.2,
+                          divisions: 40,
+                          activeColor: Colors.greenAccent,
+                          onChanged: (v) => ctrl.setAjusteVertical(v),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 50,
+                        child: Text(
+                          ctrl.ajusteVertical.toStringAsFixed(2),
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
-            ),
-            const Text(
-              "  Afecta: Alturas, Alto Aro",
-              style: TextStyle(color: Colors.white54, fontSize: 11),
-            ),
-
-            const SizedBox(height: 8),
-
-            // Info
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.black38,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: const Text(
-                "ℹ️ Usa cruces INFERIORES (B1,B2) para horizontal y SUPERIORES (A1,A2) para vertical",
-                style: TextStyle(color: Colors.white70, fontSize: 11),
-              ),
             ),
           ],
         ),
@@ -332,81 +592,11 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
     );
   }
 
-  Widget _buildImageViewer() {
-    return Consumer<OpticalController>(
-      builder: (context, controller, _) {
-        return InteractiveViewer(
-          transformationController: _transformationController,
-          maxScale: 5.0,
-          minScale: 1.0,
-          panEnabled: _isMoveMode,
-          scaleEnabled: _isMoveMode,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final double scaleX = constraints.maxWidth / _imageSize!.width;
-              final double scaleY = constraints.maxHeight / _imageSize!.height;
-              final double scale = scaleX < scaleY ? scaleX : scaleY;
-              final double displayW = _imageSize!.width * scale;
-              final double displayH = _imageSize!.height * scale;
-              final double offsetX = (constraints.maxWidth - displayW) / 2;
-              final double offsetY = (constraints.maxHeight - displayH) / 2;
-
-              return GestureDetector(
-                onPanDown: _isMoveMode
-                    ? null
-                    : (details) {
-                        controller.handleTap(
-                          details.localPosition,
-                          scale,
-                          Offset(offsetX, offsetY),
-                        );
-                      },
-                onPanUpdate: _isMoveMode
-                    ? null
-                    : (details) {
-                        controller.handleDrag(details.delta, scale);
-                      },
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Transform.flip(
-                      flipX: widget.isFrontCamera,
-                      child: Image.file(_imageFile),
-                    ),
-                    CustomPaint(
-                      size: Size(constraints.maxWidth, constraints.maxHeight),
-                      painter: OpticalPainter(
-                        points: controller.points,
-                        selectedPoint: controller.selectedPoint,
-                        scale: scale,
-                        offset: Offset(offsetX, offsetY),
-                        showCircles: controller.showCircles,
-                        refDiameterMm: controller.referenceCircleDiameter,
-                        calcRadiusPxR: controller.calcRadiusPxRight,
-                        calcRadiusPxL: controller.calcRadiusPxLeft,
-                        pixelFactorX: controller.pixelFactorX,
-                        pixelFactorY: controller.pixelFactorY,
-                        isBifocal: controller.isBifocal,
-                        bifocalOffset: controller.bifocalLineOffset,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-
   Widget _buildNudgeControls() {
     return Consumer<OpticalController>(
       builder: (context, controller, child) {
-        if (controller.selectedPoint == null || _isMoveMode) {
+        if (controller.selectedPoint == null || _isMoveMode)
           return const SizedBox.shrink();
-        }
-
         return Positioned(
           bottom: 20,
           right: 20,
@@ -421,6 +611,8 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
               children: [
                 _arrowButton(
                   Icons.keyboard_arrow_up,
+                  // Nudge buttons always move in image space (up = -Y in image),
+                  // so no rotation needed here — the controller handles image coords.
                   () => controller.nudgeSelectedPoint(0, -1),
                 ),
                 Row(
@@ -485,10 +677,15 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _statItem("IPD (DI)", ctrl.di, isLarge: true),
-                  _statItem("Puente", ctrl.puente),
-                  _statItem("Aro Anc", ctrl.aroAnc),
-                  _statItem("Aro Alt", ctrl.aroAlt),
+                  _statItem(
+                    context,
+                    context.l10n.ipdDi,
+                    ctrl.di,
+                    isLarge: true,
+                  ),
+                  _statItem(context, context.l10n.bridge, ctrl.puente),
+                  _statItem(context, context.l10n.frameW, ctrl.aroAnc),
+                  _statItem(context, context.l10n.frameH, ctrl.aroAlt),
                 ],
               ),
               const Divider(color: Colors.white24),
@@ -496,7 +693,8 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
                 children: [
                   Expanded(
                     child: _eyeStat(
-                      "Ojo Der (P1)",
+                      context,
+                      context.l10n.rightEyeP1,
                       ctrl.dnpRight,
                       ctrl.altRight,
                       ctrl.diametroRight,
@@ -505,7 +703,8 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
                   Container(width: 1, height: 60, color: Colors.white24),
                   Expanded(
                     child: _eyeStat(
-                      "Ojo Izq (P2)",
+                      context,
+                      context.l10n.leftEyeP2,
                       ctrl.dnpLeft,
                       ctrl.altLeft,
                       ctrl.diametroLeft,
@@ -520,7 +719,12 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
     );
   }
 
-  Widget _statItem(String label, double value, {bool isLarge = false}) {
+  Widget _statItem(
+    BuildContext context,
+    String label,
+    double value, {
+    bool isLarge = false,
+  }) {
     return Column(
       children: [
         Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
@@ -533,12 +737,21 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        const Text("mm", style: TextStyle(color: Colors.grey, fontSize: 10)),
+        Text(
+          context.l10n.unitMm,
+          style: const TextStyle(color: Colors.grey, fontSize: 10),
+        ),
       ],
     );
   }
 
-  Widget _eyeStat(String side, double dnp, double height, double diam) {
+  Widget _eyeStat(
+    BuildContext context,
+    String side,
+    double dnp,
+    double height,
+    double diam,
+  ) {
     return Column(
       children: [
         Text(
@@ -550,15 +763,15 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
         ),
         const SizedBox(height: 4),
         Text(
-          "DNP: ${dnp.toStringAsFixed(1)}",
+          context.l10n.dnpShort(dnp.toStringAsFixed(1)),
           style: const TextStyle(color: Colors.white),
         ),
         Text(
-          "Alt: ${height.toStringAsFixed(1)}",
+          context.l10n.heightShort(height.toStringAsFixed(1)),
           style: const TextStyle(color: Colors.white),
         ),
         Text(
-          "Diam: ${diam.toStringAsFixed(1)}",
+          context.l10n.diamShort(diam.toStringAsFixed(1)),
           style: const TextStyle(color: Colors.white54, fontSize: 11),
         ),
       ],
@@ -577,7 +790,6 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
 
 class _ResultsSheet extends StatelessWidget {
   final OpticalController controller;
-
   const _ResultsSheet({super.key, required this.controller});
 
   @override
@@ -592,13 +804,12 @@ class _ResultsSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                "📋 Resultados de Medición",
-                style: TextStyle(
+              Text(
+                "📋 ${context.l10n.measurementsResultsTitle}",
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -611,8 +822,6 @@ class _ResultsSheet extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-
-          // Main Measurements Card
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -620,131 +829,47 @@ class _ResultsSheet extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "Medidas Generales",
-                  style: TextStyle(
-                    color: Colors.cyanAccent,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const Divider(color: Colors.white24, height: 20),
-
                 _resultRow(
-                  "Distancia Interpupilar (DI)",
+                  context,
+                  context.l10n.ipdDi,
                   controller.di,
                   highlight: true,
                 ),
-                _resultRow("Puente", controller.puente),
-                _resultRow("Ancho Aro", controller.aroAnc),
-                _resultRow("Alto Aro", controller.aroAlt),
+                _resultRow(context, context.l10n.bridge, controller.puente),
+                _resultRow(context, context.l10n.frameW, controller.aroAnc),
+                _resultRow(context, context.l10n.frameH, controller.aroAlt),
               ],
             ),
           ),
-
           const SizedBox(height: 16),
-
-          // Eyes Measurements Row
           Row(
             children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[900],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Ojo Derecho (P1)",
-                        style: TextStyle(
-                          color: Colors.greenAccent,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      _resultRow(
-                        "DNP",
-                        controller.dnpRight,
-                        highlight: false,
-                        compact: true,
-                      ),
-                      _resultRow(
-                        "Altura",
-                        controller.altRight,
-                        highlight: false,
-                        compact: true,
-                      ),
-                      _resultRow(
-                        "Diámetro",
-                        controller.diametroRight,
-                        highlight: false,
-                        compact: true,
-                      ),
-                    ],
-                  ),
-                ),
+              _expandedEyeBox(
+                context,
+                context.l10n.rightEye,
+                controller.dnpRight,
+                controller.altRight,
+                controller.diametroRight,
               ),
               const SizedBox(width: 12),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[900],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Ojo Izquierdo (P2)",
-                        style: TextStyle(
-                          color: Colors.greenAccent,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      _resultRow(
-                        "DNP",
-                        controller.dnpLeft,
-                        highlight: false,
-                        compact: true,
-                      ),
-                      _resultRow(
-                        "Altura",
-                        controller.altLeft,
-                        highlight: false,
-                        compact: true,
-                      ),
-                      _resultRow(
-                        "Diámetro",
-                        controller.diametroLeft,
-                        highlight: false,
-                        compact: true,
-                      ),
-                    ],
-                  ),
-                ),
+              _expandedEyeBox(
+                context,
+                context.l10n.leftEye,
+                controller.dnpLeft,
+                controller.altLeft,
+                controller.diametroLeft,
               ),
             ],
           ),
-
           const SizedBox(height: 24),
-
-          // Share Buttons
           Row(
             children: [
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () => _copyToClipboard(context),
                   icon: const Icon(Icons.copy),
-                  label: const Text("Copiar"),
+                  label: Text(context.l10n.copyLabel),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.grey[800],
                     foregroundColor: Colors.white,
@@ -757,7 +882,7 @@ class _ResultsSheet extends StatelessWidget {
                 child: ElevatedButton.icon(
                   onPressed: () => _shareResults(context),
                   icon: const Icon(Icons.share),
-                  label: const Text("Compartir"),
+                  label: Text(context.l10n.shareLabel),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.cyanAccent,
                     foregroundColor: Colors.black,
@@ -767,14 +892,64 @@ class _ResultsSheet extends StatelessWidget {
               ),
             ],
           ),
-
           SizedBox(height: MediaQuery.of(context).padding.bottom),
         ],
       ),
     );
   }
 
+  Widget _expandedEyeBox(
+    BuildContext context,
+    String label,
+    double dnp,
+    double alt,
+    double diam,
+  ) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey[900],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.greenAccent,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            _resultRow(
+              context,
+              context.l10n.dnpShort(dnp.toStringAsFixed(1)),
+              dnp,
+              compact: true,
+            ),
+            _resultRow(
+              context,
+              context.l10n.heightShort(alt.toStringAsFixed(1)),
+              alt,
+              compact: true,
+            ),
+            _resultRow(
+              context,
+              context.l10n.diamShort(diam.toStringAsFixed(1)),
+              diam,
+              compact: true,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _resultRow(
+    BuildContext context,
     String label,
     double value, {
     bool highlight = false,
@@ -789,14 +964,13 @@ class _ResultsSheet extends StatelessWidget {
             label,
             style: TextStyle(
               color: Colors.white70,
-              fontSize: compact ? 13 : 14,
+              fontSize: compact ? 12 : 14,
             ),
           ),
           Text(
-            "${value.toStringAsFixed(1)} mm",
+            "${value.toStringAsFixed(1)} ${context.l10n.unitMm}",
             style: TextStyle(
               color: highlight ? Colors.cyanAccent : Colors.white,
-              fontSize: compact ? 15 : 16,
               fontWeight: highlight ? FontWeight.bold : FontWeight.normal,
             ),
           ),
@@ -805,67 +979,22 @@ class _ResultsSheet extends StatelessWidget {
     );
   }
 
-  String _getResultsText() {
-    return """
-📋 RESULTADOS DE MEDICIÓN ÓPTICA
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-MEDIDAS GENERALES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-👁️ Distancia Interpupilar (DI): ${controller.di.toStringAsFixed(1)} mm
-🔗 Puente: ${controller.puente.toStringAsFixed(1)} mm
-↔️  Ancho Aro: ${controller.aroAnc.toStringAsFixed(1)} mm
-↕️  Alto Aro: ${controller.aroAlt.toStringAsFixed(1)} mm
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-OJO DERECHO (P1)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-DNP: ${controller.dnpRight.toStringAsFixed(1)} mm
-Altura: ${controller.altRight.toStringAsFixed(1)} mm
-Diámetro: ${controller.diametroRight.toStringAsFixed(1)} mm
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-OJO IZQUIERDO (P2)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-DNP: ${controller.dnpLeft.toStringAsFixed(1)} mm
-Altura: ${controller.altLeft.toStringAsFixed(1)} mm
-Diámetro: ${controller.diametroLeft.toStringAsFixed(1)} mm
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Generado con Pupilómetro Digital
-""";
-  }
+  String _getResultsText(BuildContext context) =>
+      "${context.l10n.ipdDi}: ${controller.di.toStringAsFixed(1)} ${context.l10n.unitMm}\n"
+      "${context.l10n.bridge}: ${controller.puente.toStringAsFixed(1)} ${context.l10n.unitMm}";
 
   Future<void> _copyToClipboard(BuildContext context) async {
-    final text = _getResultsText();
-
-    // 1. Copy to clipboard
-    await Clipboard.setData(ClipboardData(text: text));
-
-    // 2. Show confirmation
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Resultados copiados al portapapeles"),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
-      Navigator.pop(context);
-    }
+    await Clipboard.setData(ClipboardData(text: _getResultsText(context)));
+    if (context.mounted) Navigator.pop(context);
   }
 
   Future<void> _shareResults(BuildContext context) async {
-    final text = _getResultsText();
-
-    // 1. Trigger native share dialog
     await SharePlus.instance.share(
-      ShareParams(text: text, subject: 'Resultados de Medición Óptica'),
+      ShareParams(
+        text: _getResultsText(context),
+        subject: context.l10n.measurementsShareSubject,
+      ),
     );
-
-    // 2. Close sheet
-    if (context.mounted) {
-      Navigator.pop(context);
-    }
+    if (context.mounted) Navigator.pop(context);
   }
 }

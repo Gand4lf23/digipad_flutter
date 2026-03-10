@@ -1,4 +1,3 @@
-/// Frame types available for the 3D lens viewer.
 enum LensFrameType {
   frameA('1', 'Metal 55'),
   frameB('m', 'Acetato'),
@@ -9,7 +8,6 @@ enum LensFrameType {
   const LensFrameType(this.fileCode, this.displayName);
 }
 
-/// Material index options for lenses.
 enum LensMaterialIndex {
   index150('150', '1.50'),
   index160('160', '1.60'),
@@ -21,9 +19,6 @@ enum LensMaterialIndex {
   const LensMaterialIndex(this.fileCode, this.displayName);
 }
 
-/// Orientation/Angle options for viewing the lens.
-/// 1-15: Left to Front (lateral rotation)
-/// 15-20: Front to Top (vertical rotation)
 enum LensOrientation {
   angle01(1, '1', 'Lateral izquierda'),
   angle02(2, '2', 'Lateral izquierda 2'),
@@ -51,52 +46,34 @@ enum LensOrientation {
   final String displayName;
   const LensOrientation(this.angle, this.shortName, this.displayName);
 
-  /// Get file code with leading zeros (e.g., "0001", "0015", "0020")
   String get fileCode {
     return angle.toString().padLeft(4, '0');
   }
 }
 
 class Lenses3DState {
-  /// Selected material index for the lens.
   final LensMaterialIndex materialIndex;
-
-  /// Prescription in diopters (1-20).
   final int prescription;
-
-  /// Selected frame type.
   final LensFrameType frameType;
-
-  /// Selected orientation/angle.
   final LensOrientation orientation;
-
-  /// Loading state.
   final bool isLoading;
-
-  /// Error message if any.
   final String? errorMessage;
 
   const Lenses3DState({
     this.materialIndex = LensMaterialIndex.index160,
     this.prescription = 4,
     this.frameType = LensFrameType.frameA,
-    this.orientation = LensOrientation.angle15, // Start at front view
+    this.orientation = LensOrientation.angle15,
     this.isLoading = false,
     this.errorMessage,
   });
 
-  /// Generate the asset path for the current lens configuration.
   String get currentImagePath {
-    // Format: glasses_[material]_[prescription][orientation]_[frame].webp
-    // Examples:
-    // - glasses_160_40015_1.webp (160 index, 4 diopters, front view, frame A)
-    // - glasses_170_100001_mp.webp (170 index, 10 diopters, right side, frame C)
     final current =
         'assets/images/lenses_3d/glasses_${materialIndex.fileCode}_$prescription${orientation.fileCode}_${frameType.fileCode}.webp';
     return current;
   }
 
-  /// Get the minimum available prescription for the current material index.
   int get minPrescription {
     switch (materialIndex) {
       case LensMaterialIndex.index150:
@@ -110,7 +87,6 @@ class Lenses3DState {
     }
   }
 
-  /// Get the maximum available prescription for the current material index.
   int get maxPrescription {
     switch (materialIndex) {
       case LensMaterialIndex.index150:
@@ -124,7 +100,6 @@ class Lenses3DState {
     }
   }
 
-  /// Check if the current configuration has a valid image.
   bool get hasValidImage {
     return prescription >= minPrescription && prescription <= maxPrescription;
   }
@@ -147,4 +122,14 @@ class Lenses3DState {
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
   }
+
+  @override
+  List<Object?> get props => [
+    materialIndex,
+    prescription,
+    frameType,
+    orientation,
+    isLoading,
+    errorMessage,
+  ];
 }

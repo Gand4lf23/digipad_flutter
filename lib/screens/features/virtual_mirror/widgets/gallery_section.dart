@@ -1,8 +1,11 @@
 import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:digipad_flutter/screens/features/virtual_mirror/cubit/virtual_mirror_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:digipad_flutter/l10n/l10n.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 
 class GallerySection extends StatefulWidget {
   final List<File> gallery;
@@ -191,10 +194,63 @@ class _ScrollableDraggableThumbnail extends StatelessWidget {
   }
 }
 
-class _ThumbnailPreview extends StatelessWidget {
+class _ThumbnailPreview extends StatefulWidget {
   final File file;
 
   const _ThumbnailPreview({required this.file});
+
+  @override
+  State<_ThumbnailPreview> createState() => _ThumbnailPreviewState();
+}
+
+class _ThumbnailPreviewState extends State<_ThumbnailPreview> {
+  Uint8List? _thumbnailBytes;
+  bool _isLoading = false;
+
+  bool get _isVideo {
+    final ext = widget.file.path.split('.').last.toLowerCase();
+    return ['mp4', 'mov', 'avi', 'mkv'].contains(ext);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isVideo) {
+      _generateThumbnail();
+    }
+  }
+
+  @override
+  void didUpdateWidget(_ThumbnailPreview oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.file.path != widget.file.path) {
+      if (_isVideo) {
+        _generateThumbnail();
+      } else {
+        setState(() => _thumbnailBytes = null);
+      }
+    }
+  }
+
+  Future<void> _generateThumbnail() async {
+    setState(() => _isLoading = true);
+    try {
+      final bytes = await VideoThumbnail.thumbnailData(
+        video: widget.file.path,
+        imageFormat: ImageFormat.JPEG,
+        maxWidth: 200,
+        quality: 75,
+      );
+      if (mounted) {
+        setState(() {
+          _thumbnailBytes = bytes;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -203,12 +259,47 @@ class _ThumbnailPreview extends StatelessWidget {
       width: 200,
       height: 250,
       decoration: BoxDecoration(
+        color: Colors.grey[900],
         border: Border.all(color: Colors.white24),
         borderRadius: BorderRadius.circular(8),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
-        child: Image.file(file, fit: BoxFit.cover),
+        child: _isVideo
+            ? Stack(
+                alignment: Alignment.center,
+                fit: StackFit.expand,
+                children: [
+                  if (_thumbnailBytes != null)
+                    Image.memory(_thumbnailBytes!, fit: BoxFit.cover)
+                  else
+                    Container(
+                      color: Colors.black54,
+                      child: const Center(
+                        child: Icon(
+                          Icons.videocam,
+                          color: Colors.white24,
+                          size: 64,
+                        ),
+                      ),
+                    ),
+                  if (_isLoading)
+                    const Center(
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    ),
+                  const Center(
+                    child: Icon(
+                      Icons.play_circle_fill,
+                      color: Colors.white,
+                      size: 48,
+                    ),
+                  ),
+                ],
+              )
+            : Image.file(widget.file, fit: BoxFit.cover),
       ),
     );
   }

@@ -1,4 +1,5 @@
-import 'dart:ui' as ui;
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'optical_logic_controller.dart';
 
@@ -6,19 +7,21 @@ class OpticalPainter extends CustomPainter {
   final List<DetectionPoint> points;
   final DetectionPoint? selectedPoint;
 
-  // Visual Configuration
   final bool showCircles;
-  final double refDiameterMm; // Slider Value (Reference)
-  final double calcRadiusPxR; // Calculated from L positions
-  final double calcRadiusPxL; // Calculated from L positions
+  final double refDiameterMmRight;
+  final double refDiameterMmLeft;
+  final double calcRadiusPxR;
+  final double calcRadiusPxL;
 
-  final double pixelFactorX; // Horizontal
-  final double pixelFactorY; // Vertical
+  final double pixelFactorX;
+  final double pixelFactorY;
   final bool isBifocal;
   final double bifocalOffset;
 
   final double scale;
   final Offset offset;
+
+  final double rotation; // Radians from parent
 
   OpticalPainter({
     required this.points,
@@ -26,13 +29,15 @@ class OpticalPainter extends CustomPainter {
     required this.offset,
     this.selectedPoint,
     required this.showCircles,
-    required this.refDiameterMm,
+    required this.refDiameterMmRight,
+    required this.refDiameterMmLeft,
     required this.calcRadiusPxR,
     required this.calcRadiusPxL,
     required this.pixelFactorX,
     required this.pixelFactorY,
     required this.isBifocal,
     required this.bifocalOffset,
+    required this.rotation,
   });
 
   @override
@@ -44,36 +49,24 @@ class OpticalPainter extends CustomPainter {
     Offset? p1 = _getPos(DetectionType.pupilRight);
     Offset? p2 = _getPos(DetectionType.pupilLeft);
 
-    // --- 1. CIRCLES (Reference & Calculated) - MÁS FINOS ---
+    // --- 1. CIRCLES ---
     if (showCircles && pixelFactorX > 0) {
-      // A. Reference Circle (White/Grey) - Controlled by Slider
-      double refRadiusPx = (refDiameterMm / pixelFactorX) / 2;
-      Paint refPaint = Paint()
-        ..color = Colors.white.withOpacity(0.25)
+      Paint circlePaint = Paint()
+        ..color = Colors.cyanAccent.withOpacity(0.6)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 0.8 / scale; // MÁS FINO
+        ..strokeWidth = 1.0 / scale;
 
-      if (p1 != null) canvas.drawCircle(p1, refRadiusPx, refPaint);
-      if (p2 != null) canvas.drawCircle(p2, refRadiusPx, refPaint);
-
-      // B. Calculated Diameter (Cyan) - EXACTO según fórmula
-      // El diámetro ya incluye el +1mm, así que mostramos el radio calculado + 0.5mm
-      double bufferPx = 0.5 / pixelFactorX;
-
-      Paint calcPaint = Paint()
-        ..color = Colors.cyanAccent.withOpacity(0.85)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.2 / scale; // MÁS FINO
-
-      if (p1 != null && calcRadiusPxR > 0) {
-        _drawDashedCircle(canvas, p1, calcRadiusPxR + bufferPx, calcPaint);
+      if (p1 != null) {
+        double refRadiusPxR = (refDiameterMmRight / pixelFactorX) / 2;
+        canvas.drawCircle(p1, refRadiusPxR, circlePaint);
       }
-      if (p2 != null && calcRadiusPxL > 0) {
-        _drawDashedCircle(canvas, p2, calcRadiusPxL + bufferPx, calcPaint);
+      if (p2 != null) {
+        double refRadiusPxL = (refDiameterMmLeft / pixelFactorX) / 2;
+        canvas.drawCircle(p2, refRadiusPxL, circlePaint);
       }
     }
 
-    // --- 2. POINTS & L CORNERS (MEJORADOS) ---
+    // --- 2. POINTS & L CORNERS ---
     for (var p in points) {
       bool isSelected = (p.id == selectedPoint?.id);
       bool isCorner = p.type.index >= DetectionType.lensRightTop.index;
@@ -81,113 +74,104 @@ class OpticalPainter extends CustomPainter {
           p.type == DetectionType.pupilLeft ||
           p.type == DetectionType.pupilRight;
 
-      // Colors
-      Color color = Colors.greenAccent;
-      if (isPupil) {
-        color = Colors.redAccent;
-      } else if (isCorner) {
-        color = Colors.yellowAccent; // Las L (bordes ARO INTERNO)
-      }
-
+      Color color = isPupil
+          ? Colors.redAccent
+          : (isCorner ? Colors.yellowAccent : Colors.greenAccent);
       if (isSelected) color = Colors.white;
 
-      // L SHAPES - MÁS LARGAS Y FINAS
+      // START UN-ROTATION BLOCK FOR MARKERS
+      canvas.save();
+      canvas.translate(p.position.dx, p.position.dy);
+      canvas.rotate(-rotation); // Counter-rotate relative to center of point
+
       if (isCorner) {
-        double armLen = 60.0 / scale; // MÁS LARGAS (antes 25)
+        double armLen = 60.0 / scale;
         Paint lPaint = Paint()
           ..color = color
-          ..strokeWidth =
-              (isSelected ? 2.0 : 1.2) /
-              scale // MÁS FINO
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.square;
+          ..strokeWidth = (isSelected ? 0.5 : 0.3) / scale
+          ..style = PaintingStyle.stroke;
 
         if (p.type == DetectionType.lensRightTop ||
             p.type == DetectionType.lensLeftTop) {
-          // TOP-LEFT Corner (┌)
+          // Top-Left Corner (┌) - Now always upright relative to screen
           Path path = Path();
-          path.moveTo(p.position.dx, p.position.dy + armLen);
-          path.lineTo(p.position.dx, p.position.dy);
-          path.lineTo(p.position.dx + armLen, p.position.dy);
+          path.moveTo(0, armLen);
+          path.lineTo(0, 0);
+          path.lineTo(armLen, 0);
           canvas.drawPath(path, lPaint);
-
-          // Pequeño círculo en el vértice
-          canvas.drawCircle(p.position, 2.0 / scale, Paint()..color = color);
         } else if (p.type == DetectionType.lensRightBottom ||
             p.type == DetectionType.lensLeftBottom) {
-          // BOTTOM-RIGHT Corner (┘)
+          // Bottom-Right Corner (┘) - Now always upright relative to screen
           Path path = Path();
-          path.moveTo(p.position.dx - armLen, p.position.dy);
-          path.lineTo(p.position.dx, p.position.dy);
-          path.lineTo(p.position.dx, p.position.dy - armLen);
+          path.moveTo(-armLen, 0);
+          path.lineTo(0, 0);
+          path.lineTo(0, -armLen);
           canvas.drawPath(path, lPaint);
-
-          // Pequeño círculo en el vértice
-          canvas.drawCircle(p.position, 2.0 / scale, Paint()..color = color);
         }
+        canvas.drawCircle(Offset.zero, 1.5 / scale, Paint()..color = color);
       } else {
-        // CRUCES para Pupils y Calibration - MÁS FINAS
+        // CROSSES (Stay as "+" regardless of head tilt)
         Paint crossPaint = Paint()
           ..color = color
-          ..strokeWidth =
-              (isSelected ? 1.5 : 1.0) /
-              scale // MÁS FINO
+          ..strokeWidth = (isSelected ? 0.5 : 0.3) / scale
           ..strokeCap = StrokeCap.round;
 
         double r = isPupil ? 10.0 / scale : 8.0 / scale;
-
-        // Cruz
-        canvas.drawLine(
-          p.position - Offset(r, 0),
-          p.position + Offset(r, 0),
-          crossPaint,
-        );
-        canvas.drawLine(
-          p.position - Offset(0, r),
-          p.position + Offset(0, r),
-          crossPaint,
-        );
-
-        // Centro
+        canvas.drawLine(Offset(-r, 0), Offset(r, 0), crossPaint);
+        canvas.drawLine(Offset(0, -r), Offset(0, r), crossPaint);
         canvas.drawCircle(
-          p.position,
-          isPupil ? 2.0 / scale : 1.5 / scale,
+          Offset.zero,
+          isPupil ? 1.5 / scale : 1.0 / scale,
           Paint()..color = color,
         );
       }
+      canvas.restore(); // END UN-ROTATION BLOCK
     }
 
-    // --- 3. BIFOCAL LINE (MÁS FINA) ---
+    // --- 3. BIFOCAL LINE ---
     if (isBifocal && pixelFactorY > 0) {
       Paint bifocalPaint = Paint()
         ..color = Colors.orangeAccent.withOpacity(0.9)
-        ..strokeWidth = 1.5 / scale; // MÁS FINO
+        ..strokeWidth = 1.0 / scale;
 
-      // Calculate Y position: 15mm below pupil + offset
       double drop = (15.0 / pixelFactorY) + (bifocalOffset / scale);
 
-      // Draw line constrained by the L's width
+      void drawLeveledBifocal(
+        Offset pupil,
+        DetectionType t1,
+        DetectionType t2,
+      ) {
+        Offset targetPos = Offset(pupil.dx, pupil.dy + drop);
+
+        canvas.save();
+        canvas.translate(targetPos.dx, targetPos.dy);
+        canvas.rotate(-rotation); // Make line horizontal to screen
+
+        double xLeft = (_getPos(t1)?.dx ?? pupil.dx - 20) - targetPos.dx;
+        double xRight = (_getPos(t2)?.dx ?? pupil.dx + 20) - targetPos.dx;
+
+        canvas.drawLine(Offset(xLeft, 0), Offset(xRight, 0), bifocalPaint);
+        canvas.restore();
+      }
+
       if (p1 != null) {
-        double x1 = _getPos(DetectionType.lensRightTop)?.dx ?? p1.dx - 20;
-        double x2 = _getPos(DetectionType.lensRightBottom)?.dx ?? p1.dx + 20;
-        canvas.drawLine(
-          Offset(x1, p1.dy + drop),
-          Offset(x2, p1.dy + drop),
-          bifocalPaint,
+        drawLeveledBifocal(
+          p1,
+          DetectionType.lensRightTop,
+          DetectionType.lensRightBottom,
         );
       }
+
       if (p2 != null) {
-        double x1 = _getPos(DetectionType.lensLeftTop)?.dx ?? p2.dx - 20;
-        double x2 = _getPos(DetectionType.lensLeftBottom)?.dx ?? p2.dx + 20;
-        canvas.drawLine(
-          Offset(x1, p2.dy + drop),
-          Offset(x2, p2.dy + drop),
-          bifocalPaint,
+        drawLeveledBifocal(
+          p2,
+          DetectionType.lensLeftTop,
+          DetectionType.lensLeftBottom,
         );
       }
     }
 
-    // --- 4. MARCO ARO INTERNO (OPCIONAL - para visualizar) ---
+    // --- 4. FRAME OUTLINE ---
     _drawFrameOutline(canvas);
 
     canvas.restore();
@@ -204,42 +188,76 @@ class OpticalPainter extends CustomPainter {
     Paint framePaint = Paint()
       ..color = Colors.white.withOpacity(0.15)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.5 / scale;
+      ..strokeWidth = 0.3 / scale;
 
-    // Right lens box
-    canvas.drawRect(Rect.fromPoints(rTL, rBR), framePaint);
+    // Dibujar rectángulos que respeten perfectamente la rotación de la cara
+    void drawLeveledRect(Offset p1, Offset p2) {
+      Offset center = Offset((p1.dx + p2.dx) / 2, (p1.dy + p2.dy) / 2);
 
-    // Left lens box
-    canvas.drawRect(Rect.fromPoints(lTL, lBR), framePaint);
+      // Recuperar el ancho y alto real desenrotando el vector de distancia
+      double dx = p2.dx - p1.dx;
+      double dy = p2.dy - p1.dy;
 
-    // Bridge line
-    canvas.drawLine(
-      Offset(rBR.dx, (rTL.dy + rBR.dy) / 2),
-      Offset(lTL.dx, (lTL.dy + lBR.dy) / 2),
-      framePaint,
-    );
-  }
+      double cosR = math.cos(-rotation);
+      double sinR = math.sin(-rotation);
 
-  void _drawDashedCircle(
-    Canvas canvas,
-    Offset center,
-    double radius,
-    Paint paint,
-  ) {
-    var path = Path()..addOval(Rect.fromCircle(center: center, radius: radius));
-    ui.PathMetrics pathMetrics = path.computeMetrics();
-    for (ui.PathMetric pathMetric in pathMetrics) {
-      double distance = 0.0;
-      while (distance < pathMetric.length) {
-        double dashLength = 12.0 / scale; // Más cortos
-        double gapLength = 18.0 / scale; // Más espaciados
-        canvas.drawPath(
-          pathMetric.extractPath(distance, distance + dashLength),
-          paint,
-        );
-        distance += (dashLength + gapLength);
-      }
+      // Proyección sobre los ejes de la pantalla (cara)
+      double screenDx = dx * cosR - dy * sinR;
+      double screenDy = dx * sinR + dy * cosR;
+
+      double width = screenDx.abs();
+      double height = screenDy.abs();
+
+      canvas.save();
+      canvas.translate(center.dx, center.dy);
+      canvas.rotate(-rotation);
+      canvas.drawRect(
+        Rect.fromCenter(center: Offset.zero, width: width, height: height),
+        framePaint,
+      );
+      canvas.restore();
     }
+
+    drawLeveledRect(rTL, rBR);
+    drawLeveledRect(lTL, lBR);
+
+    // Dibujar la línea del puente visualmente correcta
+    Offset rightLensCenter = Offset(
+      (rTL.dx + rBR.dx) / 2,
+      (rTL.dy + rBR.dy) / 2,
+    );
+    Offset leftLensCenter = Offset(
+      (lTL.dx + lBR.dx) / 2,
+      (lTL.dy + lBR.dy) / 2,
+    );
+
+    canvas.save();
+    Offset bridgeCenter = Offset(
+      (rightLensCenter.dx + leftLensCenter.dx) / 2,
+      (rightLensCenter.dy + leftLensCenter.dy) / 2,
+    );
+    canvas.translate(bridgeCenter.dx, bridgeCenter.dy);
+    canvas.rotate(-rotation);
+
+    double dxCenters = leftLensCenter.dx - rightLensCenter.dx;
+    double dyCenters = leftLensCenter.dy - rightLensCenter.dy;
+    double cosR = math.cos(-rotation);
+    double sinR = math.sin(-rotation);
+
+    double centerDistX = (dxCenters * cosR - dyCenters * sinR).abs();
+    double rWidth = ((rBR.dx - rTL.dx) * cosR - (rBR.dy - rTL.dy) * sinR).abs();
+    double lWidth = ((lBR.dx - lTL.dx) * cosR - (lBR.dy - lTL.dy) * sinR).abs();
+
+    double bridgeWidth = centerDistX - (rWidth / 2) - (lWidth / 2);
+
+    if (bridgeWidth > 0) {
+      canvas.drawLine(
+        Offset(-bridgeWidth / 2, 0),
+        Offset(bridgeWidth / 2, 0),
+        framePaint,
+      );
+    }
+    canvas.restore();
   }
 
   Offset? _getPos(DetectionType type) {

@@ -148,6 +148,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get dividerLabel => 'Divisor';
 
   @override
+  String get lensLabel => 'Lente';
+
+  @override
   String get verticalLabel => 'Vertical';
 
   @override
@@ -161,6 +164,15 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get goBack => 'Voltar';
+
+  @override
+  String get info => 'Informação';
+
+  @override
+  String get measurementsModuleTitle => 'Módulo de Medidas';
+
+  @override
+  String get measurementsModuleSubtitle => 'A funcionalidade de medição será implementada aqui';
 
   @override
   String get cameraRequiredTitle => 'Câmera necessária';
@@ -242,6 +254,39 @@ class AppLocalizationsPt extends AppLocalizations {
   String diamShort(String value) {
     return 'Diam: $value';
   }
+
+  @override
+  String get shareResults => 'Compartilhar Resultados';
+
+  @override
+  String get calibration => 'Calibração';
+
+  @override
+  String get editMode => 'Modo Edição';
+
+  @override
+  String get zoomMode => 'Modo Zoom';
+
+  @override
+  String get resetZoom => 'Redefinir Zoom';
+
+  @override
+  String get horizontalAdjustment => 'Ajuste Horizontal';
+
+  @override
+  String get verticalAdjustment => 'Ajuste Vertical';
+
+  @override
+  String get measurementsResultsTitle => 'Resultados';
+
+  @override
+  String get copyLabel => 'Copiar';
+
+  @override
+  String get shareLabel => 'Compartilhar';
+
+  @override
+  String get measurementsShareSubject => 'Medições';
 
   @override
   String get leftEye => 'Olho Esquerdo';
@@ -485,4 +530,51 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get simColorRed => 'Vermelho';
+
+  @override
+  String get activationTitle => 'Ativação do Dispositivo';
+
+  @override
+  String get activationEnterEmail => 'Por favor, digite seu e-mail para solicitar acesso.';
+
+  @override
+  String get activationEmailLabel => 'E-mail';
+
+  @override
+  String get activationRequestAccess => 'Solicitar Acesso';
+
+  @override
+  String get activationAwaitingApproval => 'Aguardando Aprovação';
+
+  @override
+  String activationPendingMessage(String email) {
+    return 'Sua solicitação de ativação do dispositivo está aguardando aprovação.\nE-mail: $email';
+  }
+
+  @override
+  String get activationRefreshStatus => 'Atualizar';
+
+  @override
+  String get activationConnectionRequired => 'Conexão Necessária';
+
+  @override
+  String get activationOfflineLimitReached => 'Limite de uso offline atingido.';
+
+  @override
+  String get activationRetryConnection => 'Tentar Novamente';
+
+  @override
+  String get activationErrorTitle => 'Erro';
+
+  @override
+  String get activationEmailInvalid => 'Por favor, insira um e-mail válido';
+
+  @override
+  String get activationRequestExists => 'Já existe uma solicitação para este e-mail.';
+
+  @override
+  String get activationNoInternet => 'Sem conexão com a internet e não ativado anteriormente.';
+
+  @override
+  String get activationConnectionTimeout => 'Tempo limite de conexão esgotado. Verifique sua internet.';
 }

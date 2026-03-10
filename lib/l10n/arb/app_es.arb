@@ -1,68 +1,101 @@
 {
   "@@locale": "es",
   "appTitle": "Digipad",
-  "@appTitle": {"description": "El título de la aplicación"},
-
+  "@appTitle": {
+    "description": "El título de la aplicación"
+  },
   "menuVirtualMirror": "Espejo Virtual",
   "menuSimulations": "Simulaciones",
   "menuLenses3D": "Lentes 3D",
   "menuCosmeticLenses": "Lentes Cosméticos",
   "menuMeasurements": "Mediciones",
   "menuVisualHealth": "Salud Visual",
-
   "ok": "Aceptar",
   "cancel": "Cancelar",
   "delete": "Eliminar",
-
   "dialogNavigatingContent": "Navegando al módulo de {module}.",
-  "@dialogNavigatingContent": {"placeholders": {"module": {"type": "String"}}},
-
+  "@dialogNavigatingContent": {
+    "placeholders": {
+      "module": {
+        "type": "String"
+      }
+    }
+  },
   "languageEnglish": "English",
   "languageSpanish": "Español",
   "languagePortuguese": "Português",
-
   "vmNoImages": "Aún no hay imágenes.\nCaptura una o selecciona desde tu galería para comenzar",
   "vmDragAndDrop": "Arrastra y suelta fotos",
   "vmPickOrTake": "Selecciona una foto de tu galería o toma una nueva",
   "vmDropHere": "Suelta la imagen aquí",
   "galleryDeleteTitle": "¿Eliminar imagen?",
   "galleryDeleteContent": "Esto eliminará permanentemente la imagen del almacenamiento.",
-
   "vhNoTests": "Aún no hay pruebas.",
   "vhSelectTest": "Selecciona una prueba de salud visual",
   "vhTestSummary": "Prueba {index} de {total}",
-  "@vhTestSummary": {"placeholders": {"index": {"type": "int"}, "total": {"type": "int"}}},
+  "@vhTestSummary": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "vhSelectAbove": "Selecciona una prueba de la galería de arriba",
-
   "lensThicknessSimulator": "Simulador de Espesor de Lentes",
   "lensConfiguration": "Configuración de Lente",
   "materialIndex": "Índice del Material",
   "higherIndexHint": "Índice mayor = lente más delgada",
   "prescription": "Graduación",
   "rangeDiopters": "Rango: {min}-{max} dioptrías",
-  "@rangeDiopters": {"placeholders": {"min": {"type": "int"}, "max": {"type": "int"}}},
+  "@rangeDiopters": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
   "frameType": "Tipo de Armazón",
   "imageNotAvailable": "Imagen no disponible",
   "tryDifferentSettings": "Prueba diferentes ajustes",
   "fullView": "Vista completa",
   "detailView": "Vista de detalle",
-
   "lensSimulatorTitle": "Simulador de Lentes",
   "refractiveConditions": "Condiciones refractivas",
   "lensTreatments": "Tratamientos de lentes",
   "withoutLens": "Sin lente",
   "scenesCount": "{count} escenas",
-  "@scenesCount": {"placeholders": {"count": {"type": "int"}}},
+  "@scenesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "lensesAvailable": "{count} lentes disponibles",
-  "@lensesAvailable": {"placeholders": {"count": {"type": "int"}}},
+  "@lensesAvailable": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "selectLensLabel": "Selecciona una lente:",
   "dividerLabel": "Divisor",
+  "lensLabel": "Lente",
   "verticalLabel": "Vertical",
   "horizontalLabel": "Horizontal",
   "dragDivider": "Arrastra el divisor",
   "loadingSimulation": "Cargando simulación...",
   "goBack": "Volver",
-
+  "info": "Información",
+  "measurementsModuleTitle": "Módulo de Mediciones",
+  "measurementsModuleSubtitle": "La funcionalidad de medición se implementará aquí",
   "cameraRequiredTitle": "Cámara requerida",
   "cameraRequiredContent": "El acceso a la cámara ha sido denegado permanentemente. Habilítalo en la configuración del sistema para usar esta función.",
   "openSettings": "Abrir configuración",
@@ -72,14 +105,31 @@
   "cameraPermissionExplain": "Necesitamos acceso a la cámara para detectar rostros y referencias.",
   "grantPermission": "Conceder permiso",
   "detectionIncomplete": "Detección incompleta. Se encontraron {found}/4 círculos. Intenta con una imagen más clara.",
-  "@detectionIncomplete": {"placeholders": {"found": {"type": "int"}}},
+  "@detectionIncomplete": {
+    "placeholders": {
+      "found": {
+        "type": "int"
+      }
+    }
+  },
   "captureFailed": "Captura fallida: Se encontraron {found} círculos (se requieren 4). Ajusta la iluminación o distancia.",
-  "@captureFailed": {"placeholders": {"found": {"type": "int"}}},
-
+  "@captureFailed": {
+    "placeholders": {
+      "found": {
+        "type": "int"
+      }
+    }
+  },
   "measureAdjustments": "Ajuste de Medidas",
   "guides": "Guías",
   "referenceShort": "Ref: {ref}",
-  "@referenceShort": {"placeholders": {"ref": {"type": "int"}}},
+  "@referenceShort": {
+    "placeholders": {
+      "ref": {
+        "type": "int"
+      }
+    }
+  },
   "unitMm": "mm",
   "ipdDi": "DIP (DI)",
   "bridge": "Puente",
@@ -90,10 +140,38 @@
   "dnpShort": "DNP: {value}",
   "heightShort": "Alt: {value}",
   "diamShort": "Diam: {value}",
-  "@dnpShort": {"placeholders": {"value": {"type": "String"}}},
-  "@heightShort": {"placeholders": {"value": {"type": "String"}}},
-  "@diamShort": {"placeholders": {"value": {"type": "String"}}},
-
+  "@dnpShort": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@heightShort": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@diamShort": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "shareResults": "Compartir Resultados",
+  "calibration": "Calibración",
+  "editMode": "Modo Edición",
+  "zoomMode": "Modo Zoom",
+  "resetZoom": "Resetear Zoom",
+  "horizontalAdjustment": "Ajuste Horizontal",
+  "verticalAdjustment": "Ajuste Vertical",
+  "measurementsResultsTitle": "Resultados",
+  "copyLabel": "Copiar",
+  "shareLabel": "Compartir",
+  "measurementsShareSubject": "Mediciones",
   "leftEye": "Ojo Izquierdo",
   "bothEyes": "Ambos Ojos",
   "rightEye": "Ojo Derecho",
@@ -106,8 +184,7 @@
   "onLabel": "Encendido",
   "offLabel": "Apagado",
   "detectionLabel": "Detección",
-  "overlayLabel": "Superposición"
-,
+  "overlayLabel": "Superposición",
   "simCatMyopia": "Miopía",
   "simCatMyopiaDesc": "Dificultad para ver claramente objetos lejanos (miopía)",
   "simSceneKitchen": "Cocina",
@@ -116,7 +193,6 @@
   "simSceneClothingStore": "Tienda de Ropa",
   "simLensMonofocalNear": "Monofocal Cerca",
   "simLensMonofocalFar": "Monofocal Lejos",
-
   "simCatMultifocal": "Multifocal",
   "simCatMultifocalDesc": "Comparación de calidad de lentes progresivos",
   "simSceneClothing": "Ropa",
@@ -124,14 +200,12 @@
   "simQualityStandard": "Estándar",
   "simQualityGood": "Bueno",
   "simQualityPremium": "Premium",
-
   "simCatBifocal": "Bifocal",
   "simCatBifocalDesc": "Comparación entre lentes bifocales y multifocales",
   "simSceneOffice": "Oficina",
   "simSceneDriving": "Conducción",
   "simLensInvisibleBifocal": "Bifocal Invisible",
   "simLensMultifocal": "Multifocal",
-
   "simCatPolarized": "Polarizado",
   "simCatPolarizedDesc": "Reducción de reflejos y deslumbramiento",
   "simSceneGolf": "Golf",
@@ -139,7 +213,6 @@
   "simSceneTennis": "Tenis",
   "simSceneYacht": "Yate",
   "simSceneMotorcycle": "Motocicleta",
-
   "simCatAntiReflective": "Antirreflejo",
   "simCatAntiReflectiveDesc": "Reducción de reflejos en la lente y mejor claridad",
   "simSceneBaseball": "Béisbol",
@@ -147,7 +220,6 @@
   "simSceneSoccer": "Fútbol",
   "simSceneConcert": "Concierto",
   "simSceneBridge": "Puente",
-
   "simCatDriveWear": "DriveWear",
   "simCatDriveWearDesc": "Lentes optimizados para conducir en diferentes condiciones",
   "simSceneDrivingSunny": "Conducción (Soleado)",
@@ -162,7 +234,6 @@
   "simSceneTennisCloudy": "Tenis (Nublado)",
   "simSceneYachtSunny": "Yate (Soleado)",
   "simSceneYachtCloudy": "Yate (Nublado)",
-
   "simCatPhotochromic": "Fotocromático",
   "simCatPhotochromicDesc": "Lentes que se adaptan a las condiciones de luz",
   "simSceneOpticStore": "Óptica",
@@ -170,18 +241,38 @@
   "simColorBrown": "Marrón",
   "simColorGreen": "Verde",
   "simColorSunBalance": "SunBalance",
-
   "simCatSolar": "Solar",
   "simCatSolarDesc": "Protección solar con recubrimiento antirreflejo",
   "simSceneBeach2": "Playa 2",
   "simSceneCar": "Auto",
   "simLensWithAR": "Con AR",
-
   "simCatTint": "Tinte",
   "simCatTintDesc": "Tintes de lentes personalizables para diferentes entornos",
   "simColorYellow": "Amarillo",
   "simColorAqua": "Aguamarina",
   "simColorBlue": "Azul",
   "simColorOrange": "Naranja",
-  "simColorRed": "Rojo"
+  "simColorRed": "Rojo",
+  "activationTitle": "Activación del Dispositivo",
+  "activationEnterEmail": "Por favor ingrese su correo electrónico para solicitar acceso.",
+  "activationEmailLabel": "Correo Electrónico",
+  "activationRequestAccess": "Solicitar Acceso",
+  "activationAwaitingApproval": "Esperando Aprobación",
+  "activationPendingMessage": "Su solicitud de activación del dispositivo está pendiente de aprobación.\nCorreo: {email}",
+  "@activationPendingMessage": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "activationRefreshStatus": "Actualizar",
+  "activationConnectionRequired": "Conexión Requerida",
+  "activationOfflineLimitReached": "Se ha alcanzado el límite de uso sin conexión.",
+  "activationRetryConnection": "Reintentar Conexión",
+  "activationErrorTitle": "Error",
+  "activationEmailInvalid": "Por favor ingrese un correo válido",
+  "activationRequestExists": "Ya existe una solicitud para este correo.",
+  "activationNoInternet": "Sin conexión a internet y no activado previamente.",
+  "activationConnectionTimeout": "Tiempo de conexión agotado. Por favor verifique su internet."
 }

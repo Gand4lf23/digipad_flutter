@@ -355,6 +355,12 @@ abstract class AppLocalizations {
   /// **'Divider'**
   String get dividerLabel;
 
+  /// No description provided for @lensLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Lens'**
+  String get lensLabel;
+
   /// No description provided for @verticalLabel.
   ///
   /// In en, this message translates to:
@@ -384,6 +390,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Go Back'**
   String get goBack;
+
+  /// No description provided for @info.
+  ///
+  /// In en, this message translates to:
+  /// **'Info'**
+  String get info;
+
+  /// No description provided for @measurementsModuleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Measurements Module'**
+  String get measurementsModuleTitle;
+
+  /// No description provided for @measurementsModuleSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Measurement functionality will be implemented here'**
+  String get measurementsModuleSubtitle;
 
   /// No description provided for @cameraRequiredTitle.
   ///
@@ -522,6 +546,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Diam: {value}'**
   String diamShort(String value);
+
+  /// No description provided for @shareResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Share Results'**
+  String get shareResults;
+
+  /// No description provided for @calibration.
+  ///
+  /// In en, this message translates to:
+  /// **'Calibration'**
+  String get calibration;
+
+  /// No description provided for @editMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Mode'**
+  String get editMode;
+
+  /// No description provided for @zoomMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom Mode'**
+  String get zoomMode;
+
+  /// No description provided for @resetZoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Zoom'**
+  String get resetZoom;
+
+  /// No description provided for @horizontalAdjustment.
+  ///
+  /// In en, this message translates to:
+  /// **'Horizontal Adjustment'**
+  String get horizontalAdjustment;
+
+  /// No description provided for @verticalAdjustment.
+  ///
+  /// In en, this message translates to:
+  /// **'Vertical Adjustment'**
+  String get verticalAdjustment;
+
+  /// No description provided for @measurementsResultsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Results'**
+  String get measurementsResultsTitle;
+
+  /// No description provided for @copyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get copyLabel;
+
+  /// No description provided for @shareLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get shareLabel;
+
+  /// No description provided for @measurementsShareSubject.
+  ///
+  /// In en, this message translates to:
+  /// **'Measurements'**
+  String get measurementsShareSubject;
 
   /// No description provided for @leftEye.
   ///
@@ -1008,6 +1098,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Red'**
   String get simColorRed;
+
+  /// No description provided for @activationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Device Activation'**
+  String get activationTitle;
+
+  /// No description provided for @activationEnterEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your email to request access.'**
+  String get activationEnterEmail;
+
+  /// No description provided for @activationEmailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get activationEmailLabel;
+
+  /// No description provided for @activationRequestAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Request Access'**
+  String get activationRequestAccess;
+
+  /// No description provided for @activationAwaitingApproval.
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting Approval'**
+  String get activationAwaitingApproval;
+
+  /// No description provided for @activationPendingMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your request for device activation is pending approval.\nEmail: {email}'**
+  String activationPendingMessage(String email);
+
+  /// No description provided for @activationRefreshStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get activationRefreshStatus;
+
+  /// No description provided for @activationConnectionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection Required'**
+  String get activationConnectionRequired;
+
+  /// No description provided for @activationOfflineLimitReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline usage limit reached.'**
+  String get activationOfflineLimitReached;
+
+  /// No description provided for @activationRetryConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry Connection'**
+  String get activationRetryConnection;
+
+  /// No description provided for @activationErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get activationErrorTitle;
+
+  /// No description provided for @activationEmailInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid email'**
+  String get activationEmailInvalid;
+
+  /// No description provided for @activationRequestExists.
+  ///
+  /// In en, this message translates to:
+  /// **'Request already exists for this email.'**
+  String get activationRequestExists;
+
+  /// No description provided for @activationNoInternet.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection and not previously activated.'**
+  String get activationNoInternet;
+
+  /// No description provided for @activationConnectionTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection timed out. Please check your internet.'**
+  String get activationConnectionTimeout;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

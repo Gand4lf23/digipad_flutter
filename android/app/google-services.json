@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "773499065321",
+    "project_id": "digipad-max",
+    "storage_bucket": "digipad-max.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:773499065321:android:49edfbe17adbd83f0f7178",
+        "android_client_info": {
+          "package_name": "ar.com.digipad"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA52O-zSTuu7ZYfdNK4EuMkdxYnZW9DoHs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

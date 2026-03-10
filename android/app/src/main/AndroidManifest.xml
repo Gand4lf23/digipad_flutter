@@ -28,7 +28,7 @@
 
     <application
         android:name="${applicationName}"
-        android:label="DigiPad 3D Premium"
+        android:label="DigiPad 3D Max Premium"
         android:icon="@mipmap/launcher_icon"
         android:allowBackup="true"
         android:hardwareAccelerated="true"

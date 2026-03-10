@@ -8,7 +8,7 @@ import '../../cubit/simulations_state.dart';
 import '../../models/simulation_scenario.dart';
 import '../../widgets/simulation_painter.dart';
 
-class SimulationCanvas extends StatefulWidget {
+class SimulationCanvas extends StatelessWidget {
   final SimulationsState state;
   final SimulationCategory category;
   final ui.Image problemImage;
@@ -31,17 +31,9 @@ class SimulationCanvas extends StatefulWidget {
   });
 
   @override
-  State<SimulationCanvas> createState() => _SimulationCanvasState();
-}
-
-class _SimulationCanvasState extends State<SimulationCanvas> {
-  double? _draggingPosition;
-
-  @override
   Widget build(BuildContext context) {
-    final dividerPos = _draggingPosition ?? widget.state.dividerPosition;
-    final isMultifocal = widget.category.id == 'multifocal';
-    final isLensMode = widget.state.isLensDraggingMode;
+    final isMultifocal = category.id == 'multifocal';
+    final isLensMode = state.isLensDraggingMode;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -50,20 +42,13 @@ class _SimulationCanvasState extends State<SimulationCanvas> {
             final responsive = context.responsive(constraints, orientation);
 
             return GestureDetector(
+              behavior: HitTestBehavior.opaque,
               onPanStart: isMultifocal
                   ? null
                   : (details) {
                       if (isLensMode) {
-                        // Lens dragging mode (HEAD Feature)
-                        widget.onLensDragStart?.call(details.localPosition);
+                        onLensDragStart?.call(details.localPosition);
                       } else {
-                        // Divider mode (Responsive Calc)
-                        setState(() {
-                          _draggingPosition = _calculateDividerPosition(
-                            details.localPosition,
-                            constraints.biggest,
-                          );
-                        });
                         context.read<SimulationsCubit>().setDragging(true);
                       }
                     },
@@ -71,54 +56,44 @@ class _SimulationCanvasState extends State<SimulationCanvas> {
                   ? null
                   : (details) {
                       if (isLensMode) {
-                        // Lens dragging mode
-                        widget.onLensDragUpdate?.call(details.localPosition);
+                        onLensDragUpdate?.call(details.localPosition);
                       } else {
-                        // Divider mode
-                        setState(() {
-                          _draggingPosition = _calculateDividerPosition(
-                            details.localPosition,
-                            constraints.biggest,
-                          );
-                        });
+                        final newPosition = _calculateDividerPosition(
+                          details.localPosition,
+                          constraints.biggest,
+                          state.isVerticalDivider,
+                        );
+                        context.read<SimulationsCubit>().moveDivider(
+                          newPosition,
+                        );
                       }
                     },
               onPanEnd: isMultifocal
                   ? null
                   : (_) {
                       if (isLensMode) {
-                        // Lens dragging mode
-                        widget.onLensDragEnd?.call();
+                        onLensDragEnd?.call();
                       } else {
-                        // Divider mode
-                        if (_draggingPosition != null) {
-                          context.read<SimulationsCubit>().moveDivider(
-                            _draggingPosition!,
-                          );
-                        }
                         context.read<SimulationsCubit>().setDragging(false);
-                        setState(() {
-                          _draggingPosition = null;
-                        });
                       }
                     },
               child: RepaintBoundary(
                 child: CustomPaint(
                   size: Size.infinite,
                   painter: SimulationPainter(
-                    problemImage: widget.problemImage,
-                    correctedImage: widget.correctedImage,
-                    dividerPosition: dividerPos,
-                    isVerticalDivider: widget.state.isVerticalDivider,
-                    tintColor: widget.currentLens?.tintColor,
-                    lensOpacity: widget.state.lensOpacity,
+                    problemImage: problemImage,
+                    correctedImage: correctedImage,
+                    dividerPosition: state.dividerPosition,
+                    isVerticalDivider: state.isVerticalDivider,
+                    tintColor: currentLens?.tintColor,
+                    lensOpacity: state.lensOpacity,
                     showFullCorrection: isMultifocal,
                     boxFit: BoxFit.contain,
-                    // Lens dragging specific parameters (HEAD)
-                    isLensDraggingMode: widget.state.isLensDraggingMode,
-                    lensPosition: widget.state.lensPosition,
-                    lensRadius: widget.state.lensRadius,
-                    // Responsive text size (Responsive)
+                    // Lens dragging specific parameters
+                    isLensDraggingMode: isLensMode,
+                    lensPosition: state.lensPosition,
+                    lensRadius: state.lensRadius,
+                    // Responsive text size
                     fontSize: responsive.fontSize(18),
                   ),
                 ),
@@ -130,12 +105,16 @@ class _SimulationCanvasState extends State<SimulationCanvas> {
     );
   }
 
-  double _calculateDividerPosition(Offset localPosition, Size canvasSize) {
-    if (widget.state.isVerticalDivider) {
-      // Vertical divider - calculate X position (full range 0-100%)
+  double _calculateDividerPosition(
+    Offset localPosition,
+    Size canvasSize,
+    bool isVertical,
+  ) {
+    if (isVertical) {
+      // Vertical divider - calculate X position (0.0 to 1.0)
       return (localPosition.dx / canvasSize.width).clamp(0.0, 1.0);
     } else {
-      // Horizontal divider - calculate Y position (full range 0-100%)
+      // Horizontal divider - calculate Y position (0.0 to 1.0)
       return (localPosition.dy / canvasSize.height).clamp(0.0, 1.0);
     }
   }

@@ -1,6 +1,5 @@
 import 'dart:ui';
 import 'package:digipad_flutter/common/components/d_image.dart';
-import 'package:digipad_flutter/common/utils/responsive_utils.dart';
 import 'package:digipad_flutter/data/local/gallery_storage.dart';
 import 'package:digipad_flutter/screens/features/lenses_3d/cubit/lenses_3d_cubit.dart';
 import 'package:digipad_flutter/screens/features/lenses_3d/presentation/lenses_3d_screen.dart';
@@ -23,114 +22,142 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return OrientationBuilder(
-            builder: (context, orientation) {
-              final responsive = context.responsive(constraints, orientation);
-              final screenHeight = constraints.maxHeight;
+    final screenHeight = MediaQuery.of(context).size.height;
 
-              return Container(
-                decoration: BoxDecoration(
-                  image: DecorationImage(
-                    image: DImage(imageName: 'background').provider,
-                    fit: BoxFit.cover,
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: DImage(imageName: 'background').provider,
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: SafeArea(
+          child: Stack(
+            children: [
+              _buildArchMenuItem(
+                context: context,
+                title: context.l10n.menuVirtualMirror,
+                moduleId: 'virtual_mirror',
+                icon: Icons.face_retouching_natural, // Face/Mirror icon
+                color: Colors.white,
+                top: screenHeight * 0.05,
+                left: 60,
+                onTap: () => _navigateToModule(context, 'virtual_mirror'),
+              ),
+              _buildArchMenuItem(
+                context: context,
+                title: context.l10n.menuSimulations,
+                moduleId: 'simulations',
+                icon: Icons.auto_fix_high, // Magic/Simulation icon
+                color: const Color(0xFF4CAF50),
+                top: screenHeight * 0.17,
+                left: 35,
+                onTap: () => _navigateToModule(context, 'simulations'),
+              ),
+              _buildArchMenuItem(
+                context: context,
+                title: context.l10n.menuLenses3D,
+                moduleId: 'lenses_3d',
+                icon: Icons.view_in_ar, // 3D/AR icon
+                color: Colors.white,
+                top: screenHeight * 0.30,
+                left: 20,
+                onTap: () => _navigateToModule(context, 'lenses_3d'),
+              ),
+              _buildArchMenuItem(
+                context: context,
+                title: context.l10n.menuCosmeticLenses,
+                moduleId: 'cosmetic_lenses',
+                icon: Icons.remove_red_eye_outlined, // Eye icon
+                color: const Color(0xFF2196F3),
+                top: screenHeight * 0.43,
+                left: 30,
+                onTap: () => _navigateToModule(context, 'cosmetic_lenses'),
+              ),
+              _buildArchMenuItem(
+                context: context,
+                title: context.l10n.menuMeasurements,
+                moduleId: 'measurements',
+                icon: Icons.straighten, // Ruler/Measurement icon
+                color: const Color(0xFFFB8C00),
+                top: screenHeight * 0.55,
+                left: 45,
+                onTap: () => _navigateToModule(context, 'measurements'),
+              ),
+              _buildArchMenuItem(
+                context: context,
+                title: context.l10n.menuVisualHealth,
+                moduleId: 'visual_health',
+                icon: Icons.health_and_safety_outlined, // Health icon
+                color: const Color(0xFFFFD600),
+                top: screenHeight * 0.67,
+                left: 70,
+                onTap: () => _navigateToModule(context, 'visual_health'),
+              ),
+
+              Positioned(
+                top: 8,
+                right: 12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: Colors.white24),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<LanguageCodeType>(
+                      dropdownColor: Colors.grey.shade900,
+                      iconEnabledColor: Colors.white,
+                      value: LanguageCodeType.values.firstWhere(
+                        (e) =>
+                            e.name ==
+                            Localizations.localeOf(context).languageCode,
+                        orElse: () => LanguageCodeType.en,
+                      ),
+                      items: LanguageCodeType.values.map((e) {
+                        final code = e.name;
+                        final label = code == 'en'
+                            ? context.l10n.languageEnglish
+                            : code == 'es'
+                            ? context.l10n.languageSpanish
+                            : context.l10n.languagePortuguese;
+                        return DropdownMenuItem(
+                          value: e,
+                          child: Text(
+                            label,
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val == null) return;
+                        MyApp.setLocale(context, Locale(val.name));
+                      },
+                    ),
                   ),
                 ),
-                child: SafeArea(
-                  child: Stack(
-                    children: [
-                      _buildArchMenuItem(
-                        context: context,
-                        responsive: responsive,
-                        title: 'Virtual Mirror',
-                        icon: Icons.face_retouching_natural,
-                        color: Colors.white,
-                        top: screenHeight * 0.05,
-                        left: responsive.isPhone ? 40 : 60,
-                        onTap: () =>
-                            _navigateToModule(context, 'Virtual Mirror'),
-                      ),
-                      _buildArchMenuItem(
-                        context: context,
-                        responsive: responsive,
-                        title: 'Simulations',
-                        icon: Icons.auto_fix_high,
-                        color: const Color(0xFF4CAF50),
-                        top: screenHeight * 0.17,
-                        left: responsive.isPhone ? 25 : 35,
-                        onTap: () => _navigateToModule(context, 'Simulations'),
-                      ),
-                      _buildArchMenuItem(
-                        context: context,
-                        responsive: responsive,
-                        title: 'Lenses 3D',
-                        icon: Icons.view_in_ar,
-                        color: Colors.white,
-                        top: screenHeight * 0.30,
-                        left: responsive.isPhone ? 15 : 20,
-                        onTap: () => _navigateToModule(context, 'Lenses 3D'),
-                      ),
-                      _buildArchMenuItem(
-                        context: context,
-                        responsive: responsive,
-                        title: 'Cosmetic Lenses',
-                        icon: Icons.remove_red_eye_outlined,
-                        color: const Color(0xFF2196F3),
-                        top: screenHeight * 0.43,
-                        left: responsive.isPhone ? 20 : 30,
-                        onTap: () =>
-                            _navigateToModule(context, 'Cosmetic Lenses'),
-                      ),
-                      _buildArchMenuItem(
-                        context: context,
-                        responsive: responsive,
-                        title: 'Measurements',
-                        icon: Icons.straighten,
-                        color: const Color(0xFFFB8C00),
-                        top: screenHeight * 0.55,
-                        left: responsive.isPhone ? 30 : 45,
-                        onTap: () => _navigateToModule(context, 'Measurements'),
-                      ),
-                      _buildArchMenuItem(
-                        context: context,
-                        responsive: responsive,
-                        title: 'Visual Health',
-                        icon: Icons.health_and_safety_outlined,
-                        color: const Color(0xFFFFD600),
-                        top: screenHeight * 0.67,
-                        left: responsive.isPhone ? 50 : 70,
-                        onTap: () =>
-                            _navigateToModule(context, 'Visual Health'),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          );
-        },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildArchMenuItem({
     required BuildContext context,
-    required ResponsiveUtils responsive,
     required String title,
-    required IconData icon,
+    required String moduleId,
+    required IconData icon, // Changed from svgName to IconData
     required Color color,
     required double top,
     required double left,
     required VoidCallback onTap,
   }) {
-    final buttonWidth = responsive.isPhone
-        ? responsive.width * 0.50
-        : responsive.width * 0.42;
-    final buttonHeight = responsive.isPhone
-        ? responsive.height * 0.05
-        : responsive.height * 0.06;
+    final buttonWidth = MediaQuery.of(context).size.width * 0.42;
+    final buttonHeight = MediaQuery.of(context).size.height * 0.06;
     // Use a dark color for the icon when the button color is white
     final iconColor = color;
 
@@ -179,7 +206,8 @@ class HomeScreen extends StatelessWidget {
                       title,
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.95),
-                        fontSize: responsive.fontSize(16),
+                        fontSize: 16,
+
                         fontWeight: FontWeight.bold,
                         shadows: [
                           const Shadow(

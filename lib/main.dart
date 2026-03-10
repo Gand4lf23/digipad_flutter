@@ -1,9 +1,23 @@
+import 'package:digipad_flutter/screens/activation/cubit/activation_cubit.dart';
+import 'package:digipad_flutter/screens/activation/data/activation_service.dart';
+import 'package:digipad_flutter/screens/activation/presentation/activation_wrapper.dart';
+import 'package:digipad_flutter/screens/activation/presentation/interaction_observer.dart';
 import 'package:digipad_flutter/screens/home_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:digipad_flutter/l10n/arb/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint("Firebase initialization failed: $e");
+    // App will likely fail if Firebase is required for activation
+  }
   runApp(const MyApp());
 }
 
@@ -21,9 +35,31 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   Locale? _locale;
+  late final ActivationService _activationService;
 
-  void updateLocale(Locale locale) {
+  @override
+  void initState() {
+    super.initState();
+    _activationService = ActivationService();
+    _loadSavedLocale();
+  }
+
+  Future<void> _loadSavedLocale() async {
+    final prefs = await SharedPreferences.getInstance();
+    final languageCode = prefs.getString('language_code');
+    if (languageCode != null) {
+      setState(() {
+        _locale = Locale(languageCode);
+      });
+    } else {
+      // Default behavior (null) uses device locale
+    }
+  }
+
+  void updateLocale(Locale locale) async {
     setState(() => _locale = locale);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('language_code', locale.languageCode);
   }
 
   @override
@@ -34,17 +70,22 @@ class _MyAppState extends State<MyApp> {
       DeviceOrientation.portraitDown,
     ]);
 
-    return MaterialApp(
-      title: 'DigiPad',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+    return BlocProvider(
+      create: (context) => ActivationCubit(_activationService),
+      child: InteractionObserver(
+        child: MaterialApp(
+          title: 'DigiPad',
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+            useMaterial3: true,
+          ),
+          locale: _locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const ActivationWrapper(),
+          debugShowCheckedModeBanner: false,
+        ),
       ),
-      locale: _locale,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: const HomeScreen(),
-      debugShowCheckedModeBanner: false,
     );
   }
 }

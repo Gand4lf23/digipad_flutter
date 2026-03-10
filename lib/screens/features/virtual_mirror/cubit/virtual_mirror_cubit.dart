@@ -32,8 +32,8 @@ class VirtualMirrorCubit extends Cubit<VirtualMirrorState> {
     final video = await _picker.pickVideo(source: ImageSource.camera);
     if (video != null) {
       final file = File(video.path);
-      await storage.saveImage(file);
-      emit(state.copyWith());
+      await storage.saveVideo(file);
+      emit(state.copyWith(galleryImages: [file, ...state.galleryImages]));
     }
   }
 
@@ -50,10 +50,10 @@ class VirtualMirrorCubit extends Cubit<VirtualMirrorState> {
   }
 
   Future<void> pickFromGallery() async {
-    final files = await _picker.pickMultiImage();
+    final files = await _picker.pickMultipleMedia();
     if (files.isNotEmpty) {
-      final images = files.map((xfile) => File(xfile.path)).toList();
-      emit(state.copyWith(galleryImages: [...images, ...state.galleryImages]));
+      final media = files.map((xfile) => File(xfile.path)).toList();
+      emit(state.copyWith(galleryImages: [...media, ...state.galleryImages]));
     }
   }
 

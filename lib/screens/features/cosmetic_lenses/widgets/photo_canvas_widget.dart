@@ -44,33 +44,37 @@ class PhotoCanvasWidget extends StatelessWidget {
                     ],
                   ),
                 )
-              : RepaintBoundary(
-                  key: canvasKey,
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      return Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          // Background photo
-                          Image.file(
-                            File(state.cameraPhoto!),
-                            fit: BoxFit.contain,
-                          ),
-                          // Left iris overlay
-                          DraggableIrisWidget(
-                            isLeftEye: true,
-                            canvasWidth: constraints.maxWidth,
-                            canvasHeight: constraints.maxHeight,
-                          ),
-                          // Right iris overlay
-                          DraggableIrisWidget(
-                            isLeftEye: false,
-                            canvasWidth: constraints.maxWidth,
-                            canvasHeight: constraints.maxHeight,
-                          ),
-                        ],
-                      );
-                    },
+              : InteractiveViewer(
+                  minScale: 0.5,
+                  maxScale: 5.0,
+                  child: RepaintBoundary(
+                    key: canvasKey,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            // Background photo
+                            Image.file(
+                              File(state.cameraPhoto!),
+                              fit: BoxFit.contain,
+                            ),
+                            // Left iris overlay
+                            DraggableIrisWidget(
+                              isLeftEye: true,
+                              canvasWidth: constraints.maxWidth,
+                              canvasHeight: constraints.maxHeight,
+                            ),
+                            // Right iris overlay
+                            DraggableIrisWidget(
+                              isLeftEye: false,
+                              canvasWidth: constraints.maxWidth,
+                              canvasHeight: constraints.maxHeight,
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ),
         );

@@ -24,6 +24,9 @@ class ResponsiveUtils {
   /// Check if device is a tablet (width >= 600)
   bool get isTablet => width >= 600;
 
+  /// Check if device is a desktop (width >= 1024)
+  bool get isDesktop => width >= 1024;
+
   /// Check if in landscape mode
   bool get isLandscape => orientation == Orientation.landscape;
 
@@ -47,6 +50,20 @@ class ResponsiveUtils {
     }
     // For phones, reduce spacing by 25%
     return baseSpacing * 0.75;
+  }
+
+  /// Return a value depending on breakpoint
+  /// Provide explicit values for mobile, tablet, and desktop.
+  /// Example:
+  ///   responsive.value(mobile: 18, tablet: 22, desktop: 24)
+  double value({
+    required double mobile,
+    required double tablet,
+    required double desktop,
+  }) {
+    if (isDesktop) return desktop;
+    if (isTablet) return tablet;
+    return mobile;
   }
 
   /// Get responsive icon size

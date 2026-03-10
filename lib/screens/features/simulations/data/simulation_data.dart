@@ -1058,11 +1058,18 @@ class SimulationData {
         problemImagePath: '$_basePath/solar/solar_beach_without.webp',
         correctionLenses: [
           CorrectionLens(
-            id: 'solar_beach_solar',
-            name: 'solar',
-            displayName: 'With Solar',
+            id: 'solar_beach_standard',
+            name: 'standard',
+            displayName: 'Standard',
             correctedImagePath: '$_basePath/solar/solar_beach_withAr.webp',
             quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'solar_beach_premium',
+            name: 'premium',
+            displayName: 'Premium',
+            correctedImagePath: '$_basePath/solar/solar_beach_withAr.webp',
+            quality: LensQuality.premium,
           ),
         ],
       ),
@@ -1074,9 +1081,16 @@ class SimulationData {
         problemImagePath: '$_basePath/solar/solar_beach2_without.webp',
         correctionLenses: [
           CorrectionLens(
-            id: 'solar_beach2_ar',
-            name: 'anti_reflective',
-            displayName: 'With AR',
+            id: 'solar_beach2_standard',
+            name: 'standard',
+            displayName: 'Standard',
+            correctedImagePath: '$_basePath/solar/solar_beach2_withAr.webp',
+            quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'solar_beach2_premium',
+            name: 'premium',
+            displayName: 'Premium',
             correctedImagePath: '$_basePath/solar/solar_beach2_withAr.webp',
             quality: LensQuality.premium,
           ),
@@ -1090,11 +1104,18 @@ class SimulationData {
         problemImagePath: '$_basePath/solar/solar_car_without.webp',
         correctionLenses: [
           CorrectionLens(
-            id: 'solar_car_solar',
-            name: 'solar',
-            displayName: 'With Solar',
+            id: 'solar_car_standard',
+            name: 'standard',
+            displayName: 'Standard',
             correctedImagePath: '$_basePath/solar/solar_car_withAr.webp',
             quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'solar_car_premium',
+            name: 'premium',
+            displayName: 'Premium',
+            correctedImagePath: '$_basePath/solar/solar_car_withAr.webp',
+            quality: LensQuality.premium,
           ),
         ],
       ),
@@ -1106,12 +1127,18 @@ class SimulationData {
         problemImagePath: '$_basePath/solar/solar_driving_without.webp',
         correctionLenses: [
           CorrectionLens(
-            id: 'solar_driving_solar',
-            name: 'solar',
-            displayName: 'With Solar',
-            correctedImagePath:
-                '$_basePath/simulation/solar/solar_driving_withAr.webp',
+            id: 'solar_driving_standard',
+            name: 'standard',
+            displayName: 'Standard',
+            correctedImagePath: '$_basePath/solar/solar_driving_withAr.webp',
             quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'solar_driving_premium',
+            name: 'premium',
+            displayName: 'Premium',
+            correctedImagePath: '$_basePath/solar/solar_driving_withAr.webp',
+            quality: LensQuality.premium,
           ),
         ],
       ),
@@ -1120,15 +1147,21 @@ class SimulationData {
         id: 'solar_golf_no_ar',
         sceneName: 'golf',
         displayName: 'Golf',
-        problemImagePath: '$_basePath/simulation/solar/solar_golf_without.webp',
+        problemImagePath: '$_basePath/solar/solar_golf_without.webp',
         correctionLenses: [
           CorrectionLens(
-            id: 'solar_golf_solar',
-            name: 'solar',
-            displayName: 'With Solar',
-            correctedImagePath:
-                '$_basePath/simulation/solar/solar_golf_withAr.webp',
+            id: 'solar_golf_standard',
+            name: 'standard',
+            displayName: 'Standard',
+            correctedImagePath: '$_basePath/solar/solar_golf_withAr.webp',
             quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'solar_golf_premium',
+            name: 'premium',
+            displayName: 'Premium',
+            correctedImagePath: '$_basePath/solar/solar_golf_withAr.webp',
+            quality: LensQuality.premium,
           ),
         ],
       ),
@@ -1137,15 +1170,21 @@ class SimulationData {
         id: 'solar_lake_no_ar',
         sceneName: 'lake',
         displayName: 'Lake',
-        problemImagePath: '$_basePath/simulation/solar/solar_lake_without.webp',
+        problemImagePath: '$_basePath/solar/solar_lake_without.webp',
         correctionLenses: [
           CorrectionLens(
-            id: 'solar_lake_solar',
-            name: 'solar',
-            displayName: 'With Solar',
-            correctedImagePath:
-                '$_basePath/simulation/solar/solar_lake_withAr.webp',
+            id: 'solar_lake_standard',
+            name: 'standard',
+            displayName: 'Standard',
+            correctedImagePath: '$_basePath/solar/solar_lake_withAr.webp',
             quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'solar_lake_premium',
+            name: 'premium',
+            displayName: 'Premium',
+            correctedImagePath: '$_basePath/solar/solar_lake_withAr.webp',
+            quality: LensQuality.premium,
           ),
         ],
       ),
@@ -1154,15 +1193,21 @@ class SimulationData {
         id: 'solar_moto_no_ar',
         sceneName: 'motorcycle',
         displayName: 'Motorcycle',
-        problemImagePath: '$_basePath/simulation/solar/solar_moto_without.webp',
+        problemImagePath: '$_basePath/solar/solar_moto_without.webp',
         correctionLenses: [
           CorrectionLens(
-            id: 'solar_moto_solar',
-            name: 'solar',
-            displayName: 'With Solar',
-            correctedImagePath:
-                '$_basePath/simulation/solar/solar_moto_withAr.webp',
+            id: 'solar_moto_standard',
+            name: 'standard',
+            displayName: 'Standard',
+            correctedImagePath: '$_basePath/solar/solar_moto_withAr.webp',
             quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'solar_moto_premium',
+            name: 'premium',
+            displayName: 'Premium',
+            correctedImagePath: '$_basePath/solar/solar_moto_withAr.webp',
+            quality: LensQuality.premium,
           ),
         ],
       ),
@@ -1171,16 +1216,21 @@ class SimulationData {
         id: 'solar_tennis_no_ar',
         sceneName: 'tennis',
         displayName: 'Tennis',
-        problemImagePath:
-            '$_basePath/simulation/solar/solar_tennis_without.webp',
+        problemImagePath: '$_basePath/solar/solar_tennis_without.webp',
         correctionLenses: [
           CorrectionLens(
-            id: 'solar_tennis_solar',
-            name: 'solar',
-            displayName: 'With Solar',
-            correctedImagePath:
-                '$_basePath/simulation/solar/solar_tennis_withAr.webp',
+            id: 'solar_tennis_standard',
+            name: 'standard',
+            displayName: 'Standard',
+            correctedImagePath: '$_basePath/solar/solar_tennis_withAr.webp',
             quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'solar_tennis_premium',
+            name: 'premium',
+            displayName: 'Premium',
+            correctedImagePath: '$_basePath/solar/solar_tennis_withAr.webp',
+            quality: LensQuality.premium,
           ),
         ],
       ),
@@ -1189,16 +1239,21 @@ class SimulationData {
         id: 'solar_yacht_no_ar',
         sceneName: 'yacht',
         displayName: 'Yacht',
-        problemImagePath:
-            '$_basePath/simulation/solar/solar_yacht_without.webp',
+        problemImagePath: '$_basePath/solar/solar_yacht_without.webp',
         correctionLenses: [
           CorrectionLens(
-            id: 'solar_yacht_solar',
-            name: 'solar',
-            displayName: 'With Solar',
-            correctedImagePath:
-                '$_basePath/simulation/solar/solar_yacht_withAr.webp',
+            id: 'solar_yacht_standard',
+            name: 'standard',
+            displayName: 'Standard',
+            correctedImagePath: '$_basePath/solar/solar_yacht_withAr.webp',
             quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'solar_yacht_premium',
+            name: 'premium',
+            displayName: 'Premium',
+            correctedImagePath: '$_basePath/solar/solar_yacht_withAr.webp',
+            quality: LensQuality.premium,
           ),
         ],
       ),
@@ -1610,7 +1665,7 @@ class SimulationData {
             name: 'drivewear',
             displayName: 'Drivewear®',
             correctedImagePath:
-                '$_basePath/drivewear/drivewear_night_drivewear.webp',
+                '$_basePath/drivewear/drivewear_overcast_drivewear.webp',
             quality: LensQuality.premium,
           ),
           CorrectionLens(

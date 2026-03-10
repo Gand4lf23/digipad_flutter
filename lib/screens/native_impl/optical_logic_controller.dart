@@ -1,20 +1,17 @@
-import 'dart:math';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 enum DetectionType {
-  refTL, // A1 (Calibration Top-Left) - VERTICAL
-  refTR, // A2 (Calibration Top-Right) - VERTICAL
-  refBL, // B1 (Calibration Bottom-Left) - HORIZONTAL
-  refBR, // B2 (Calibration Bottom-Right) - HORIZONTAL
-  pupilRight, // P_1 (Patient Right Eye / Screen Left)
-  pupilLeft, // P_2 (Patient Left Eye / Screen Right)
-  // CORNERS (The "L" shapes) - INTERNAL ARO EDGES
-  // Right Eye Box (Screen Left)
-  lensRightTop, // Defines RE_1 (Temporal) and RS_1 (Top)
-  lensRightBottom, // Defines RC_1 (Nasal) and RI_1 (Bottom)
-  // Left Eye Box (Screen Right)
-  lensLeftTop, // Defines RC_2 (Nasal) and RS_2 (Top)
-  lensLeftBottom, // Defines RE_2 (Temporal) and RI_2 (Bottom)
+  refTL,
+  refTR,
+  refBL,
+  refBR,
+  pupilRight,
+  pupilLeft,
+  lensRightTop,
+  lensRightBottom,
+  lensLeftTop,
+  lensLeftBottom,
 }
 
 class DetectionPoint {
@@ -34,19 +31,19 @@ class DetectionPoint {
 class OpticalController extends ChangeNotifier {
   List<DetectionPoint> points = [];
 
-  // Configuration - SEPARAR CALIBRACION HORIZONTAL Y VERTICAL
-  double ajusteHorizontal = 1.0; // Para DI, DNP, Ancho Aro
-  double ajusteVertical = 1.0; // Para Alturas, Alto Aro
-  double referenceCircleDiameter = 60.0; // Controlled by Slider
+  double ajusteHorizontal = 1.0;
+  double ajusteVertical = 1.0;
+  double referenceCircleDiameterRight = 60.0;
+  double referenceCircleDiameterLeft = 60.0;
+
   bool showCircles = true;
   bool isBifocal = false;
   double bifocalLineOffset = 0.0;
 
-  // Calculated Results
-  double pixelFactorX = 0; // Factor Horizontal (usa cruces INFERIORES)
-  double pixelFactorY = 0; // Factor Vertical (usa cruces SUPERIORES)
-  double di = 0; // IPD
-  double puente = 0; // Bridge
+  double pixelFactorX = 0;
+  double pixelFactorY = 0;
+  double di = 0;
+  double puente = 0;
   double dnpRight = 0;
   double dnpLeft = 0;
   double altRight = 0;
@@ -55,16 +52,12 @@ class OpticalController extends ChangeNotifier {
   double aroAnc = 0;
   double diametroRight = 0;
   double diametroLeft = 0;
-
-  // Visual Helpers for Painter
   double calcRadiusPxRight = 0;
   double calcRadiusPxLeft = 0;
 
   DetectionPoint? selectedPoint;
-  Size? _imageSize;
 
   void initialize(Map<String, dynamic> detections, Size imageSize) {
-    _imageSize = imageSize;
     points.clear();
 
     Offset toPixel(dynamic item) {
@@ -73,45 +66,73 @@ class OpticalController extends ChangeNotifier {
       return Offset(nx * imageSize.width, ny * imageSize.height);
     }
 
-    // 1. Process Calibration Circles (A1, A2, B1, B2)
     List<dynamic> rawCircles = detections['circles'] ?? [];
     List<Offset> circleOffsets = rawCircles.map((c) => toPixel(c)).toList();
 
     if (circleOffsets.isNotEmpty) {
-      // Sort Y to find Top vs Bottom rows
-      circleOffsets.sort((a, b) => a.dy.compareTo(b.dy));
-
-      List<Offset> topRow = [];
-      List<Offset> bottomRow = [];
-
       if (circleOffsets.length >= 4) {
-        topRow = [circleOffsets[0], circleOffsets[1]];
-        bottomRow = [circleOffsets[2], circleOffsets[3]];
+        // ── Robust rectangle pairing ────────────────────────────────────────
+        // Ordenamos los puntos por ángulo alrededor de su centroide para formar
+        // el perímetro (ej. TL, TR, BR, BL). Luego comparamos los lados opuestos
+        // para identificar cuáles son las filas (los lados más largos).
+
+        final pts = circleOffsets.take(4).toList();
+
+        // 1. Encontrar el centroide
+        double cx = 0, cy = 0;
+        for (var p in pts) {
+          cx += p.dx;
+          cy += p.dy;
+        }
+        cx /= 4;
+        cy /= 4;
+
+        // 2. Ordenar cíclicamente por el ángulo
+        pts.sort((a, b) {
+          double angleA = math.atan2(a.dy - cy, a.dx - cx);
+          double angleB = math.atan2(b.dy - cy, b.dx - cx);
+          return angleA.compareTo(angleB);
+        });
+
+        // 3. Los puntos forman ahora un polígono ordenado (0-1, 1-2, 2-3, 3-0).
+        // Comparamos los dos pares de lados opuestos para ver cuáles son las filas.
+        double len1 = (pts[0] - pts[1]).distance + (pts[2] - pts[3]).distance;
+        double len2 = (pts[1] - pts[2]).distance + (pts[3] - pts[0]).distance;
+
+        List<Offset> pair1, pair2;
+        if (len1 > len2) {
+          pair1 = [pts[0], pts[1]];
+          pair2 = [pts[2], pts[3]];
+        } else {
+          pair1 = [pts[1], pts[2]];
+          pair2 = [pts[3], pts[0]];
+        }
+
+        // 4. Ordenar cada fila de izquierda a derecha (por su componente X)
+        pair1.sort((a, b) => a.dx.compareTo(b.dx));
+        pair2.sort((a, b) => a.dx.compareTo(b.dx));
+
+        // 5. La fila superior será la que tenga la menor Y promedio
+        final avgY1 = (pair1[0].dy + pair1[1].dy) / 2;
+        final avgY2 = (pair2[0].dy + pair2[1].dy) / 2;
+        final List<Offset> topRow = avgY1 <= avgY2 ? pair1 : pair2;
+        final List<Offset> bottomRow = avgY1 <= avgY2 ? pair2 : pair1;
+
+        _addPoint(topRow[0], DetectionType.refTL, "A1");
+        _addPoint(topRow[1], DetectionType.refTR, "A2");
+        _addPoint(bottomRow[0], DetectionType.refBL, "B1");
+        _addPoint(bottomRow[1], DetectionType.refBR, "B2");
       } else if (circleOffsets.length >= 2) {
-        topRow = [circleOffsets[0], circleOffsets[1]];
-      } else {
-        topRow = circleOffsets;
-      }
-
-      // Sort X to find Left vs Right
-      topRow.sort((a, b) => a.dx.compareTo(b.dx));
-      bottomRow.sort((a, b) => a.dx.compareTo(b.dx));
-
-      // TOP ROW: A1, A2 (para calibración VERTICAL)
-      if (topRow.isNotEmpty) _addPoint(topRow.first, DetectionType.refTL, "A1");
-      if (topRow.length > 1) _addPoint(topRow.last, DetectionType.refTR, "A2");
-
-      // BOTTOM ROW: B1, B2 (para calibración HORIZONTAL)
-      if (bottomRow.isNotEmpty) {
-        _addPoint(bottomRow.first, DetectionType.refBL, "B1");
-      }
-      if (bottomRow.length > 1) {
-        _addPoint(bottomRow.last, DetectionType.refBR, "B2");
+        final List<Offset> sorted = circleOffsets
+          ..sort((a, b) => a.dx.compareTo(b.dx));
+        _addPoint(sorted.first, DetectionType.refTL, "A1");
+        _addPoint(sorted.last, DetectionType.refTR, "A2");
+      } else if (circleOffsets.length == 1) {
+        _addPoint(circleOffsets.first, DetectionType.refTL, "A1");
       }
     }
     _ensureCalibrationPointsExist(imageSize);
 
-    // 2. Process Pupils (P_1, P_2)
     List<dynamic> rawEyes = detections['eyes'] ?? [];
     if (rawEyes.length >= 2) {
       List<Offset> eyes = rawEyes.map((e) => toPixel(e)).toList()
@@ -119,7 +140,6 @@ class OpticalController extends ChangeNotifier {
       _addPoint(eyes[0], DetectionType.pupilRight, "P_1");
       _addPoint(eyes[1], DetectionType.pupilLeft, "P_2");
     } else {
-      // Defaults if not found
       _addPoint(
         Offset(imageSize.width * 0.4, imageSize.height * 0.45),
         DetectionType.pupilRight,
@@ -132,9 +152,7 @@ class OpticalController extends ChangeNotifier {
       );
     }
 
-    // 3. Initialize Lens Corners ("L" shapes - BORDES INTERNOS DEL ARO)
     _initializeLensCorners(imageSize);
-
     calculateFormulas();
   }
 
@@ -152,7 +170,6 @@ class OpticalController extends ChangeNotifier {
   }
 
   void _ensureCalibrationPointsExist(Size size) {
-    // TOP ROW (Vertical calibration)
     if (!points.any((p) => p.type == DetectionType.refTL)) {
       _addPoint(
         Offset(size.width * 0.2, size.height * 0.3),
@@ -167,8 +184,6 @@ class OpticalController extends ChangeNotifier {
         "A2",
       );
     }
-
-    // BOTTOM ROW (Horizontal calibration)
     if (!points.any((p) => p.type == DetectionType.refBL)) {
       _addPoint(
         Offset(size.width * 0.2, size.height * 0.7),
@@ -186,57 +201,61 @@ class OpticalController extends ChangeNotifier {
   }
 
   void _initializeLensCorners(Size size) {
-    Offset p1 = getPoint(DetectionType.pupilRight);
-    Offset p2 = getPoint(DetectionType.pupilLeft);
+    final Offset p1 = getPoint(DetectionType.pupilRight);
+    final Offset p2 = getPoint(DetectionType.pupilLeft);
 
-    // Estimate initial box size (approx 50mm)
-    double offsetVal = size.width * 0.08;
+    // Estimate a realistic pixel-per-mm factor from the calibration bar so
+    // the initial lens corners land close to the actual frame edges.
+    // This avoids absurdly large default measurements on first load.
+    final Offset B1 = getPoint(DetectionType.refBL);
+    final Offset B2 = getPoint(DetectionType.refBR);
+    final double barPx = (B2 - B1).distance;
+    final double pxPerMm = barPx > 1
+        ? (130.0 / barPx)
+        : (130.0 / (size.width * 0.6));
 
-    // Right Eye (Screen Left)
-    _addPoint(
-      p1 + Offset(-offsetVal, -offsetVal),
-      DetectionType.lensRightTop,
-      "R_TL",
-    );
-    _addPoint(
-      p1 + Offset(offsetVal, offsetVal),
-      DetectionType.lensRightBottom,
-      "R_BR",
-    );
+    // Typical frame: ~25mm half-width, ~19mm half-height from pupil center
+    final double halfW = 25.0 / pxPerMm;
+    final double halfH = 19.0 / pxPerMm;
 
-    // Left Eye (Screen Right)
-    _addPoint(
-      p2 + Offset(-offsetVal, -offsetVal),
-      DetectionType.lensLeftTop,
-      "L_TL",
-    );
-    _addPoint(
-      p2 + Offset(offsetVal, offsetVal),
-      DetectionType.lensLeftBottom,
-      "L_BR",
-    );
+    _addPoint(p1 + Offset(-halfW, -halfH), DetectionType.lensRightTop, "R_TL");
+    _addPoint(p1 + Offset(halfW, halfH), DetectionType.lensRightBottom, "R_BR");
+    _addPoint(p2 + Offset(-halfW, -halfH), DetectionType.lensLeftTop, "L_TL");
+    _addPoint(p2 + Offset(halfW, halfH), DetectionType.lensLeftBottom, "L_BR");
   }
 
-  // --- INTERACTION ---
-
   void handleTap(Offset localPosition, double scale, Offset translation) {
+    // Convertir la posición del toque en pantalla a coordenadas de la imagen
     final imgPos = (localPosition - translation) / scale;
-    final hitRadius = 35 / scale; // Increased for easier L selection
+
+    // Aumentamos un poco el radio de "agarre" (45px lógicos) para facilitar el toque,
+    // dividido por la escala para que sea consistente al hacer zoom.
+    final hitRadius = 45 / scale;
 
     try {
-      // Priority: Corners > Pupils > Refs
-      points.sort((a, b) {
-        bool aIsCorner = a.type.index >= DetectionType.lensRightTop.index;
-        bool bIsCorner = b.type.index >= DetectionType.lensRightTop.index;
-        if (aIsCorner && !bIsCorner) return -1;
-        if (!aIsCorner && bIsCorner) return 1;
-        return 0;
+      // 1. Filtrar TODOS los puntos que están dentro del radio de toque
+      final candidates = points
+          .where((p) => (p.position - imgPos).distance <= hitRadius)
+          .toList();
+
+      if (candidates.isEmpty) {
+        // Si tocamos el vacío, deseleccionar
+        if (selectedPoint != null) {
+          selectedPoint = null;
+          notifyListeners();
+        }
+        return;
+      }
+
+      // 2. Ordenar los candidatos por DISTANCIA (el más cercano gana)
+      candidates.sort((a, b) {
+        final distA = (a.position - imgPos).distance;
+        final distB = (b.position - imgPos).distance;
+        return distA.compareTo(distB);
       });
 
-      final hitPoint = points.firstWhere(
-        (p) => (p.position - imgPos).distance < hitRadius,
-      );
-      selectedPoint = hitPoint;
+      // 3. Seleccionar el primero (el más cercano)
+      selectedPoint = candidates.first;
       notifyListeners();
     } catch (_) {
       if (selectedPoint != null) {
@@ -262,10 +281,13 @@ class OpticalController extends ChangeNotifier {
     }
   }
 
-  // --- SLIDER CONTROLS ---
+  void setReferenceDiameterRight(double val) {
+    referenceCircleDiameterRight = val;
+    notifyListeners();
+  }
 
-  void setReferenceDiameter(double val) {
-    referenceCircleDiameter = val;
+  void setReferenceDiameterLeft(double val) {
+    referenceCircleDiameterLeft = val;
     notifyListeners();
   }
 
@@ -304,105 +326,117 @@ class OpticalController extends ChangeNotifier {
     }
   }
 
-  // --- MATH FORMULAS (CORREGIDAS) ---
-
+  // ---------------------------------------------------------------------------
+  // MEASUREMENT MATH — Rotation-invariant via calibration-bar projection
+  //
+  // All coordinates are in original IMAGE pixel space (unaffected by UI rotation).
+  // The calibration bar (B1→B2) defines the true optical horizontal axis.
+  // Every measurement is projected onto that axis and its perpendicular,
+  // so results are identical whether the photo is upright or tilted.
+  // ---------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
+  // MEASUREMENT MATH — Rotation-invariant via calibration-bar projection
+  //
+  // All coordinates are in original IMAGE pixel space (unaffected by UI rotation).
+  // The calibration bar (B1→B2) defines the true optical horizontal axis.
+  // Every measurement is projected onto that axis and its perpendicular,
+  // so results are identical whether the photo is upright or tilted.
+  // ---------------------------------------------------------------------------
   void calculateFormulas() {
-    // Calibration Points
-    Offset A1 = getPoint(DetectionType.refTL); // Top-Left (Vertical)
-    Offset A2 = getPoint(DetectionType.refTR); // Top-Right (Vertical)
-    Offset B1 = getPoint(DetectionType.refBL); // Bottom-Left (Horizontal)
-    Offset B2 = getPoint(DetectionType.refBR); // Bottom-Right (Horizontal)
+    final Offset A1 = getPoint(DetectionType.refTL);
+    final Offset A2 = getPoint(DetectionType.refTR);
+    final Offset B1 = getPoint(DetectionType.refBL);
+    final Offset B2 = getPoint(DetectionType.refBR);
+    final Offset P_1 = getPoint(DetectionType.pupilRight);
+    final Offset P_2 = getPoint(DetectionType.pupilLeft);
+    final Offset rTL = getPoint(DetectionType.lensRightTop);
+    final Offset rBR = getPoint(DetectionType.lensRightBottom);
+    final Offset lTL = getPoint(DetectionType.lensLeftTop);
+    final Offset lBR = getPoint(DetectionType.lensLeftBottom);
 
-    // Pupils
-    Offset P_1 = getPoint(DetectionType.pupilRight);
-    Offset P_2 = getPoint(DetectionType.pupilLeft);
+    // Build calibration-bar coordinate axes.
+    // hUnit always points LEFT→RIGHT; vUnit always points DOWNWARD.
+    Offset barVec = B2 - B1;
+    if (barVec.dx < 0) barVec = Offset(-barVec.dx, -barVec.dy);
+    final double barLen = barVec.distance;
+    final Offset hUnit = barLen > 1
+        ? Offset(barVec.dx / barLen, barVec.dy / barLen)
+        : const Offset(1, 0);
+    Offset vUnit = Offset(-hUnit.dy, hUnit.dx);
+    if (vUnit.dy < 0) vUnit = Offset(hUnit.dy, -hUnit.dx);
 
-    // Lens Corners (L shapes - BORDES INTERNOS)
-    Offset rTL = getPoint(DetectionType.lensRightTop);
-    Offset rBR = getPoint(DetectionType.lensRightBottom);
-    Offset lTL = getPoint(DetectionType.lensLeftTop);
-    Offset lBR = getPoint(DetectionType.lensLeftBottom);
+    // ─── CÁLCULO DE ESCALA REAL (CORREGIDO) ─────────────────────────────
+    // La única medida real que conocemos es el ancho de la barra (130 mm).
+    double distHoriz = barLen < 1 ? 1 : barLen;
 
-    // Define Edges (INTERNAL ARO)
-    // RE (Right Eye - Screen Left)
-    double RE_1 = rTL.dx; // Temporal Edge
-    double RS_1 = rTL.dy; // Top Edge
-    double RC_1 = rBR.dx; // Nasal Edge
-    double RI_1 = rBR.dy; // Bottom Edge
+    // Como los píxeles de una cámara son cuadrados (1:1), 1 píxel equivale a los
+    // mismos milímetros tanto en el eje X como en el eje Y.
+    double milimetrosPorPixel = 130.0 / distHoriz;
 
-    // LE (Left Eye - Screen Right)
-    double RC_2 = lTL.dx; // Nasal Edge
-    double RS_2 = lTL.dy; // Top Edge
-    double RE_2 = lBR.dx; // Temporal Edge
-    double RI_2 = lBR.dy; // Bottom Edge
+    // Aplicamos la misma escala a ambos ejes, respetando los ajustes manuales del usuario.
+    pixelFactorX = milimetrosPorPixel * ajusteHorizontal;
+    pixelFactorY = milimetrosPorPixel * ajusteVertical;
 
-    // ===== PIXEL FACTORS (SEPARADOS) =====
+    // Calculamos el midTop solo para tener un punto de origen (Y=0) de referencia
+    // para las proyecciones verticales.
+    final Offset midTop = Offset((A1.dx + A2.dx) / 2, (A1.dy + A2.dy) / 2);
 
-    // 1. HORIZONTAL: Usa cruces INFERIORES (B1, B2) - más cercanas a ojos/armazón
-    // Formula: PixelX = (130 / (B2.X – B1.X)) * AjusteHorizontal
-    double distHoriz = (B2.dx - B1.dx).abs();
-    if (distHoriz == 0) distHoriz = 1;
-    pixelFactorX = (130.0 / distHoriz) * ajusteHorizontal;
+    // ────────────────────────────────────────────────────────────────────
 
-    // 2. VERTICAL: Usa cruces SUPERIORES (A1, A2)
-    // Formula: PixelY = (130 / |A2.Y - A1.Y|) * AjusteVertical
-    // (Asumiendo que la distancia vertical también es conocida, o usa promedio Y de ambas filas)
-    // Si las cruces están alineadas horizontalmente, usa la distancia entre filas:
-    double distVert = ((B1.dy + B2.dy) / 2 - (A1.dy + A2.dy) / 2).abs();
-    if (distVert == 0) distVert = 1;
-    // Asumiendo distancia vertical conocida (ej: 85mm entre filas)
-    pixelFactorY = (85.0 / distVert) * ajusteVertical;
+    // Project all points onto the calibration axes (Soporta rotación)
+    double h(Offset p) {
+      final d = p - B1;
+      return d.dx * hUnit.dx + d.dy * hUnit.dy;
+    }
 
-    // ===== MEDIDAS HORIZONTALES (usan pixelFactorX) =====
+    double v(Offset p) {
+      final d = p - midTop;
+      return d.dx * vUnit.dx + d.dy * vUnit.dy;
+    }
 
-    // 3. IPD (DI)
-    // Formula: DI = (P_2.X – P_1.X) * PixelX
-    di = (P_2.dx - P_1.dx) * pixelFactorX;
+    final double hP1 = h(P_1);
+    final double hP2 = h(P_2);
+    final double RE_1 = h(rTL);
+    final double RC_1 = h(rBR);
+    final double RC_2 = h(lTL);
+    final double RE_2 = h(lBR);
 
-    // 4. Bridge (Puente)
-    // Formula: Puente = (RC_2.X – RC_1.X) * PixelX
-    puente = (RC_2 - RC_1) * pixelFactorX;
+    final double vP1 = v(P_1);
+    final double vP2 = v(P_2);
+    final double RS_1 = v(rTL);
+    final double RI_1 = v(rBR);
+    final double RS_2 = v(lTL);
+    final double RI_2 = v(lBR);
 
-    // 5. Center & DNP
-    // Formula: Centro = (RC_1 + RC_2) / 2
-    double centroPx = (RC_1 + RC_2) / 2.0;
+    // Measurements
+    di = (hP2 - hP1).abs() * pixelFactorX;
+    puente = (RC_2 - RC_1).abs() * pixelFactorX;
 
-    // Formula: DNP1 = (Centro - P_1.X) * PixelX
-    dnpRight = (centroPx - P_1.dx) * pixelFactorX;
+    final double centroPx = (RC_1 + RC_2) / 2.0;
+    dnpRight = (centroPx - hP1).abs() * pixelFactorX;
+    dnpLeft = (hP2 - centroPx).abs() * pixelFactorX;
 
-    // Formula: DNP2 = (P_2.X - Centro) * PixelX
-    dnpLeft = (P_2.dx - centroPx) * pixelFactorX;
+    aroAnc = (((RC_1 - RE_1).abs() + (RE_2 - RC_2).abs()) / 2.0) * pixelFactorX;
 
-    // 6. Ancho Aro (ARO INTERNO)
-    // Formula: Aro Anc. = (((RC_1.X – RE_1.X) + (RE_2.X – RC_2.X)) / 2) * PixelX
-    double w1 = RC_1 - RE_1;
-    double w2 = RE_2 - RC_2;
-    aroAnc = ((w1 + w2) / 2.0) * pixelFactorX;
-
-    // 7. Diametros Calculados
-    // Formula: Diametro1 = (((P_1.X – RE_1.X) * 2) * PixelX) + 1
-    double radPxR = (P_1.dx - RE_1).abs();
+    final double radPxR = (hP1 - RE_1).abs();
     diametroRight = (radPxR * 2.0 * pixelFactorX) + 1.0;
     calcRadiusPxRight = radPxR;
 
-    // Formula: Diametro2 = (((RE_2.X – P_2.X) * 2) * PixelX) + 1
-    double radPxL = (RE_2 - P_2.dx).abs();
+    final double radPxL = (RE_2 - hP2).abs();
     diametroLeft = (radPxL * 2.0 * pixelFactorX) + 1.0;
     calcRadiusPxLeft = radPxL;
 
-    // ===== MEDIDAS VERTICALES (usan pixelFactorY) =====
+    altRight = (RI_1 - vP1).abs() * pixelFactorY;
+    altLeft = (RI_2 - vP2).abs() * pixelFactorY;
+    aroAlt = (((RI_1 - RS_1).abs() + (RI_2 - RS_2).abs()) / 2.0) * pixelFactorY;
 
-    // 8. Alturas (Heights)
-    // Formula: ALT1 = (RI_1.Y - P_1.Y) * PixelY
-    altRight = (RI_1 - P_1.dy) * pixelFactorY;
-    altLeft = (RI_2 - P_2.dy) * pixelFactorY;
-
-    // 9. Alto Aro (ARO INTERNO)
-    // Formula: Aro Alt. = (((RI_1.Y – RS_1.Y) + (RI_2.Y – RS_2.Y)) / 2) * PixelY
-    double h1 = RI_1 - RS_1;
-    double h2 = RI_2 - RS_2;
-    aroAlt = ((h1 + h2) / 2.0) * pixelFactorY;
+    (P_2.dx - P_1.dx).abs();
 
     notifyListeners();
-  }
+  } // Log helpers
+
+  String _fmt(Offset o) =>
+      "(${o.dx.toStringAsFixed(1)},${o.dy.toStringAsFixed(1)})";
+  String _fmtUnit(Offset o) =>
+      "(${o.dx.toStringAsFixed(3)},${o.dy.toStringAsFixed(3)})";
 }

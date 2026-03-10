@@ -1,0 +1,17 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow the application to read and write to the device_activations collection
+    // Note: In a production environment with user authentication, you would restrict this.
+    // Since this is a device activation flow without user login, we allow public access
+    // to this specific collection.
+    match /device_activations/{deviceId} {
+      allow read, write: if true;
+    }
+    
+    // Default deny for other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

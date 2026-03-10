@@ -38,9 +38,6 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
   late Animation<double> _pulseAnimation;
 
   CorrectionLens? _currentLens;
-  
-  // Lens dragging local state for smoothness
-  Offset? _draggingLensPosition;
 
   @override
   void initState() {
@@ -123,40 +120,39 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
     }
   }
 
-  void _onToggleInteractionMode() {
-    context.read<SimulationsCubit>().toggleInteractionMode();
+  void _onToggleInteractionMode(BuildContext cubitContext) {
+    cubitContext.read<SimulationsCubit>().toggleInteractionMode();
   }
 
-  void _onLensDragStart(Offset position) {
-    setState(() {
-      _draggingLensPosition = position;
-    });
-    context.read<SimulationsCubit>().setDragging(true);
-  }
-
-  void _onLensDragUpdate(Offset position) {
+  void _onLensDragStart(Offset position, BuildContext cubitContext) {
     final size = MediaQuery.of(context).size;
-    final lensRadius = context.read<SimulationsCubit>().state.lensRadius;
-    
+    final lensRadius = cubitContext.read<SimulationsCubit>().state.lensRadius;
+
     // Clamp position within screen bounds
     final clampedPosition = Offset(
       position.dx.clamp(lensRadius, size.width - lensRadius),
       position.dy.clamp(lensRadius, size.height - lensRadius),
     );
-    
-    setState(() {
-      _draggingLensPosition = clampedPosition;
-    });
+
+    cubitContext.read<SimulationsCubit>().moveLens(clampedPosition);
+    cubitContext.read<SimulationsCubit>().setDragging(true);
   }
 
-  void _onLensDragEnd() {
-    if (_draggingLensPosition != null) {
-      context.read<SimulationsCubit>().moveLens(_draggingLensPosition!);
-    }
-    context.read<SimulationsCubit>().setDragging(false);
-    setState(() {
-      _draggingLensPosition = null;
-    });
+  void _onLensDragUpdate(Offset position, BuildContext cubitContext) {
+    final size = MediaQuery.of(context).size;
+    final lensRadius = cubitContext.read<SimulationsCubit>().state.lensRadius;
+
+    // Clamp position within screen bounds
+    final clampedPosition = Offset(
+      position.dx.clamp(lensRadius, size.width - lensRadius),
+      position.dy.clamp(lensRadius, size.height - lensRadius),
+    );
+
+    cubitContext.read<SimulationsCubit>().moveLens(clampedPosition);
+  }
+
+  void _onLensDragEnd(BuildContext cubitContext) {
+    cubitContext.read<SimulationsCubit>().setDragging(false);
   }
 
   @override
@@ -196,19 +192,24 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
               problemImage: _problemImage!,
               correctedImage: _correctedImage,
               currentLens: _currentLens,
-              onLensDragStart: _onLensDragStart,
-              onLensDragUpdate: _onLensDragUpdate,
-              onLensDragEnd: _onLensDragEnd,
+              onLensDragStart: (pos) => _onLensDragStart(pos, context),
+              onLensDragUpdate: (pos) => _onLensDragUpdate(pos, context),
+              onLensDragEnd: () => _onLensDragEnd(context),
             ),
 
             // Top gradient and back button
-            SimulationTopBar(
-              scenario: widget.scenario,
-              category: widget.category,
-              categoryColor: _getCategoryColor(widget.category.id),
-              onBack: () => Navigator.pop(context),
-              onToggleMode: _onToggleInteractionMode,
-              isLensMode: state.isLensDraggingMode,
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SimulationTopBar(
+                scenario: widget.scenario,
+                category: widget.category,
+                categoryColor: _getCategoryColor(widget.category.id),
+                onBack: () => Navigator.pop(context),
+                onToggleMode: () => _onToggleInteractionMode(context),
+                isLensMode: state.isLensDraggingMode,
+              ),
             ),
 
             // Bottom control panel
@@ -301,13 +302,16 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
     );
   }
 
-  Widget _buildInstructionOverlay(SimulationsState state, BuildContext context) {
+  Widget _buildInstructionOverlay(
+    SimulationsState state,
+    BuildContext context,
+  ) {
     final size = MediaQuery.of(context).size;
     final position = state.isLensDraggingMode
         ? state.lensPosition
         : (state.isVerticalDivider
-            ? Offset(size.width * state.dividerPosition, size.height / 2)
-            : Offset(size.width / 2, size.height * state.dividerPosition));
+              ? Offset(size.width * state.dividerPosition, size.height / 2)
+              : Offset(size.width / 2, size.height * state.dividerPosition));
 
     return AnimatedBuilder(
       animation: _pulseAnimation,
@@ -315,10 +319,14 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
         return Positioned(
           left: state.isLensDraggingMode
               ? position.dx - 100
-              : (state.isVerticalDivider ? position.dx - 100 : size.width / 2 - 100),
+              : (state.isVerticalDivider
+                    ? position.dx - 100
+                    : size.width / 2 - 100),
           top: state.isLensDraggingMode
               ? position.dy - 80
-              : (state.isVerticalDivider ? position.dy - 100 : position.dy - 80),
+              : (state.isVerticalDivider
+                    ? position.dy - 100
+                    : position.dy - 80),
           child: Opacity(
             opacity: _pulseAnimation.value,
             child: Container(
@@ -335,8 +343,8 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
                     state.isLensDraggingMode
                         ? Icons.touch_app_outlined
                         : (state.isVerticalDivider
-                            ? Icons.swap_horiz_outlined
-                            : Icons.swap_vert_outlined),
+                              ? Icons.swap_horiz_outlined
+                              : Icons.swap_vert_outlined),
                     color: Colors.white.withValues(alpha: 0.9),
                     size: 20,
                   ),
