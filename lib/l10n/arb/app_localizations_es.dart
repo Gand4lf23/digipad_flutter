@@ -53,13 +53,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get languagePortuguese => 'Português';
 
   @override
-  String get vmNoImages => 'Aún no hay imágenes.\nCaptura una o selecciona desde tu galería para comenzar';
+  String get vmNoImages =>
+      'Aún no hay imágenes.\nCaptura una o selecciona desde tu galería para comenzar';
 
   @override
   String get vmDragAndDrop => 'Arrastra y suelta fotos';
 
   @override
-  String get vmPickOrTake => 'Selecciona una foto de tu galería o toma una nueva';
+  String get vmPickOrTake =>
+      'Selecciona una foto de tu galería o toma una nueva';
 
   @override
   String get vmDropHere => 'Suelta la imagen aquí';
@@ -68,7 +70,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get galleryDeleteTitle => '¿Eliminar imagen?';
 
   @override
-  String get galleryDeleteContent => 'Esto eliminará permanentemente la imagen del almacenamiento.';
+  String get galleryDeleteContent =>
+      'Esto eliminará permanentemente la imagen del almacenamiento.';
 
   @override
   String get vhNoTests => 'Aún no hay pruebas.';
@@ -172,13 +175,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get measurementsModuleTitle => 'Módulo de Mediciones';
 
   @override
-  String get measurementsModuleSubtitle => 'La funcionalidad de medición se implementará aquí';
+  String get measurementsModuleSubtitle =>
+      'La funcionalidad de medición se implementará aquí';
 
   @override
   String get cameraRequiredTitle => 'Cámara requerida';
 
   @override
-  String get cameraRequiredContent => 'El acceso a la cámara ha sido denegado permanentemente. Habilítalo en la configuración del sistema para usar esta función.';
+  String get cameraRequiredContent =>
+      'El acceso a la cámara ha sido denegado permanentemente. Habilítalo en la configuración del sistema para usar esta función.';
 
   @override
   String get openSettings => 'Abrir configuración';
@@ -193,7 +198,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get cameraPermissionRequired => 'Permiso de cámara requerido';
 
   @override
-  String get cameraPermissionExplain => 'Necesitamos acceso a la cámara para detectar rostros y referencias.';
+  String get cameraPermissionExplain =>
+      'Necesitamos acceso a la cámara para detectar rostros y referencias.';
 
   @override
   String get grantPermission => 'Conceder permiso';
@@ -307,7 +313,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get eyelid => 'Párpado';
 
   @override
-  String get takeOrSelectStart => 'Toma una foto o selecciona desde la galería para comenzar';
+  String get takeOrSelectStart =>
+      'Toma una foto o selecciona desde la galería para comenzar';
 
   @override
   String get selectBrand => 'Selecciona Marca';
@@ -331,7 +338,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get simCatMyopia => 'Miopía';
 
   @override
-  String get simCatMyopiaDesc => 'Dificultad para ver claramente objetos lejanos (miopía)';
+  String get simCatMyopiaDesc =>
+      'Dificultad para ver claramente objetos lejanos (miopía)';
 
   @override
   String get simSceneKitchen => 'Cocina';
@@ -355,7 +363,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get simCatMultifocal => 'Multifocal';
 
   @override
-  String get simCatMultifocalDesc => 'Comparación de calidad de lentes progresivos';
+  String get simCatMultifocalDesc =>
+      'Comparación de calidad de lentes progresivos';
 
   @override
   String get simSceneClothing => 'Ropa';
@@ -376,7 +385,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get simCatBifocal => 'Bifocal';
 
   @override
-  String get simCatBifocalDesc => 'Comparación entre lentes bifocales y multifocales';
+  String get simCatBifocalDesc =>
+      'Comparación entre lentes bifocales y multifocales';
 
   @override
   String get simSceneOffice => 'Oficina';
@@ -415,7 +425,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get simCatAntiReflective => 'Antirreflejo';
 
   @override
-  String get simCatAntiReflectiveDesc => 'Reducción de reflejos en la lente y mejor claridad';
+  String get simCatAntiReflectiveDesc =>
+      'Reducción de reflejos en la lente y mejor claridad';
 
   @override
   String get simSceneBaseball => 'Béisbol';
@@ -436,7 +447,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get simCatDriveWear => 'DriveWear';
 
   @override
-  String get simCatDriveWearDesc => 'Lentes optimizados para conducir en diferentes condiciones';
+  String get simCatDriveWearDesc =>
+      'Lentes optimizados para conducir en diferentes condiciones';
 
   @override
   String get simSceneDrivingSunny => 'Conducción (Soleado)';
@@ -478,7 +490,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get simCatPhotochromic => 'Fotocromático';
 
   @override
-  String get simCatPhotochromicDesc => 'Lentes que se adaptan a las condiciones de luz';
+  String get simCatPhotochromicDesc =>
+      'Lentes que se adaptan a las condiciones de luz';
 
   @override
   String get simSceneOpticStore => 'Óptica';
@@ -499,7 +512,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get simCatSolar => 'Solar';
 
   @override
-  String get simCatSolarDesc => 'Protección solar con recubrimiento antirreflejo';
+  String get simCatSolarDesc =>
+      'Protección solar con recubrimiento antirreflejo';
 
   @override
   String get simSceneBeach2 => 'Playa 2';
@@ -514,7 +528,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get simCatTint => 'Tinte';
 
   @override
-  String get simCatTintDesc => 'Tintes de lentes personalizables para diferentes entornos';
+  String get simCatTintDesc =>
+      'Tintes de lentes personalizables para diferentes entornos';
 
   @override
   String get simColorYellow => 'Amarillo';
@@ -535,7 +550,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get activationTitle => 'Activación del Dispositivo';
 
   @override
-  String get activationEnterEmail => 'Por favor ingrese su correo electrónico para solicitar acceso.';
+  String get activationEnterEmail =>
+      'Por favor ingrese su correo electrónico para solicitar acceso.';
 
   @override
   String get activationEmailLabel => 'Correo Electrónico';
@@ -558,7 +574,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get activationConnectionRequired => 'Conexión Requerida';
 
   @override
-  String get activationOfflineLimitReached => 'Se ha alcanzado el límite de uso sin conexión.';
+  String get activationOfflineLimitReached =>
+      'Se ha alcanzado el límite de uso sin conexión.';
 
   @override
   String get activationRetryConnection => 'Reintentar Conexión';
@@ -570,11 +587,14 @@ class AppLocalizationsEs extends AppLocalizations {
   String get activationEmailInvalid => 'Por favor ingrese un correo válido';
 
   @override
-  String get activationRequestExists => 'Ya existe una solicitud para este correo.';
+  String get activationRequestExists =>
+      'Ya existe una solicitud para este correo.';
 
   @override
-  String get activationNoInternet => 'Sin conexión a internet y no activado previamente.';
+  String get activationNoInternet =>
+      'Sin conexión a internet y no activado previamente.';
 
   @override
-  String get activationConnectionTimeout => 'Tiempo de conexión agotado. Por favor verifique su internet.';
+  String get activationConnectionTimeout =>
+      'Tiempo de conexión agotado. Por favor verifique su internet.';
 }

@@ -274,5 +274,8 @@
   "activationEmailInvalid": "Please enter a valid email",
   "activationRequestExists": "Request already exists for this email.",
   "activationNoInternet": "No internet connection and not previously activated.",
-  "activationConnectionTimeout": "Connection timed out. Please check your internet."
+  "activationConnectionTimeout": "Connection timed out. Please check your internet.",
+  "nativeSplitGalleryOnlyHint": "Tap the bottom button to open the camera\nor select a photo from your gallery",
+  "nativeSplitModeGallery": "Gallery",
+  "nativeSplitModeCamera": "Camera"
 }

@@ -92,31 +92,38 @@ class _LensImageViewerState extends State<LensImageViewer> {
           children: [
             // Lens Image
             ClipRect(
-              // Use ClipRect instead of RRect for full filling
               child: Transform.scale(
-                scale: widget.isZoomedOut ? 1.0 : 1.4,
-                child: Image.asset(
-                  widget.state.currentImagePath,
-                  // Use contain for zoomed out (full view) to see whole glasses
-                  // Use cover for zoomed in (detail view)
-                  fit: widget.isZoomedOut ? BoxFit.contain : BoxFit.cover,
-                  alignment: Alignment.center,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: Colors.grey.shade200,
-                      child: Center(
-                        child: Icon(
-                          Icons.image_not_supported_outlined,
-                          size: 32,
-                          color: Colors.grey.shade400,
+                // 1. REDUCED SCALE: Since BoxFit.cover already zooms to fill the width,
+                // we only need about 1.8x to get a tight crop on the eyes.
+                scale: widget.isZoomedOut ? 1.8 : 3,
+                // Important: Keep the transform centered to avoid compounding shifts
+                alignment: Alignment.center,
+                child: Transform.translate(
+                  offset: widget.isZoomedOut
+                      ? const Offset(0, 0)
+                      : const Offset(40, 0),
+                  child: Image.asset(
+                    widget.state.currentImagePath,
+                    fit: widget.isZoomedOut ? BoxFit.contain : BoxFit.cover,
+                    // 2. PERFECT FOCUS: -0.35 targets the exact upper-middle section
+                    // of the portrait where the eyes and glasses are located.
+                    alignment: Alignment.center,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Colors.grey.shade200,
+                        child: Center(
+                          child: Icon(
+                            Icons.image_not_supported_outlined,
+                            size: 32,
+                            color: Colors.grey.shade400,
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
-
             // Info overlay - top left
             Positioned(
               top: 8,

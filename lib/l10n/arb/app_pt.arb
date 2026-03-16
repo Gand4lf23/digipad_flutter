@@ -274,5 +274,8 @@
   "activationEmailInvalid": "Por favor, insira um e-mail válido",
   "activationRequestExists": "Já existe uma solicitação para este e-mail.",
   "activationNoInternet": "Sem conexão com a internet e não ativado anteriormente.",
-  "activationConnectionTimeout": "Tempo limite de conexão esgotado. Verifique sua internet."
+  "activationConnectionTimeout": "Tempo limite de conexão esgotado. Verifique sua internet.",
+  "nativeSplitGalleryOnlyHint": "Toque no botão inferior para abrir a câmera\nou selecione uma foto da sua galeria",
+  "nativeSplitModeGallery": "Galeria",
+  "nativeSplitModeCamera": "Câmera"
 }

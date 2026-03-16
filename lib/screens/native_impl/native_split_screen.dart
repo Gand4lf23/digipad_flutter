@@ -19,6 +19,9 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
   MethodChannel? _channel;
   final ImagePicker _picker = ImagePicker();
 
+  // ValueNotifier inicializado en true para el Modo Galería / Estático
+  late final ValueNotifier<bool> _galleryModeNotifier;
+
   bool _detectionEnabled = true;
   bool _torchEnabled = false;
   bool _frontCamera = false;
@@ -40,12 +43,19 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    // Inicializamos el Notifier y le agregamos un listener
+    _galleryModeNotifier = ValueNotifier<bool>(true);
+    _galleryModeNotifier.addListener(_onGalleryModeChanged);
+
     _checkCameraPermission();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _galleryModeNotifier.removeListener(_onGalleryModeChanged);
+    _galleryModeNotifier.dispose();
     super.dispose();
   }
 
@@ -53,6 +63,24 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _checkCameraPermission();
+    }
+  }
+
+  // Se ejecuta cada vez que el usuario toca el toggle
+  void _onGalleryModeChanged() {
+    final isGalleryOnly = _galleryModeNotifier.value;
+    if (_channel != null) {
+      // Apagamos o prendemos el flujo nativo dependiendo del modo
+      _channel!.invokeMethod('setDetectionEnabled', {
+        'enabled': isGalleryOnly ? false : _detectionEnabled,
+      });
+      _channel!.invokeMethod('setOverlayVisible', {
+        'visible': isGalleryOnly ? false : _overlayVisible,
+      });
+      _channel!.invokeMethod('setStreamDetections', {
+        'enabled': isGalleryOnly ? false : _streamDetections,
+        'throttleMs': 50,
+      });
     }
   }
 
@@ -144,56 +172,138 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
     return Scaffold(
       backgroundColor: _backgroundColor,
       body: SafeArea(
-        child: Stack(
-          children: [
-            Column(
+        child: ValueListenableBuilder<bool>(
+          valueListenable: _galleryModeNotifier,
+          builder: (context, isGalleryOnly, child) {
+            return Stack(
               children: [
-                Expanded(
-                  flex: 7,
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(24),
-                      bottomRight: Radius.circular(24),
+                Column(
+                  children: [
+                    Expanded(
+                      flex: 7,
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          bottomLeft: Radius.circular(24),
+                          bottomRight: Radius.circular(24),
+                        ),
+                        child: Stack(
+                          children: [
+                            if (Platform.isAndroid)
+                              AndroidView(
+                                viewType: viewType,
+                                layoutDirection: TextDirection.ltr,
+                                creationParams: creationParams,
+                                creationParamsCodec:
+                                    const StandardMessageCodec(),
+                                onPlatformViewCreated: _onPlatformViewCreated,
+                              )
+                            else if (Platform.isIOS)
+                              UiKitView(
+                                viewType: viewType,
+                                layoutDirection: TextDirection.ltr,
+                                creationParams: creationParams,
+                                creationParamsCodec:
+                                    const StandardMessageCodec(),
+                                onPlatformViewCreated: _onPlatformViewCreated,
+                              )
+                            else
+                              Center(
+                                child: Text(
+                                  context.l10n.platformNotSupported,
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              ),
+
+                            // AQUÍ ESTÁ EL TEXTO CAMBIADO
+                            if (isGalleryOnly)
+                              Container(
+                                color: _backgroundColor,
+                                child: Center(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.photo_camera_outlined,
+                                        size: 80,
+                                        color: Colors.white24,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        context.l10n.nativeSplitGalleryOnlyHint,
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          color: Colors.white54,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            else
+                              _buildGuideBox(),
+                          ],
+                        ),
+                      ),
                     ),
-                    child: Stack(
-                      children: [
-                        if (Platform.isAndroid)
-                          AndroidView(
-                            viewType: viewType,
-                            layoutDirection: TextDirection.ltr,
-                            creationParams: creationParams,
-                            creationParamsCodec: const StandardMessageCodec(),
-                            onPlatformViewCreated: _onPlatformViewCreated,
-                          )
-                        else if (Platform.isIOS)
-                          UiKitView(
-                            viewType: viewType,
-                            layoutDirection: TextDirection.ltr,
-                            creationParams: creationParams,
-                            creationParamsCodec: const StandardMessageCodec(),
-                            onPlatformViewCreated: _onPlatformViewCreated,
-                          )
-                        else
-                          Center(
-                            child: Text(
-                              context.l10n.platformNotSupported,
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        _buildGuideBox(),
-                      ],
-                    ),
-                  ),
+                    Expanded(flex: 3, child: _buildControlPanel(isGalleryOnly)),
+                  ],
                 ),
-                Expanded(flex: 3, child: _buildControlPanel()),
+                _buildBackButton(context),
+                _buildGalleryToggle(), // Toggle arriba a la derecha
+                if (_isCapturing)
+                  Container(
+                    color: Colors.black54,
+                    child: const Center(child: CircularProgressIndicator()),
+                  ),
               ],
-            ),
-            _buildBackButton(context),
-            if (_isCapturing)
-              Container(
-                color: Colors.black54,
-                child: const Center(child: CircularProgressIndicator()),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  // Toggle UI arriba a la derecha
+  Widget _buildGalleryToggle() {
+    return Positioned(
+      top: 16.0,
+      right: 16.0,
+      child: Container(
+        padding: const EdgeInsets.only(left: 12, right: 4, top: 4, bottom: 4),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.4),
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.image, color: Colors.white, size: 16),
+            const SizedBox(width: 6),
+            Text(
+              _galleryModeNotifier.value
+                  ? context.l10n.nativeSplitModeGallery
+                  : context.l10n.nativeSplitModeCamera,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
               ),
+            ),
+            const SizedBox(width: 4),
+            SizedBox(
+              height: 24,
+              child: Switch(
+                value: _galleryModeNotifier.value,
+                onChanged: (val) {
+                  _galleryModeNotifier.value = val;
+                },
+                activeColor: _accentColor,
+                activeTrackColor: _accentColor.withOpacity(0.5),
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
           ],
         ),
       ),
@@ -283,7 +393,6 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
     _channel!.setMethodCallHandler((call) async {
       if (call.method == 'onDetections') {
         try {
-          final data = Map<String, dynamic>.from(call.arguments);
           setState(() {});
         } catch (e) {
           debugPrint("Error parsing detection data: $e");
@@ -291,15 +400,19 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
       }
     });
 
+    final isGalleryOnly = _galleryModeNotifier.value;
+
     await Future.wait([
       _channel!.invokeMethod('setDetectionEnabled', {
-        'enabled': _detectionEnabled,
+        'enabled': isGalleryOnly ? false : _detectionEnabled,
       }),
       _channel!.invokeMethod('setTorch', {'enabled': _torchEnabled}),
       _channel!.invokeMethod('setFrontCamera', {'front': _frontCamera}),
-      _channel!.invokeMethod('setOverlayVisible', {'visible': _overlayVisible}),
+      _channel!.invokeMethod('setOverlayVisible', {
+        'visible': isGalleryOnly ? false : _overlayVisible,
+      }),
       _channel!.invokeMethod('setStreamDetections', {
-        'enabled': _streamDetections,
+        'enabled': isGalleryOnly ? false : _streamDetections,
         'throttleMs': 50,
       }),
     ]);
@@ -362,33 +475,36 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
     );
   }
 
-  Widget _buildControlPanel() {
+  Widget _buildControlPanel(bool isGalleryOnly) {
     return Container(
       color: _backgroundColor,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildCompactSwitch(
-                label: context.l10n.detectionLabel,
-                value: _detectionEnabled,
-                onChanged: (v) {
-                  setState(() => _detectionEnabled = v);
-                  _channel?.invokeMethod('setDetectionEnabled', {'enabled': v});
-                },
-              ),
-              _buildCompactSwitch(
-                label: context.l10n.overlayLabel,
-                value: _overlayVisible,
-                onChanged: (v) {
-                  setState(() => _overlayVisible = v);
-                  _channel?.invokeMethod('setOverlayVisible', {'visible': v});
-                },
-              ),
-            ],
-          ),
+          if (!isGalleryOnly)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildCompactSwitch(
+                  label: context.l10n.detectionLabel,
+                  value: _detectionEnabled,
+                  onChanged: (v) {
+                    setState(() => _detectionEnabled = v);
+                    _channel?.invokeMethod('setDetectionEnabled', {
+                      'enabled': v,
+                    });
+                  },
+                ),
+                _buildCompactSwitch(
+                  label: context.l10n.overlayLabel,
+                  value: _overlayVisible,
+                  onChanged: (v) {
+                    setState(() => _overlayVisible = v);
+                    _channel?.invokeMethod('setOverlayVisible', {'visible': v});
+                  },
+                ),
+              ],
+            ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: Stack(
@@ -399,20 +515,23 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
                   children: [
                     _buildIconButton(
                       icon: Icons.photo_library,
-                      onPressed: _pickFromGallery,
+                      onPressed: () => _pickImage(ImageSource.gallery),
                     ),
                     const SizedBox(width: 24),
-                    _buildPhotoButton(),
+                    _buildPhotoButton(isGalleryOnly),
                     const SizedBox(width: 24),
-                    _buildIconButton(
-                      icon: Icons.flip_camera_ios_outlined,
-                      onPressed: () {
-                        setState(() => _frontCamera = !_frontCamera);
-                        _channel?.invokeMethod('setFrontCamera', {
-                          'front': _frontCamera,
-                        });
-                      },
-                    ),
+                    if (!isGalleryOnly)
+                      _buildIconButton(
+                        icon: Icons.flip_camera_ios_outlined,
+                        onPressed: () {
+                          setState(() => _frontCamera = !_frontCamera);
+                          _channel?.invokeMethod('setFrontCamera', {
+                            'front': _frontCamera,
+                          });
+                        },
+                      )
+                    else
+                      const SizedBox(width: 48),
                   ],
                 ),
                 Align(
@@ -461,12 +580,16 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
     );
   }
 
-  Widget _buildPhotoButton() {
+  Widget _buildPhotoButton(bool isGalleryOnly) {
     return SizedBox(
       width: 70,
       height: 70,
       child: ElevatedButton(
-        onPressed: _isCapturing ? null : _capturePhoto,
+        onPressed: _isCapturing
+            ? null
+            : (isGalleryOnly
+                  ? () => _pickImage(ImageSource.camera)
+                  : _capturePhoto),
         style: ElevatedButton.styleFrom(
           shape: const CircleBorder(),
           backgroundColor: Colors.white,
@@ -481,7 +604,11 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
                   color: _accentColor,
                 ),
               )
-            : const Icon(Icons.camera, color: _accentColor, size: 35),
+            : Icon(
+                isGalleryOnly ? Icons.camera_alt : Icons.camera,
+                color: _accentColor,
+                size: 35,
+              ),
       ),
     );
   }
@@ -521,10 +648,10 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
     );
   }
 
-  Future<void> _pickFromGallery() async {
+  Future<void> _pickImage(ImageSource source) async {
     if (_isCapturing) return;
     try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      final XFile? image = await _picker.pickImage(source: source);
       if (image == null) return;
 
       setState(() => _isCapturing = true);
@@ -575,7 +702,7 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
         if (mounted) setState(() => _isCapturing = false);
       }
     } catch (e) {
-      debugPrint("Error picking image: $e");
+      debugPrint("Error picking/processing image: $e");
       if (mounted) setState(() => _isCapturing = false);
     }
   }
@@ -622,9 +749,7 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(
-                    "Se encontraron ${circles.length} cruces de 4 requeridas",
-                  ),
+                  content: Text(context.l10n.captureFailed(circles.length)),
                   backgroundColor: Colors.redAccent,
                   duration: const Duration(seconds: 3),
                 ),
