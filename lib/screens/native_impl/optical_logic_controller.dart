@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum DetectionType {
   refTL,
@@ -57,6 +58,37 @@ class OpticalController extends ChangeNotifier {
 
   DetectionPoint? selectedPoint;
 
+  OpticalController() {
+    _loadCalibration();
+  }
+
+  Future<void> _loadCalibration() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      ajusteHorizontal = prefs.getDouble('ajusteHorizontal') ?? 1.0;
+      ajusteVertical = prefs.getDouble('ajusteVertical') ?? 1.0;
+
+      // Si la imagen ya terminó de cargar sus puntos, actualizamos las fórmulas
+      if (points.isNotEmpty) {
+        calculateFormulas();
+      } else {
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint("Error cargando la calibración: $e");
+    }
+  }
+
+  // Guarda los valores de calibración en memoria persistente
+  Future<void> _saveCalibration(String key, double value) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble(key, value);
+    } catch (e) {
+      debugPrint("Error guardando la calibración: $e");
+    }
+  }
+
   void initialize(Map<String, dynamic> detections, Size imageSize) {
     points.clear();
 
@@ -71,14 +103,8 @@ class OpticalController extends ChangeNotifier {
 
     if (circleOffsets.isNotEmpty) {
       if (circleOffsets.length >= 4) {
-        // ── Robust rectangle pairing ────────────────────────────────────────
-        // Ordenamos los puntos por ángulo alrededor de su centroide para formar
-        // el perímetro (ej. TL, TR, BR, BL). Luego comparamos los lados opuestos
-        // para identificar cuáles son las filas (los lados más largos).
-
         final pts = circleOffsets.take(4).toList();
 
-        // 1. Encontrar el centroide
         double cx = 0, cy = 0;
         for (var p in pts) {
           cx += p.dx;
@@ -87,15 +113,12 @@ class OpticalController extends ChangeNotifier {
         cx /= 4;
         cy /= 4;
 
-        // 2. Ordenar cíclicamente por el ángulo
         pts.sort((a, b) {
           double angleA = math.atan2(a.dy - cy, a.dx - cx);
           double angleB = math.atan2(b.dy - cy, b.dx - cx);
           return angleA.compareTo(angleB);
         });
 
-        // 3. Los puntos forman ahora un polígono ordenado (0-1, 1-2, 2-3, 3-0).
-        // Comparamos los dos pares de lados opuestos para ver cuáles son las filas.
         double len1 = (pts[0] - pts[1]).distance + (pts[2] - pts[3]).distance;
         double len2 = (pts[1] - pts[2]).distance + (pts[3] - pts[0]).distance;
 
@@ -108,11 +131,9 @@ class OpticalController extends ChangeNotifier {
           pair2 = [pts[3], pts[0]];
         }
 
-        // 4. Ordenar cada fila de izquierda a derecha (por su componente X)
         pair1.sort((a, b) => a.dx.compareTo(b.dx));
         pair2.sort((a, b) => a.dx.compareTo(b.dx));
 
-        // 5. La fila superior será la que tenga la menor Y promedio
         final avgY1 = (pair1[0].dy + pair1[1].dy) / 2;
         final avgY2 = (pair2[0].dy + pair2[1].dy) / 2;
         final List<Offset> topRow = avgY1 <= avgY2 ? pair1 : pair2;
@@ -204,9 +225,6 @@ class OpticalController extends ChangeNotifier {
     final Offset p1 = getPoint(DetectionType.pupilRight);
     final Offset p2 = getPoint(DetectionType.pupilLeft);
 
-    // Estimate a realistic pixel-per-mm factor from the calibration bar so
-    // the initial lens corners land close to the actual frame edges.
-    // This avoids absurdly large default measurements on first load.
     final Offset B1 = getPoint(DetectionType.refBL);
     final Offset B2 = getPoint(DetectionType.refBR);
     final double barPx = (B2 - B1).distance;
@@ -214,7 +232,6 @@ class OpticalController extends ChangeNotifier {
         ? (130.0 / barPx)
         : (130.0 / (size.width * 0.6));
 
-    // Typical frame: ~25mm half-width, ~19mm half-height from pupil center
     final double halfW = 25.0 / pxPerMm;
     final double halfH = 19.0 / pxPerMm;
 
@@ -225,21 +242,15 @@ class OpticalController extends ChangeNotifier {
   }
 
   void handleTap(Offset localPosition, double scale, Offset translation) {
-    // Convertir la posición del toque en pantalla a coordenadas de la imagen
     final imgPos = (localPosition - translation) / scale;
-
-    // Aumentamos un poco el radio de "agarre" (45px lógicos) para facilitar el toque,
-    // dividido por la escala para que sea consistente al hacer zoom.
     final hitRadius = 45 / scale;
 
     try {
-      // 1. Filtrar TODOS los puntos que están dentro del radio de toque
       final candidates = points
           .where((p) => (p.position - imgPos).distance <= hitRadius)
           .toList();
 
       if (candidates.isEmpty) {
-        // Si tocamos el vacío, deseleccionar
         if (selectedPoint != null) {
           selectedPoint = null;
           notifyListeners();
@@ -247,14 +258,12 @@ class OpticalController extends ChangeNotifier {
         return;
       }
 
-      // 2. Ordenar los candidatos por DISTANCIA (el más cercano gana)
       candidates.sort((a, b) {
         final distA = (a.position - imgPos).distance;
         final distB = (b.position - imgPos).distance;
         return distA.compareTo(distB);
       });
 
-      // 3. Seleccionar el primero (el más cercano)
       selectedPoint = candidates.first;
       notifyListeners();
     } catch (_) {
@@ -294,13 +303,15 @@ class OpticalController extends ChangeNotifier {
   void setAjusteHorizontal(double val) {
     ajusteHorizontal = val;
     calculateFormulas();
-    notifyListeners();
+    // Guardamos el nuevo valor en cuanto se cambia
+    _saveCalibration('ajusteHorizontal', val);
   }
 
   void setAjusteVertical(double val) {
     ajusteVertical = val;
     calculateFormulas();
-    notifyListeners();
+    // Guardamos el nuevo valor en cuanto se cambia
+    _saveCalibration('ajusteVertical', val);
   }
 
   void toggleCircles(bool val) {
@@ -326,22 +337,6 @@ class OpticalController extends ChangeNotifier {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // MEASUREMENT MATH — Rotation-invariant via calibration-bar projection
-  //
-  // All coordinates are in original IMAGE pixel space (unaffected by UI rotation).
-  // The calibration bar (B1→B2) defines the true optical horizontal axis.
-  // Every measurement is projected onto that axis and its perpendicular,
-  // so results are identical whether the photo is upright or tilted.
-  // ---------------------------------------------------------------------------
-  // ---------------------------------------------------------------------------
-  // MEASUREMENT MATH — Rotation-invariant via calibration-bar projection
-  //
-  // All coordinates are in original IMAGE pixel space (unaffected by UI rotation).
-  // The calibration bar (B1→B2) defines the true optical horizontal axis.
-  // Every measurement is projected onto that axis and its perpendicular,
-  // so results are identical whether the photo is upright or tilted.
-  // ---------------------------------------------------------------------------
   void calculateFormulas() {
     final Offset A1 = getPoint(DetectionType.refTL);
     final Offset A2 = getPoint(DetectionType.refTR);
@@ -354,8 +349,6 @@ class OpticalController extends ChangeNotifier {
     final Offset lTL = getPoint(DetectionType.lensLeftTop);
     final Offset lBR = getPoint(DetectionType.lensLeftBottom);
 
-    // Build calibration-bar coordinate axes.
-    // hUnit always points LEFT→RIGHT; vUnit always points DOWNWARD.
     Offset barVec = B2 - B1;
     if (barVec.dx < 0) barVec = Offset(-barVec.dx, -barVec.dy);
     final double barLen = barVec.distance;
@@ -365,25 +358,14 @@ class OpticalController extends ChangeNotifier {
     Offset vUnit = Offset(-hUnit.dy, hUnit.dx);
     if (vUnit.dy < 0) vUnit = Offset(hUnit.dy, -hUnit.dx);
 
-    // ─── CÁLCULO DE ESCALA REAL (CORREGIDO) ─────────────────────────────
-    // La única medida real que conocemos es el ancho de la barra (130 mm).
     double distHoriz = barLen < 1 ? 1 : barLen;
-
-    // Como los píxeles de una cámara son cuadrados (1:1), 1 píxel equivale a los
-    // mismos milímetros tanto en el eje X como en el eje Y.
     double milimetrosPorPixel = 130.0 / distHoriz;
 
-    // Aplicamos la misma escala a ambos ejes, respetando los ajustes manuales del usuario.
     pixelFactorX = milimetrosPorPixel * ajusteHorizontal;
     pixelFactorY = milimetrosPorPixel * ajusteVertical;
 
-    // Calculamos el midTop solo para tener un punto de origen (Y=0) de referencia
-    // para las proyecciones verticales.
     final Offset midTop = Offset((A1.dx + A2.dx) / 2, (A1.dy + A2.dy) / 2);
 
-    // ────────────────────────────────────────────────────────────────────
-
-    // Project all points onto the calibration axes (Soporta rotación)
     double h(Offset p) {
       final d = p - B1;
       return d.dx * hUnit.dx + d.dy * hUnit.dy;
@@ -408,7 +390,6 @@ class OpticalController extends ChangeNotifier {
     final double RS_2 = v(lTL);
     final double RI_2 = v(lBR);
 
-    // Measurements
     di = (hP2 - hP1).abs() * pixelFactorX;
     puente = (RC_2 - RC_1).abs() * pixelFactorX;
 
@@ -433,7 +414,7 @@ class OpticalController extends ChangeNotifier {
     (P_2.dx - P_1.dx).abs();
 
     notifyListeners();
-  } // Log helpers
+  }
 
   String _fmt(Offset o) =>
       "(${o.dx.toStringAsFixed(1)},${o.dy.toStringAsFixed(1)})";

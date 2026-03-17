@@ -594,4 +594,14 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get activationConnectionTimeout =>
       'Tempo limite de conexão esgotado. Verifique sua internet.';
+
+  @override
+  String get nativeSplitGalleryOnlyHint =>
+      'Toque no botão inferior para abrir a câmera\nou selecione uma foto da sua galeria';
+
+  @override
+  String get nativeSplitModeGallery => 'Galeria';
+
+  @override
+  String get nativeSplitModeCamera => 'Câmera';
 }

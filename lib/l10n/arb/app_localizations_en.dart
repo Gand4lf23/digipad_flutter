@@ -593,4 +593,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get activationConnectionTimeout =>
       'Connection timed out. Please check your internet.';
+
+  @override
+  String get nativeSplitGalleryOnlyHint =>
+      'Tap the bottom button to open the camera\nor select a photo from your gallery';
+
+  @override
+  String get nativeSplitModeGallery => 'Gallery';
+
+  @override
+  String get nativeSplitModeCamera => 'Camera';
 }

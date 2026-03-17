@@ -529,9 +529,17 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
               ),
             ),
             const SizedBox(height: 12),
+
+            // --- AJUSTE HORIZONTAL ---
             Row(
               children: [
-                const SizedBox(width: 140, child: SizedBox.shrink()),
+                SizedBox(
+                  width: 140,
+                  child: Text(
+                    context.l10n.horizontalAdjustment,
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                  ),
+                ),
                 Expanded(
                   child: Slider(
                     value: ctrl.ajusteHorizontal,
@@ -551,37 +559,32 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
                 ),
               ],
             ),
+
+            // --- AJUSTE VERTICAL ---
             Row(
               children: [
-                const SizedBox(width: 140, child: SizedBox.shrink()),
+                SizedBox(
+                  width: 140,
+                  child: Text(
+                    context.l10n.verticalAdjustment,
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                  ),
+                ),
                 Expanded(
-                  child: Row(
-                    children: [
-                      Text(
-                        context.l10n.verticalAdjustment,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                        ),
-                      ),
-                      Expanded(
-                        child: Slider(
-                          value: ctrl.ajusteVertical,
-                          min: 0.8,
-                          max: 1.2,
-                          divisions: 40,
-                          activeColor: Colors.greenAccent,
-                          onChanged: (v) => ctrl.setAjusteVertical(v),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 50,
-                        child: Text(
-                          ctrl.ajusteVertical.toStringAsFixed(2),
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ],
+                  child: Slider(
+                    value: ctrl.ajusteVertical,
+                    min: 0.8,
+                    max: 1.2,
+                    divisions: 40,
+                    activeColor: Colors.greenAccent,
+                    onChanged: (v) => ctrl.setAjusteVertical(v),
+                  ),
+                ),
+                SizedBox(
+                  width: 50,
+                  child: Text(
+                    ctrl.ajusteVertical.toStringAsFixed(2),
+                    style: const TextStyle(color: Colors.white),
                   ),
                 ),
               ],
@@ -595,14 +598,16 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
   Widget _buildNudgeControls() {
     return Consumer<OpticalController>(
       builder: (context, controller, child) {
-        if (controller.selectedPoint == null || _isMoveMode)
+        if (controller.selectedPoint == null || _isMoveMode) {
           return const SizedBox.shrink();
+        }
         return Positioned(
           bottom: 20,
           right: 20,
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.black54,
+              // Fondo más transparente para dejar ver un poco la imagen debajo
+              color: Colors.black.withOpacity(0.4),
               borderRadius: BorderRadius.circular(16),
             ),
             padding: const EdgeInsets.all(8),
@@ -611,8 +616,6 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
               children: [
                 _arrowButton(
                   Icons.keyboard_arrow_up,
-                  // Nudge buttons always move in image space (up = -Y in image),
-                  // so no rotation needed here — the controller handles image coords.
                   () => controller.nudgeSelectedPoint(0, -1),
                 ),
                 Row(
@@ -622,7 +625,8 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
                       Icons.keyboard_arrow_left,
                       () => controller.nudgeSelectedPoint(-1, 0),
                     ),
-                    const SizedBox(width: 40, height: 40),
+                    // Redujimos drásticamente el espacio central (antes era 40)
+                    const SizedBox(width: 16, height: 16),
                     _arrowButton(
                       Icons.keyboard_arrow_right,
                       () => controller.nudgeSelectedPoint(1, 0),
@@ -653,14 +657,17 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
       onTapUp: (_) => _holdTimer?.cancel(),
       onTapCancel: () => _holdTimer?.cancel(),
       child: Container(
-        width: 50,
-        height: 50,
+        // Redujimos el tamaño del botón (antes 50x50, ahora 38x38)
+        width: 38,
+        height: 38,
         decoration: BoxDecoration(
-          color: Colors.grey[800],
+          // Botón ligeramente translúcido
+          color: Colors.grey[800]!.withOpacity(0.8),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: Colors.white24),
         ),
-        child: Icon(icon, color: Colors.white, size: 30),
+        // Ícono más pequeño (antes 30, ahora 24)
+        child: Icon(icon, color: Colors.white, size: 24),
       ),
     );
   }
