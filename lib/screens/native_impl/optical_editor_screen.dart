@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:widgets_to_image/widgets_to_image.dart';
 
 import 'optical_logic_controller.dart';
 import 'optical_painter.dart';
@@ -34,6 +35,8 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
   Size? _viewportSize;
   final TransformationController _transformationController =
       TransformationController();
+  final WidgetsToImageController _screenshotController =
+      WidgetsToImageController();
 
   bool _isMoveMode = false;
   bool _showAjustePanel = false;
@@ -221,76 +224,80 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
 
     return ChangeNotifierProvider.value(
       value: _controller,
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        appBar: AppBar(
-          title: Text(context.l10n.measureAdjustments),
-          backgroundColor: const Color(0xFF1C1C1E),
-          actions: [
-            TextButton(
-              onPressed: _resetZoom,
-              child: Text(
-                context.l10n.resetZoom,
-                style: const TextStyle(color: Colors.white),
+      // Wrap the Scaffold to allow capturing the full screen visually
+      child: WidgetsToImage(
+        controller: _screenshotController,
+        child: Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(
+            title: Text(context.l10n.measureAdjustments),
+            backgroundColor: const Color(0xFF1C1C1E),
+            actions: [
+              TextButton(
+                onPressed: _resetZoom,
+                child: Text(
+                  context.l10n.resetZoom,
+                  style: const TextStyle(color: Colors.white),
+                ),
               ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.share, color: Colors.white),
-              onPressed: _showResultsSheet,
-              tooltip: context.l10n.shareResults,
-            ),
-            IconButton(
-              icon: Icon(
-                Icons.tune,
-                color: _showAjustePanel ? Colors.orangeAccent : Colors.white,
+              IconButton(
+                icon: const Icon(Icons.share, color: Colors.white),
+                onPressed: _showResultsSheet,
+                tooltip: context.l10n.shareResults,
               ),
-              onPressed: () =>
-                  setState(() => _showAjustePanel = !_showAjustePanel),
-              tooltip: context.l10n.calibration,
-            ),
-            IconButton(
-              icon: Icon(
-                _isMoveMode ? Icons.pan_tool : Icons.zoom_in,
-                color: _isMoveMode ? Colors.greenAccent : Colors.white,
+              IconButton(
+                icon: Icon(
+                  Icons.tune,
+                  color: _showAjustePanel ? Colors.orangeAccent : Colors.white,
+                ),
+                onPressed: () =>
+                    setState(() => _showAjustePanel = !_showAjustePanel),
+                tooltip: context.l10n.calibration,
               ),
-              onPressed: () => setState(() => _isMoveMode = !_isMoveMode),
-              tooltip: _isMoveMode
-                  ? context.l10n.editMode
-                  : context.l10n.zoomMode,
-            ),
+              IconButton(
+                icon: Icon(
+                  _isMoveMode ? Icons.pan_tool : Icons.zoom_in,
+                  color: _isMoveMode ? Colors.greenAccent : Colors.white,
+                ),
+                onPressed: () => setState(() => _isMoveMode = !_isMoveMode),
+                tooltip: _isMoveMode
+                    ? context.l10n.editMode
+                    : context.l10n.zoomMode,
+              ),
 
-            Builder(
-              builder: (context) {
-                if (_isMoveMode || _controller.selectedPoint != null) {
-                  return IconButton(
-                    icon: const Icon(Icons.check, color: Colors.cyanAccent),
-                    onPressed: () {
-                      setState(() {
-                        _isMoveMode = false;
-                        _showAjustePanel = false;
-                      });
-                      _controller.selectedPoint = null;
-                      _controller.notifyListeners();
-                    },
-                  );
-                }
-                return const SizedBox.shrink();
-              },
-            ),
-          ],
-        ),
-        body: Column(
-          children: [
-            _buildTopControls(),
-            if (_showAjustePanel) _buildCalibrationPanel(),
-            Expanded(
-              flex: 3,
-              child: Stack(
-                children: [_buildImageViewer(), _buildNudgeControls()],
+              Builder(
+                builder: (context) {
+                  if (_isMoveMode || _controller.selectedPoint != null) {
+                    return IconButton(
+                      icon: const Icon(Icons.check, color: Colors.cyanAccent),
+                      onPressed: () {
+                        setState(() {
+                          _isMoveMode = false;
+                          _showAjustePanel = false;
+                        });
+                        _controller.selectedPoint = null;
+                        _controller.notifyListeners();
+                      },
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
               ),
-            ),
-            Expanded(flex: 2, child: _buildInfoPanel()),
-          ],
+            ],
+          ),
+          body: Column(
+            children: [
+              _buildTopControls(),
+              if (_showAjustePanel) _buildCalibrationPanel(),
+              Expanded(
+                flex: 3,
+                child: Stack(
+                  children: [_buildImageViewer(), _buildNudgeControls()],
+                ),
+              ),
+              Expanded(flex: 2, child: _buildInfoPanel()),
+            ],
+          ),
         ),
       ),
     );
@@ -790,14 +797,22 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => _ResultsSheet(controller: _controller),
+      builder: (context) => _ResultsSheet(
+        controller: _controller,
+        screenshotController: _screenshotController,
+      ),
     );
   }
 }
 
 class _ResultsSheet extends StatelessWidget {
   final OpticalController controller;
-  const _ResultsSheet({super.key, required this.controller});
+  final WidgetsToImageController screenshotController;
+
+  const _ResultsSheet({
+    required this.controller,
+    required this.screenshotController,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -986,9 +1001,46 @@ class _ResultsSheet extends StatelessWidget {
     );
   }
 
-  String _getResultsText(BuildContext context) =>
-      "${context.l10n.ipdDi}: ${controller.di.toStringAsFixed(1)} ${context.l10n.unitMm}\n"
-      "${context.l10n.bridge}: ${controller.puente.toStringAsFixed(1)} ${context.l10n.unitMm}";
+  String _getResultsText(BuildContext context) {
+    final buffer = StringBuffer()
+      ..writeln(context.l10n.measurementsResultsTitle)
+      ..writeln(
+        "${context.l10n.ipdDi}: ${controller.di.toStringAsFixed(1)} ${context.l10n.unitMm}",
+      )
+      ..writeln(
+        "${context.l10n.bridge}: ${controller.puente.toStringAsFixed(1)} ${context.l10n.unitMm}",
+      )
+      ..writeln(
+        "${context.l10n.frameW}: ${controller.aroAnc.toStringAsFixed(1)} ${context.l10n.unitMm}",
+      )
+      ..writeln(
+        "${context.l10n.frameH}: ${controller.aroAlt.toStringAsFixed(1)} ${context.l10n.unitMm}",
+      )
+      ..writeln()
+      ..writeln("${context.l10n.rightEye}:")
+      ..writeln(
+        "${context.l10n.dnpShort(controller.dnpRight.toStringAsFixed(1))} ${context.l10n.unitMm}",
+      )
+      ..writeln(
+        "${context.l10n.heightShort(controller.altRight.toStringAsFixed(1))} ${context.l10n.unitMm}",
+      )
+      ..writeln(
+        "${context.l10n.diamShort(controller.diametroRight.toStringAsFixed(1))} ${context.l10n.unitMm}",
+      )
+      ..writeln()
+      ..writeln("${context.l10n.leftEye}:")
+      ..writeln(
+        "${context.l10n.dnpShort(controller.dnpLeft.toStringAsFixed(1))} ${context.l10n.unitMm}",
+      )
+      ..writeln(
+        "${context.l10n.heightShort(controller.altLeft.toStringAsFixed(1))} ${context.l10n.unitMm}",
+      )
+      ..writeln(
+        "${context.l10n.diamShort(controller.diametroLeft.toStringAsFixed(1))} ${context.l10n.unitMm}",
+      );
+
+    return buffer.toString().trim();
+  }
 
   Future<void> _copyToClipboard(BuildContext context) async {
     await Clipboard.setData(ClipboardData(text: _getResultsText(context)));
@@ -996,12 +1048,45 @@ class _ResultsSheet extends StatelessWidget {
   }
 
   Future<void> _shareResults(BuildContext context) async {
-    await SharePlus.instance.share(
-      ShareParams(
-        text: _getResultsText(context),
-        subject: context.l10n.measurementsShareSubject,
-      ),
-    );
+    try {
+      // Capture the screen behind the bottom sheet
+      final bytes = await screenshotController.capture();
+
+      if (bytes != null) {
+        // Share text + Image
+        await SharePlus.instance.share(
+          ShareParams(
+            text: _getResultsText(context),
+            subject: context.l10n.measurementsShareSubject,
+            files: [
+              XFile.fromData(
+                bytes,
+                name: 'measurements.png',
+                mimeType: 'image/png',
+              ),
+            ],
+          ),
+        );
+      } else {
+        // Fallback to only share text
+        await SharePlus.instance.share(
+          ShareParams(
+            text: _getResultsText(context),
+            subject: context.l10n.measurementsShareSubject,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error sharing: $e');
+      // Final fallback to just text on error
+      await SharePlus.instance.share(
+        ShareParams(
+          text: _getResultsText(context),
+          subject: context.l10n.measurementsShareSubject,
+        ),
+      );
+    }
+
     if (context.mounted) Navigator.pop(context);
   }
 }

@@ -9,14 +9,24 @@ class ActivationCubit extends Cubit<ActivationState> {
   final ActivationService _service;
   StreamSubscription? _subscription;
 
+  DateTime? _lastOnlineAccessUpdate;
+  static const int _accessUpdateThrottleMinutes = 5;
+
   ActivationCubit(this._service) : super(const ActivationState());
 
   Future<void> init() async {
+    await _subscription?.cancel();
     emit(state.copyWith(status: ActivationStatus.checking));
 
+    final savedEmail = await _service.getSavedEmail();
     final hasInternet = await _service.checkInternetConnection();
 
     if (!hasInternet) {
+      if (savedEmail == null) {
+        emit(state.copyWith(status: ActivationStatus.notRegistered));
+        return;
+      }
+
       final interactions = await _service.getOfflineInteractionsCount();
       if (_service.isOfflineLimitReached(interactions)) {
         emit(
@@ -30,7 +40,12 @@ class ActivationCubit extends Cubit<ActivationState> {
         final isLocallyApproved = await _service.isLocallyApproved();
 
         if (isLocallyApproved) {
-          emit(state.copyWith(status: ActivationStatus.approved));
+          emit(
+            state.copyWith(
+              status: ActivationStatus.approved,
+              email: savedEmail,
+            ),
+          );
           return;
         } else {
           emit(
@@ -44,16 +59,26 @@ class ActivationCubit extends Cubit<ActivationState> {
       }
     }
 
+    if (savedEmail == null) {
+      emit(state.copyWith(status: ActivationStatus.notRegistered));
+      return;
+    }
+
+    await _service.updateLastAccess(savedEmail);
+    _lastOnlineAccessUpdate = DateTime.now();
+
     try {
-      final stream = _service.getActivationStream();
+      final stream = _service.getActivationStream(savedEmail);
       _subscription = stream.listen(
         (snapshot) async {
           if (snapshot == null || !snapshot.exists) {
+            await _service.clearSavedEmail();
+            await _service.setLocallyApproved(false);
             emit(state.copyWith(status: ActivationStatus.notRegistered));
           } else {
             final data = snapshot.data();
             final isApproved = data?['isApproved'] == true;
-            final email = data?['email'] as String?;
+            final email = data?['email'] as String? ?? savedEmail;
 
             if (isApproved) {
               await _service.setLocallyApproved(true);
@@ -119,6 +144,21 @@ class ActivationCubit extends Cubit<ActivationState> {
           ),
         );
       }
+    } else {
+      if (state.status == ActivationStatus.notRegistered) return;
+
+      final now = DateTime.now();
+
+      if (_lastOnlineAccessUpdate == null ||
+          now.difference(_lastOnlineAccessUpdate!).inMinutes >=
+              _accessUpdateThrottleMinutes) {
+        _lastOnlineAccessUpdate = now;
+
+        final savedEmail = await _service.getSavedEmail();
+        if (savedEmail != null) {
+          _service.updateLastAccess(savedEmail);
+        }
+      }
     }
   }
 
@@ -142,15 +182,12 @@ class ActivationCubit extends Cubit<ActivationState> {
           .requestActivation(email)
           .timeout(const Duration(seconds: 15));
 
-      emit(
-        state.copyWith(status: ActivationStatus.pendingApproval, email: email),
-      );
+      await _service.saveEmail(email);
+      await init();
     } catch (e) {
       String msg = 'activationErrorTitle';
 
       if (e is TimeoutException) {
-        msg = 'activationRetryConnection';
-
         msg = 'activationConnectionTimeout';
       } else if (e.toString().contains('email_already_used')) {
         emit(

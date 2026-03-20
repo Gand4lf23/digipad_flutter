@@ -16,6 +16,7 @@ class ActivationService {
   static const String _offlineInteractionsKey = 'offline_interactions_count';
   static const int _maxOfflineInteractions = 25;
   static const String _isApprovedKey = 'is_device_approved_locally';
+  static const String _savedEmailKey = 'saved_activation_email';
 
   SharedPreferences? _prefs;
   Future<SharedPreferences> get _sharedPrefs async {
@@ -23,6 +24,21 @@ class ActivationService {
   }
 
   String? _cachedDeviceId;
+
+  Future<String?> getSavedEmail() async {
+    final prefs = await _sharedPrefs;
+    return prefs.getString(_savedEmailKey);
+  }
+
+  Future<void> saveEmail(String email) async {
+    final prefs = await _sharedPrefs;
+    await prefs.setString(_savedEmailKey, email);
+  }
+
+  Future<void> clearSavedEmail() async {
+    final prefs = await _sharedPrefs;
+    await prefs.remove(_savedEmailKey);
+  }
 
   Future<bool> checkInternetConnection() async {
     final connectivityResult = await Connectivity().checkConnectivity();
@@ -126,9 +142,7 @@ class ActivationService {
       if (response.statusCode == 200) {
         return response.body;
       }
-    } catch (e) {
-      // Ignore errors fetching IP
-    }
+    } catch (e) {}
     return null;
   }
 
@@ -152,31 +166,27 @@ class ActivationService {
     }
   }
 
-  Stream<DocumentSnapshot<Map<String, dynamic>>?> getActivationStream() async* {
+  Stream<DocumentSnapshot<Map<String, dynamic>>?> getActivationStream(
+    String email,
+  ) async* {
     final deviceId = await _getDeviceId();
-    yield* _firestore
-        .collection(_collectionName)
-        .where('deviceId', isEqualTo: deviceId)
-        .limit(1)
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs.isNotEmpty ? snapshot.docs.first : null,
-        );
+    final docId = '${email}_$deviceId';
+    yield* _firestore.collection(_collectionName).doc(docId).snapshots();
   }
 
   Future<bool> checkApprovalStatus() async {
     try {
-      final deviceId = await _getDeviceId();
-      final query = await _firestore
-          .collection(_collectionName)
-          .where('deviceId', isEqualTo: deviceId)
-          .limit(1)
-          .get();
+      final savedEmail = await getSavedEmail();
+      if (savedEmail == null) return false;
 
-      if (query.docs.isNotEmpty) {
-        final data = query.docs.first.data();
-        _updateLastAccess(query.docs.first.reference);
-        return data['isApproved'] == true;
+      final deviceId = await _getDeviceId();
+      final docId = '${savedEmail}_$deviceId';
+      final doc = await _firestore.collection(_collectionName).doc(docId).get();
+
+      if (doc.exists) {
+        final data = doc.data();
+        await updateLastAccess(savedEmail);
+        return data?['isApproved'] == true;
       }
       return false;
     } catch (e) {
@@ -184,27 +194,23 @@ class ActivationService {
     }
   }
 
-  Future<void> _updateLastAccess(DocumentReference ref) async {
+  Future<void> updateLastAccess(String email) async {
     try {
-      await ref.update({'lastAccess': FieldValue.serverTimestamp()});
+      final deviceId = await _getDeviceId();
+      final docId = '${email}_$deviceId';
+      await _firestore.collection(_collectionName).doc(docId).update({
+        'lastAccess': FieldValue.serverTimestamp(),
+      });
     } catch (_) {}
   }
 
-  /// Requests activation for the device.
   Future<void> requestActivation(String email) async {
     final deviceId = await _getDeviceId();
 
-    // OPTIMIZATION: Removed the emailQuery block. Since an email CAN have
-    // multiple devices, throwing an exception here was incorrect.
-    // Removing it fixes the bug AND saves 1 full Firestore Read query!
-
-    // Check if *this device* already has a record
     final deviceQuery = await _firestore
         .collection(_collectionName)
         .where('deviceId', isEqualTo: deviceId)
-        .limit(
-          1,
-        ) // OPTIMIZATION: Added limit(1) to save Firestore reads/bandwidth
+        .limit(1)
         .get();
 
     if (deviceQuery.docs.isNotEmpty) {
@@ -212,23 +218,19 @@ class ActivationService {
       final existingData = existingDoc.data();
 
       if (existingData['email'] == email) {
-        // Same email, same device. Update timestamp.
         await existingDoc.reference.update({
           'lastRequestDate': FieldValue.serverTimestamp(),
           'lastAccess': FieldValue.serverTimestamp(),
         });
-        return; // Exits early!
+        return;
       } else {
-        // Different email for this device. Delete old doc.
         await existingDoc.reference.delete();
       }
     }
 
-    // New doc ID format allows for email_deviceId combination naturally
     final docId = '${email}_$deviceId';
     final docRef = _firestore.collection(_collectionName).doc(docId);
 
-    // Fetch Device Info, IP, and Location concurrently
     late final Map<String, dynamic> deviceInfo;
     late final String? ipAddress;
     late final Position? position;

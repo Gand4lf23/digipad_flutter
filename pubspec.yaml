@@ -82,6 +82,7 @@ dependencies:
   package_info_plus: ^9.0.0
   shared_preferences: ^2.5.3
   connectivity_plus: ^7.0.0
+  widgets_to_image: ^2.0.1
 
 dev_dependencies:
   flutter_test:
@@ -124,9 +125,6 @@ flutter:
     - assets/images/lenses_3d/
     - assets/images/
     - assets/svgs/
-    - assets/models/
-    - assets/labels.txt
-    - assets/model3.tflite
 
 # Flutter Native Splash Configuration
 flutter_native_splash:

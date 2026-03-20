@@ -52,7 +52,7 @@ class OpticalPainter extends CustomPainter {
     // --- 1. CIRCLES ---
     if (showCircles && pixelFactorX > 0) {
       Paint circlePaint = Paint()
-        ..color = Colors.cyanAccent.withOpacity(0.6)
+        ..color = Colors.blueAccent.withOpacity(0.6)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.0 / scale;
 
@@ -76,8 +76,8 @@ class OpticalPainter extends CustomPainter {
 
       Color color = isPupil
           ? Colors.redAccent
-          : (isCorner ? Colors.yellowAccent : Colors.greenAccent);
-      if (isSelected) color = Colors.white;
+          : (isCorner ? Colors.white : Colors.redAccent);
+      if (isSelected) color = Colors.green;
 
       // START UN-ROTATION BLOCK FOR MARKERS
       canvas.save();
@@ -88,7 +88,7 @@ class OpticalPainter extends CustomPainter {
         double armLen = 60.0 / scale;
         Paint lPaint = Paint()
           ..color = color
-          ..strokeWidth = (isSelected ? 0.5 : 0.3) / scale
+          ..strokeWidth = (isSelected ? 0.7 : 0.5) / scale
           ..style = PaintingStyle.stroke;
 
         if (p.type == DetectionType.lensRightTop ||
@@ -113,7 +113,7 @@ class OpticalPainter extends CustomPainter {
         // CROSSES (Stay as "+" regardless of head tilt)
         Paint crossPaint = Paint()
           ..color = color
-          ..strokeWidth = (isSelected ? 0.5 : 0.3) / scale
+          ..strokeWidth = (isSelected ? 0.7 : 0.5) / scale
           ..strokeCap = StrokeCap.round;
 
         double r = isPupil ? 10.0 / scale : 8.0 / scale;

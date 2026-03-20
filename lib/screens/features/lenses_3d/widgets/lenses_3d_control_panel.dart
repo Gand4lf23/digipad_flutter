@@ -94,7 +94,7 @@ class Lenses3DControlPanel extends StatelessWidget {
                   material.displayName,
                   style: TextStyle(
                     color: isSelected ? Colors.white : Colors.white60,
-                    fontSize: 11,
+                    fontSize: 14,
                     fontWeight: isSelected
                         ? FontWeight.bold
                         : FontWeight.normal,
@@ -145,7 +145,7 @@ class Lenses3DControlPanel extends StatelessWidget {
                   frame.displayName,
                   style: TextStyle(
                     color: isSelected ? Colors.white : Colors.white60,
-                    fontSize: 11,
+                    fontSize: 14,
                     fontWeight: isSelected
                         ? FontWeight.bold
                         : FontWeight.normal,
@@ -184,7 +184,7 @@ class Lenses3DControlPanel extends StatelessWidget {
                 '${state.prescription}D',
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 12,
+                  fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
               ),
