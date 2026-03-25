@@ -744,7 +744,7 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
         Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
         const SizedBox(height: 4),
         Text(
-          value.toStringAsFixed(1),
+          value.toStringAsFixed(2),
           style: TextStyle(
             color: Colors.white,
             fontSize: isLarge ? 28 : 22,
@@ -777,15 +777,15 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
         ),
         const SizedBox(height: 4),
         Text(
-          context.l10n.dnpShort(dnp.toStringAsFixed(1)),
+          context.l10n.dnpShort(dnp.toStringAsFixed(2)),
           style: const TextStyle(color: Colors.white),
         ),
         Text(
-          context.l10n.heightShort(height.toStringAsFixed(1)),
+          context.l10n.heightShort(height.toStringAsFixed(2)),
           style: const TextStyle(color: Colors.white),
         ),
         Text(
-          context.l10n.diamShort(diam.toStringAsFixed(1)),
+          context.l10n.diamShort(diam.toStringAsFixed(2)),
           style: const TextStyle(color: Colors.white54, fontSize: 11),
         ),
       ],
@@ -990,7 +990,7 @@ class _ResultsSheet extends StatelessWidget {
             ),
           ),
           Text(
-            "${value.toStringAsFixed(1)} ${context.l10n.unitMm}",
+            "${value.toStringAsFixed(2)} ${context.l10n.unitMm}",
             style: TextStyle(
               color: highlight ? Colors.cyanAccent : Colors.white,
               fontWeight: highlight ? FontWeight.bold : FontWeight.normal,
@@ -1005,38 +1005,38 @@ class _ResultsSheet extends StatelessWidget {
     final buffer = StringBuffer()
       ..writeln(context.l10n.measurementsResultsTitle)
       ..writeln(
-        "${context.l10n.ipdDi}: ${controller.di.toStringAsFixed(1)} ${context.l10n.unitMm}",
+        "${context.l10n.ipdDi}: ${controller.di.toStringAsFixed(2)} ${context.l10n.unitMm}",
       )
       ..writeln(
-        "${context.l10n.bridge}: ${controller.puente.toStringAsFixed(1)} ${context.l10n.unitMm}",
+        "${context.l10n.bridge}: ${controller.puente.toStringAsFixed(2)} ${context.l10n.unitMm}",
       )
       ..writeln(
-        "${context.l10n.frameW}: ${controller.aroAnc.toStringAsFixed(1)} ${context.l10n.unitMm}",
+        "${context.l10n.frameW}: ${controller.aroAnc.toStringAsFixed(2)} ${context.l10n.unitMm}",
       )
       ..writeln(
-        "${context.l10n.frameH}: ${controller.aroAlt.toStringAsFixed(1)} ${context.l10n.unitMm}",
+        "${context.l10n.frameH}: ${controller.aroAlt.toStringAsFixed(2)} ${context.l10n.unitMm}",
       )
       ..writeln()
       ..writeln("${context.l10n.rightEye}:")
       ..writeln(
-        "${context.l10n.dnpShort(controller.dnpRight.toStringAsFixed(1))} ${context.l10n.unitMm}",
+        "${context.l10n.dnpShort(controller.dnpRight.toStringAsFixed(2))} ${context.l10n.unitMm}",
       )
       ..writeln(
-        "${context.l10n.heightShort(controller.altRight.toStringAsFixed(1))} ${context.l10n.unitMm}",
+        "${context.l10n.heightShort(controller.altRight.toStringAsFixed(2))} ${context.l10n.unitMm}",
       )
       ..writeln(
-        "${context.l10n.diamShort(controller.diametroRight.toStringAsFixed(1))} ${context.l10n.unitMm}",
+        "${context.l10n.diamShort(controller.diametroRight.toStringAsFixed(2))} ${context.l10n.unitMm}",
       )
       ..writeln()
       ..writeln("${context.l10n.leftEye}:")
       ..writeln(
-        "${context.l10n.dnpShort(controller.dnpLeft.toStringAsFixed(1))} ${context.l10n.unitMm}",
+        "${context.l10n.dnpShort(controller.dnpLeft.toStringAsFixed(2))} ${context.l10n.unitMm}",
       )
       ..writeln(
-        "${context.l10n.heightShort(controller.altLeft.toStringAsFixed(1))} ${context.l10n.unitMm}",
+        "${context.l10n.heightShort(controller.altLeft.toStringAsFixed(2))} ${context.l10n.unitMm}",
       )
       ..writeln(
-        "${context.l10n.diamShort(controller.diametroLeft.toStringAsFixed(1))} ${context.l10n.unitMm}",
+        "${context.l10n.diamShort(controller.diametroLeft.toStringAsFixed(2))} ${context.l10n.unitMm}",
       );
 
     return buffer.toString().trim();

@@ -34,50 +34,6 @@ class _VirtualMirrorScreenState extends State<VirtualMirrorScreen> {
 
                 return Column(
                   children: [
-                    // Gallery section
-                    BlocBuilder<VirtualMirrorCubit, VirtualMirrorState>(
-                      builder: (context, state) {
-                        if (state.galleryImages.isEmpty) {
-                          return Padding(
-                            padding: responsive.padding(
-                              const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                            ),
-                            child: Card(
-                              color: Colors.grey.shade900,
-                              elevation: 1,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  responsive.borderRadius(16),
-                                ),
-                                side: BorderSide(
-                                  color: Colors.grey.shade600,
-                                  width: 1,
-                                ),
-                              ),
-                              child: SizedBox(
-                                height: responsive.isPhone ? 150 : 250,
-                                child: Center(
-                                  child: Text(
-                                    textAlign: TextAlign.center,
-                                    'No images loaded yet. \nCapture one or select from your gallery to get started!',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: responsive.fontSize(24),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        }
-
-                        return GallerySection(gallery: state.galleryImages);
-                      },
-                    ),
-
                     // Title
                     Padding(
                       padding: responsive.padding(
@@ -144,6 +100,49 @@ class _VirtualMirrorScreenState extends State<VirtualMirrorScreen> {
                             ),
                     ),
 
+                    // Gallery section
+                    BlocBuilder<VirtualMirrorCubit, VirtualMirrorState>(
+                      builder: (context, state) {
+                        if (state.galleryImages.isEmpty) {
+                          return Padding(
+                            padding: responsive.padding(
+                              const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                            ),
+                            child: Card(
+                              color: Colors.grey.shade900,
+                              elevation: 1,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  responsive.borderRadius(16),
+                                ),
+                                side: BorderSide(
+                                  color: Colors.grey.shade600,
+                                  width: 1,
+                                ),
+                              ),
+                              child: SizedBox(
+                                height: responsive.isPhone ? 150 : 250,
+                                child: Center(
+                                  child: Text(
+                                    textAlign: TextAlign.center,
+                                    'No images loaded yet. \nCapture one or select from your gallery to get started!',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: responsive.fontSize(24),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+
+                        return GallerySection(gallery: state.galleryImages);
+                      },
+                    ),
                     // Control panel
                     const ControlPanel(),
                   ],

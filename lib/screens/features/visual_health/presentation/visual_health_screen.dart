@@ -34,7 +34,6 @@ class _VisualHealthScreenState extends State<VisualHealthScreen> {
 
                 return Column(
                   children: [
-                    const TestGalleryWidget(),
                     BlocBuilder<VisualHealthCubit, VisualHealthState>(
                       builder: (context, state) {
                         return Text(
@@ -51,6 +50,7 @@ class _VisualHealthScreenState extends State<VisualHealthScreen> {
                     ),
                     const SizedBox(height: 8),
                     const Expanded(child: TestDisplayWidget()),
+                    const TestGalleryWidget(),
                     const VisualHealthControlPanel(),
                   ],
                 );
