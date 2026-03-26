@@ -65,8 +65,10 @@ class OpticalController extends ChangeNotifier {
   Future<void> _loadCalibration() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      ajusteHorizontal = prefs.getDouble('ajusteHorizontal') ?? 1.0;
-      ajusteVertical = prefs.getDouble('ajusteVertical') ?? 1.0;
+      ajusteHorizontal =
+          prefs.getDouble('ajusteHorizontal')?.clamp(0.0, 2.0) ?? 1.0;
+      ajusteVertical =
+          prefs.getDouble('ajusteVertical')?.clamp(0.0, 2.0) ?? 1.0;
 
       // Si la imagen ya terminó de cargar sus puntos, actualizamos las fórmulas
       if (points.isNotEmpty) {
@@ -83,6 +85,13 @@ class OpticalController extends ChangeNotifier {
   Future<void> _saveCalibration(String key, double value) async {
     try {
       final prefs = await SharedPreferences.getInstance();
+
+      if (key == 'ajusteHorizontal') {
+        ajusteHorizontal = value.clamp(0.0, 2.0);
+      } else if (key == 'ajusteVertical') {
+        ajusteVertical = value.clamp(0.0, 2.0);
+      }
+
       await prefs.setDouble(key, value);
     } catch (e) {
       debugPrint("Error guardando la calibración: $e");

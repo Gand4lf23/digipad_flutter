@@ -79,6 +79,8 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
   }
 
   String _formatCalibrationValue(double value) {
+    if (value > 2) return '2';
+
     return value.toStringAsFixed(3);
   }
 
