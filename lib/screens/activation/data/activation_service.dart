@@ -138,16 +138,21 @@ class ActivationService {
 
   Future<String?> _getIpAddress() async {
     try {
-      final response = await http.get(Uri.parse('https://api.ipify.org'));
+      final response = await http
+          .get(Uri.parse('https://api.ipify.org'))
+          .timeout(const Duration(seconds: 3));
       if (response.statusCode == 200) {
         return response.body;
       }
-    } catch (e) {}
+    } catch (_) {}
     return null;
   }
 
   Future<Position?> _getLocation() async {
     try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return null;
+
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -160,8 +165,10 @@ class ActivationService {
         return null;
       }
 
-      return await Geolocator.getCurrentPosition();
-    } catch (e) {
+      return await Geolocator.getCurrentPosition(
+        timeLimit: const Duration(seconds: 5),
+      );
+    } catch (_) {
       return null;
     }
   }
