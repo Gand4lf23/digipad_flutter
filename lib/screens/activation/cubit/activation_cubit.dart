@@ -72,9 +72,15 @@ class ActivationCubit extends Cubit<ActivationState> {
       _subscription = stream.listen(
         (snapshot) async {
           if (snapshot == null || !snapshot.exists) {
-            await _service.clearSavedEmail();
-            await _service.setLocallyApproved(false);
-            emit(state.copyWith(status: ActivationStatus.notRegistered));
+            // Only clear if we aren't currently in the middle of a check/registration
+            // this prevents a race condition where the first stream snapshot
+            // might return !exists before the document is fully propagated.
+            if (state.status != ActivationStatus.checking &&
+                state.status != ActivationStatus.pendingApproval) {
+              await _service.clearSavedEmail();
+              await _service.setLocallyApproved(false);
+              emit(state.copyWith(status: ActivationStatus.notRegistered));
+            }
           } else {
             final data = snapshot.data();
             final isApproved = data?['isApproved'] == true;
@@ -180,7 +186,7 @@ class ActivationCubit extends Cubit<ActivationState> {
     try {
       await _service
           .requestActivation(email)
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 30));
 
       await _service.saveEmail(email);
       await init();
@@ -203,7 +209,13 @@ class ActivationCubit extends Cubit<ActivationState> {
         msg = 'activationConnectionRequired';
       }
 
-      emit(state.copyWith(status: ActivationStatus.error, errorMessage: msg));
+      emit(
+        state.copyWith(
+          status: ActivationStatus.error,
+          errorMessage: msg,
+          email: email, // Preserve email for retry
+        ),
+      );
     }
   }
 
