@@ -342,6 +342,13 @@ class AppLocalizationsEs extends AppLocalizations {
       'Dificultad para ver claramente objetos lejanos (miopía)';
 
   @override
+  String get simCatPresbyopia => 'Presbicia';
+
+  @override
+  String get simCatPresbyopiaDesc =>
+      'Dificultad para ver claramente objetos lejanos (presbicia)';
+
+  @override
   String get simSceneKitchen => 'Cocina';
 
   @override
@@ -607,4 +614,26 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get nativeSplitModeCamera => 'Cámara';
+
+  @override
+  String get lensType => 'Tipo de Lente';
+
+  @override
+  String get simCatAspheric => 'Esférico';
+
+  @override
+  String get simCatAsphericDesc => 'Diseño de lente más plano y estético';
+
+  @override
+  String get simCatBlueFilter => 'Filtro Azul';
+
+  @override
+  String get simCatBlueFilterDesc => 'Protección contra luz azul';
+
+  @override
+  String get simCatMonofocal => 'Monofocal';
+
+  @override
+  String get simCatMonofocalDesc =>
+      'Corrección visual con un único punto focal';
 }

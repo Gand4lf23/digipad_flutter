@@ -187,6 +187,8 @@
   "overlayLabel": "Superposición",
   "simCatMyopia": "Miopía",
   "simCatMyopiaDesc": "Dificultad para ver claramente objetos lejanos (miopía)",
+  "simCatPresbyopia": "Presbicia",
+  "simCatPresbyopiaDesc": "Dificultad para ver claramente objetos lejanos (presbicia)",
   "simSceneKitchen": "Cocina",
   "simSceneMarket": "Mercado",
   "simSceneGrocery": "Supermercado",
@@ -277,5 +279,12 @@
   "activationConnectionTimeout": "Tiempo de conexión agotado. Por favor verifique su internet.",
   "nativeSplitGalleryOnlyHint": "Toca el botón inferior para abrir la cámara\no selecciona una foto de tu galería",
   "nativeSplitModeGallery": "Galería",
-  "nativeSplitModeCamera": "Cámara"
+  "nativeSplitModeCamera": "Cámara",
+  "lensType": "Tipo de Lente",
+  "simCatAspheric": "Esférico",
+  "simCatAsphericDesc": "Diseño de lente más plano y estético",
+  "simCatBlueFilter": "Filtro Azul",
+  "simCatBlueFilterDesc": "Protección contra luz azul",
+  "simCatMonofocal": "Monofocal",
+  "simCatMonofocalDesc": "Corrección visual con un único punto focal"
 }

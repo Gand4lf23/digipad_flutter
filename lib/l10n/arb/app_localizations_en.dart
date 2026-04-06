@@ -342,6 +342,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Difficulty seeing distant objects clearly (nearsightedness)';
 
   @override
+  String get simCatPresbyopia => 'Presbyopia';
+
+  @override
+  String get simCatPresbyopiaDesc =>
+      'Difficulty seeing nearby objects clearly (presbyopia)';
+
+  @override
   String get simSceneKitchen => 'Kitchen';
 
   @override
@@ -603,4 +610,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nativeSplitModeCamera => 'Camera';
+
+  @override
+  String get lensType => 'Lens Type';
+
+  @override
+  String get simCatAspheric => 'Aspheric';
+
+  @override
+  String get simCatAsphericDesc => 'Slimmer and flatter lens design';
+
+  @override
+  String get simCatBlueFilter => 'Blue Filter';
+
+  @override
+  String get simCatBlueFilterDesc => 'Protection against blue light';
+
+  @override
+  String get simCatMonofocal => 'Monofocal';
+
+  @override
+  String get simCatMonofocalDesc =>
+      'Vision correction with a single focal point';
 }

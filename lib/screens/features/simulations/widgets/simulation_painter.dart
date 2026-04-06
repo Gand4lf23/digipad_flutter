@@ -59,9 +59,16 @@ class SimulationPainter extends CustomPainter {
     // Draw corrected image inside circular lens
     canvas.save();
 
-    // Create circular clip path for lens
+    // Create path for lens (like a real lens frame, slightly wider than tall)
+    final frameWidth = lensRadius * 2.2;
+    final frameHeight = lensRadius * 1.5;
+    final lensRect = Rect.fromCenter(
+      center: lensPosition,
+      width: frameWidth,
+      height: frameHeight,
+    );
     final lensPath = Path()
-      ..addOval(Rect.fromCircle(center: lensPosition, radius: lensRadius));
+      ..addRRect(RRect.fromRectAndRadius(lensRect, Radius.circular(lensRadius * 0.5)));
     canvas.clipPath(lensPath);
 
     // Draw corrected image inside lens
@@ -242,7 +249,16 @@ class SimulationPainter extends CustomPainter {
       ..color = Colors.white.withOpacity(0.8)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
 
-    canvas.drawCircle(lensPosition, lensRadius, borderPaint);
+    final frameWidth = lensRadius * 2.2;
+    final frameHeight = lensRadius * 1.5;
+    final lensRect = Rect.fromCenter(
+      center: lensPosition,
+      width: frameWidth,
+      height: frameHeight,
+    );
+    final lensRRect = RRect.fromRectAndRadius(lensRect, Radius.circular(lensRadius * 0.5));
+
+    canvas.drawRRect(lensRRect, borderPaint);
 
     // Draw subtle sheen/reflection
     final sheenPaint = Paint()
@@ -250,24 +266,30 @@ class SimulationPainter extends CustomPainter {
           RadialGradient(
             colors: [Colors.white.withOpacity(0.2), Colors.transparent],
           ).createShader(
-            Rect.fromCircle(
+            Rect.fromCenter(
               center: Offset(
-                lensPosition.dx - lensRadius * 0.3,
-                lensPosition.dy - lensRadius * 0.3,
+                lensPosition.dx - frameWidth * 0.15,
+                lensPosition.dy - frameHeight * 0.15,
               ),
-              radius: lensRadius * 0.5,
+              width: frameWidth * 0.5,
+              height: frameHeight * 0.5,
             ),
           )
       ..blendMode = BlendMode.plus;
 
-    canvas.drawCircle(
-      Offset(
-        lensPosition.dx - lensRadius * 0.3,
-        lensPosition.dy - lensRadius * 0.3,
-      ),
-      lensRadius * 0.4,
-      sheenPaint,
-    );
+    final sheenPath = Path()
+      ..addOval(
+        Rect.fromCenter(
+          center: Offset(
+            lensPosition.dx - frameWidth * 0.15,
+            lensPosition.dy - frameHeight * 0.15,
+          ),
+          width: frameWidth * 0.4,
+          height: frameHeight * 0.4,
+        ),
+      );
+
+    canvas.drawPath(sheenPath, sheenPaint);
   }
 
   @override

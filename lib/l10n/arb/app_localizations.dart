@@ -706,6 +706,18 @@ abstract class AppLocalizations {
   /// **'Difficulty seeing distant objects clearly (nearsightedness)'**
   String get simCatMyopiaDesc;
 
+  /// No description provided for @simCatPresbyopia.
+  ///
+  /// In en, this message translates to:
+  /// **'Presbyopia'**
+  String get simCatPresbyopia;
+
+  /// No description provided for @simCatPresbyopiaDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Difficulty seeing nearby objects clearly (presbyopia)'**
+  String get simCatPresbyopiaDesc;
+
   /// No description provided for @simSceneKitchen.
   ///
   /// In en, this message translates to:
@@ -1209,6 +1221,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Camera'**
   String get nativeSplitModeCamera;
+
+  /// No description provided for @lensType.
+  ///
+  /// In en, this message translates to:
+  /// **'Lens Type'**
+  String get lensType;
+
+  /// No description provided for @simCatAspheric.
+  ///
+  /// In en, this message translates to:
+  /// **'Aspheric'**
+  String get simCatAspheric;
+
+  /// No description provided for @simCatAsphericDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Slimmer and flatter lens design'**
+  String get simCatAsphericDesc;
+
+  /// No description provided for @simCatBlueFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Blue Filter'**
+  String get simCatBlueFilter;
+
+  /// No description provided for @simCatBlueFilterDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Protection against blue light'**
+  String get simCatBlueFilterDesc;
+
+  /// No description provided for @simCatMonofocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Monofocal'**
+  String get simCatMonofocal;
+
+  /// No description provided for @simCatMonofocalDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Vision correction with a single focal point'**
+  String get simCatMonofocalDesc;
 }
 
 class _AppLocalizationsDelegate

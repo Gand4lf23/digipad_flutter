@@ -32,8 +32,8 @@ class SimulationCanvas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMultifocal = category.id == 'multifocal';
-    final isLensMode = state.isLensDraggingMode;
+    final isFullImageMode = ['multifocal', 'presbyopia', 'myopia', 'monofocal'].contains(category.id);
+    final isLensMode = state.isLensDraggingMode || category.id == 'tint';
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -43,7 +43,7 @@ class SimulationCanvas extends StatelessWidget {
 
             return GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onPanStart: isMultifocal
+              onPanStart: isFullImageMode
                   ? null
                   : (details) {
                       if (isLensMode) {
@@ -52,7 +52,7 @@ class SimulationCanvas extends StatelessWidget {
                         context.read<SimulationsCubit>().setDragging(true);
                       }
                     },
-              onPanUpdate: isMultifocal
+              onPanUpdate: isFullImageMode
                   ? null
                   : (details) {
                       if (isLensMode) {
@@ -68,7 +68,7 @@ class SimulationCanvas extends StatelessWidget {
                         );
                       }
                     },
-              onPanEnd: isMultifocal
+              onPanEnd: isFullImageMode
                   ? null
                   : (_) {
                       if (isLensMode) {
@@ -87,7 +87,7 @@ class SimulationCanvas extends StatelessWidget {
                     isVerticalDivider: state.isVerticalDivider,
                     tintColor: currentLens?.tintColor,
                     lensOpacity: state.lensOpacity,
-                    showFullCorrection: isMultifocal,
+                    showFullCorrection: isFullImageMode,
                     boxFit: BoxFit.contain,
                     // Lens dragging specific parameters
                     isLensDraggingMode: isLensMode,

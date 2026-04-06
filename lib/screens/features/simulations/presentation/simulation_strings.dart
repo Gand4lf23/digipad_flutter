@@ -15,6 +15,8 @@ class SimulationStrings {
         return context.l10n.simCatMultifocal;
       case 'bifocal':
         return context.l10n.simCatBifocal;
+      case 'presbyopia':
+        return context.l10n.simCatPresbyopia;
       case 'polarized':
         return context.l10n.simCatPolarized;
       case 'anti_reflex':
@@ -27,6 +29,10 @@ class SimulationStrings {
         return context.l10n.simCatSolar;
       case 'tint':
         return context.l10n.simCatTint;
+      case 'aspheric':
+        return context.l10n.simCatAspheric;
+      case 'blue_filter':
+        return context.l10n.simCatBlueFilter;
       default:
         return category.displayName;
     }
@@ -43,6 +49,8 @@ class SimulationStrings {
         return context.l10n.simCatMultifocalDesc;
       case 'bifocal':
         return context.l10n.simCatBifocalDesc;
+      case 'presbyopia':
+        return context.l10n.simCatPresbyopiaDesc;
       case 'polarized':
         return context.l10n.simCatPolarizedDesc;
       case 'anti_reflex':
@@ -55,6 +63,10 @@ class SimulationStrings {
         return context.l10n.simCatSolarDesc;
       case 'tint':
         return context.l10n.simCatTintDesc;
+      case 'aspheric':
+        return context.l10n.simCatAsphericDesc;
+      case 'blue_filter':
+        return context.l10n.simCatBlueFilterDesc;
       default:
         return category.description;
     }

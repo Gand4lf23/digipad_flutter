@@ -229,7 +229,7 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
             // Lens instruction overlay (shown initially)
             if (!state.isDragging &&
                 _correctedImage != null &&
-                widget.category.id != 'multifocal')
+                !['multifocal', 'presbyopia', 'myopia', 'monofocal'].contains(widget.category.id))
               _buildInstructionOverlay(state, context),
           ],
         );
@@ -307,7 +307,8 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
     BuildContext context,
   ) {
     final size = MediaQuery.of(context).size;
-    final position = state.isLensDraggingMode
+    final isLensMode = state.isLensDraggingMode || widget.category.id == 'tint';
+    final position = isLensMode
         ? state.lensPosition
         : (state.isVerticalDivider
               ? Offset(size.width * state.dividerPosition, size.height / 2)
@@ -317,12 +318,12 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
       animation: _pulseAnimation,
       builder: (context, child) {
         return Positioned(
-          left: state.isLensDraggingMode
+          left: isLensMode
               ? position.dx - 100
               : (state.isVerticalDivider
                     ? position.dx - 100
                     : size.width / 2 - 100),
-          top: state.isLensDraggingMode
+          top: isLensMode
               ? position.dy - 80
               : (state.isVerticalDivider
                     ? position.dy - 100
@@ -340,7 +341,7 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    state.isLensDraggingMode
+                    isLensMode
                         ? Icons.touch_app_outlined
                         : (state.isVerticalDivider
                               ? Icons.swap_horiz_outlined
@@ -350,7 +351,7 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    state.isLensDraggingMode
+                    isLensMode
                         ? 'Drag the lens around'
                         : context.l10n.dragDivider,
                     style: TextStyle(

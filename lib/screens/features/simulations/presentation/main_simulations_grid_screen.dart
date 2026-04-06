@@ -102,7 +102,7 @@ class _SimulationsGridView extends StatelessWidget {
                       end: Alignment.bottomRight,
                       colors: [
                         Theme.of(context).primaryColor,
-                        Theme.of(context).primaryColor.withOpacity(0.7),
+                        Theme.of(context).primaryColor.withValues(alpha: 0.7),
                         Colors.deepPurple.shade700,
                       ],
                     ),
@@ -115,7 +115,7 @@ class _SimulationsGridView extends StatelessWidget {
                         child: Icon(
                           Icons.visibility_outlined,
                           size: 150,
-                          color: Colors.white.withOpacity(0.1),
+                          color: Colors.white.withValues(alpha: 0.1),
                         ),
                       ),
                       if (state.selectedCategory != null)
@@ -129,7 +129,7 @@ class _SimulationsGridView extends StatelessWidget {
                               state.selectedCategory!,
                             ),
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.9),
+                              color: Colors.white.withValues(alpha: 0.9),
                               fontSize: responsive.fontSize(16),
                             ),
                             maxLines: 2,
@@ -149,22 +149,29 @@ class _SimulationsGridView extends StatelessWidget {
 
   Widget _buildCategoryGrid(BuildContext context) {
     final allCategories = SimulationData.categories;
-    final visionProblems = ['myopia', 'presbyopia', 'multifocal', 'bifocal'];
+    final visionProblems = ['myopia', 'presbyopia'];
+    final lensTypes = ['monofocal', 'bifocal', 'multifocal'];
 
+    final treatmentCategories = allCategories
+        .where((c) => !visionProblems.contains(c.id) && !lensTypes.contains(c.id))
+        .toList();
+    final typeCategories = allCategories
+        .where((c) => lensTypes.contains(c.id))
+        .toList();
     final problemCategories = allCategories
         .where((c) => visionProblems.contains(c.id))
-        .toList();
-    final treatmentCategories = allCategories
-        .where((c) => !visionProblems.contains(c.id))
         .toList();
 
     return SliverList(
       delegate: SliverChildListDelegate([
-        _buildSectionHeader(context.l10n.refractiveConditions),
-        _buildGridSection(context, problemCategories),
-        const SizedBox(height: 24),
         _buildSectionHeader(context.l10n.lensTreatments),
         _buildGridSection(context, treatmentCategories),
+        const SizedBox(height: 24),
+        _buildSectionHeader(context.l10n.lensType),
+        _buildGridSection(context, typeCategories),
+        const SizedBox(height: 24),
+        _buildSectionHeader(context.l10n.refractiveConditions),
+        _buildGridSection(context, problemCategories),
         const SizedBox(height: 32),
       ]),
     );
@@ -341,7 +348,7 @@ class _CategoryCard extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Colors.white, _iconColor.withOpacity(0.1)],
+              colors: [Colors.white, _iconColor.withValues(alpha: 0.1)],
             ),
           ),
           child: Padding(
@@ -352,7 +359,7 @@ class _CategoryCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: _iconColor.withOpacity(0.15),
+                    color: _iconColor.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -444,7 +451,7 @@ class _ScenarioCard extends StatelessWidget {
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            Colors.black.withOpacity(0.5),
+                            Colors.black.withValues(alpha: 0.5),
                           ],
                         ),
                       ),
@@ -459,13 +466,13 @@ class _ScenarioCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
+                        color: Colors.black.withValues(alpha:0.6),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         context.l10n.withoutLens,
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha:0.9),
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
@@ -517,7 +524,7 @@ class _ScenarioCard extends StatelessWidget {
                               decoration: BoxDecoration(
                                 color: _getLensColor(
                                   lens.quality,
-                                ).withOpacity(0.15),
+                                ).withValues(alpha:0.15),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: AutoSizeText(
