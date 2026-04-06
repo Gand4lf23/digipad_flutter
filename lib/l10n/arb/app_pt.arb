@@ -286,5 +286,20 @@
   "simCatBlueFilter": "Filtro Azul",
   "simCatBlueFilterDesc": "Proteção contra luz azul",
   "simCatMonofocal": "Monofocal",
-  "simCatMonofocalDesc": "Correção visual com um único ponto focal"
+  "simCatMonofocalDesc": "Correção visual com um único ponto focal",
+  "menuPhotoSync": "Photo Sync",
+  "photoSyncTitle": "Photo Sync",
+  "photoSyncSubtitle": "Transferência de fotos sem internet",
+  "photoSyncHost": "TOTEM",
+  "photoSyncHostDesc": "Este dispositivo recebe fotos",
+  "photoSyncClient": "CELULAR",
+  "photoSyncClientDesc": "Este dispositivo envia fotos",
+  "photoSyncScanQr": "Escanear código QR",
+  "photoSyncAutoReconnect": "Reconectar automaticamente",
+  "photoSyncConnected": "Conectado ao totem",
+  "photoSyncTakePhoto": "Tirar foto",
+  "photoSyncSending": "Enviando foto...",
+  "photoSyncSent": "Foto enviada!",
+  "photoSyncSendError": "Erro ao enviar. Tente novamente.",
+  "photoSyncWaiting": "Aguardando conexões..."
 }

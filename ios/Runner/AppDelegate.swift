@@ -16,6 +16,9 @@ import Flutter
         withId: "native-left-view"
     )
     
+    // Register Photo Sync WiFi plugin
+    PhotoSyncWifiPlugin.register(with: registrar(forPlugin: "PhotoSyncWifiPlugin")!)
+    
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }

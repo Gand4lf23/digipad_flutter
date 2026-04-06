@@ -158,13 +158,22 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) {
+      create: (context) {
         final cubit = SimulationsCubit();
         cubit.selectCategory(widget.category);
         cubit.selectScenario(widget.scenario);
         if (_currentLens != null) {
           cubit.selectLens(_currentLens!);
         }
+
+        // Center lens after initial layout
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            final size = MediaQuery.of(context).size;
+            cubit.setLensPosition(Offset(size.width / 2, size.height / 2));
+          }
+        });
+
         return cubit;
       },
       child: Scaffold(backgroundColor: Colors.black, body: _buildBody(context)),
@@ -205,7 +214,7 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
               child: SimulationTopBar(
                 scenario: widget.scenario,
                 category: widget.category,
-                categoryColor: _getCategoryColor(widget.category.id),
+                categoryColor: widget.category.color,
                 onBack: () => Navigator.pop(context),
                 onToggleMode: () => _onToggleInteractionMode(context),
                 isLensMode: state.isLensDraggingMode,
@@ -225,44 +234,13 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
                 onLensSelected: _onLensChanged,
               ),
             ),
-
-            // Lens instruction overlay (shown initially)
-            if (!state.isDragging &&
-                _correctedImage != null &&
-                !['multifocal', 'presbyopia', 'myopia', 'monofocal'].contains(widget.category.id))
-              _buildInstructionOverlay(state, context),
           ],
         );
       },
     );
   }
 
-  Color _getCategoryColor(String categoryId) {
-    switch (categoryId) {
-      case 'myopia':
-        return Colors.blue;
-      case 'presbyopia':
-        return Colors.purple;
-      case 'multifocal':
-        return Colors.teal;
-      case 'bifocal':
-        return Colors.indigo;
-      case 'polarized':
-        return Colors.cyan;
-      case 'anti_reflex':
-        return Colors.green;
-      case 'drive':
-        return Colors.orange;
-      case 'photochromic':
-        return Colors.amber;
-      case 'solar':
-        return Colors.amber.shade700;
-      case 'tint':
-        return Colors.indigoAccent;
-      default:
-        return Colors.grey;
-    }
-  }
+
 
   Widget _buildErrorView() {
     return Center(
@@ -299,73 +277,6 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildInstructionOverlay(
-    SimulationsState state,
-    BuildContext context,
-  ) {
-    final size = MediaQuery.of(context).size;
-    final isLensMode = state.isLensDraggingMode || widget.category.id == 'tint';
-    final position = isLensMode
-        ? state.lensPosition
-        : (state.isVerticalDivider
-              ? Offset(size.width * state.dividerPosition, size.height / 2)
-              : Offset(size.width / 2, size.height * state.dividerPosition));
-
-    return AnimatedBuilder(
-      animation: _pulseAnimation,
-      builder: (context, child) {
-        return Positioned(
-          left: isLensMode
-              ? position.dx - 100
-              : (state.isVerticalDivider
-                    ? position.dx - 100
-                    : size.width / 2 - 100),
-          top: isLensMode
-              ? position.dy - 80
-              : (state.isVerticalDivider
-                    ? position.dy - 100
-                    : position.dy - 80),
-          child: Opacity(
-            opacity: _pulseAnimation.value,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.8),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    isLensMode
-                        ? Icons.touch_app_outlined
-                        : (state.isVerticalDivider
-                              ? Icons.swap_horiz_outlined
-                              : Icons.swap_vert_outlined),
-                    color: Colors.white.withValues(alpha: 0.9),
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    isLensMode
-                        ? 'Drag the lens around'
-                        : context.l10n.dragDivider,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 }

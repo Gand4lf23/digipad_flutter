@@ -30,24 +30,27 @@ class SimulationTopBar extends StatelessWidget {
         return OrientationBuilder(
           builder: (context, orientation) {
             final responsive = context.responsive(constraints, orientation);
+            final isTablet = responsive.isTablet;
 
             return Container(
+              width: double.infinity,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    categoryColor.withOpacity(0.9),
-                    categoryColor.withOpacity(0.0),
+                    category.color.withValues(alpha: 0.95),
+                    category.color.withValues(alpha: 0.8),
+                    category.color.withValues(alpha: 0.0),
                   ],
-                  stops: const [0.0, 1.0],
+                  stops: const [0.0, 0.4, 1.0],
                 ),
               ),
               child: SafeArea(
                 bottom: false,
                 child: Padding(
                   padding: responsive.padding(
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    EdgeInsets.fromLTRB(16, 16, 24, isTablet ? 40 : 24),
                   ),
                   child: Row(
                     children: [
@@ -55,19 +58,35 @@ class SimulationTopBar extends StatelessWidget {
                         icon: Icon(
                           Icons.arrow_back_ios_new,
                           color: Colors.white,
-                          size: responsive.iconSize(24),
+                          size: responsive.iconSize(isTablet ? 32 : 24),
                         ),
                         onPressed: onBack,
                       ),
+                      const SizedBox(width: 8),
+                      // Category Icon
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          category.icon,
+                          color: Colors.white,
+                          size: responsive.iconSize(isTablet ? 40 : 28),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              SimulationStrings.scenarioName(context, scenario),
+                              SimulationStrings.categoryName(context, category),
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: responsive.fontSize(45),
+                                fontSize: responsive.fontSize(isTablet ? 48 : 34),
                                 fontWeight: FontWeight.bold,
                                 shadows: const [
                                   Shadow(
@@ -79,115 +98,23 @@ class SimulationTopBar extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              SimulationStrings.categoryName(context, category),
+                              scenario.displayName,
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: responsive.fontSize(32),
+                                color: Colors.white.withValues(alpha: 0.9),
+                                fontSize: responsive.fontSize(isTablet ? 28 : 20),
                                 fontWeight: FontWeight.w500,
-                                shadows: const [
-                                  Shadow(
-                                    offset: Offset(0, 1),
-                                    blurRadius: 2.0,
-                                    color: Colors.black45,
-                                  ),
-                                ],
                               ),
                             ),
                           ],
                         ),
                       ),
                       if (onToggleMode != null &&
-                          scenario.correctionLenses.isNotEmpty)
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          padding: const EdgeInsets.all(4),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Divider mode button
-                              GestureDetector(
-                                onTap: isLensMode ? onToggleMode : null,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: !isLensMode
-                                        ? Colors.white
-                                        : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.drag_handle,
-                                        color: !isLensMode
-                                            ? categoryColor
-                                            : Colors.white,
-                                        size: responsive.iconSize(20),
-                                      ),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        context.l10n.dividerLabel,
-                                        style: TextStyle(
-                                          color: !isLensMode
-                                              ? categoryColor
-                                              : Colors.white,
-                                          fontSize: responsive.fontSize(28),
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              // Lens mode button
-                              GestureDetector(
-                                onTap: !isLensMode ? onToggleMode : null,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isLensMode
-                                        ? Colors.white
-                                        : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.circle_outlined,
-                                        color: isLensMode
-                                            ? categoryColor
-                                            : Colors.white,
-                                        size: responsive.iconSize(20),
-                                      ),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        context.l10n.lensLabel,
-                                        style: TextStyle(
-                                          color: isLensMode
-                                              ? categoryColor
-                                              : Colors.white,
-                                          fontSize: responsive.fontSize(28),
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                          scenario.correctionLenses.isNotEmpty &&
+                          !['myopia', 'presbyopia', 'monofocal', 'aspheric', 'bifocal', 'multifocal']
+                              .contains(
+                            category.id,
+                          ))
+                        _buildModeToggle(context, responsive),
                     ],
                   ),
                 ),
@@ -196,6 +123,81 @@ class SimulationTopBar extends StatelessWidget {
           },
         );
       },
+    );
+  }
+
+  Widget _buildModeToggle(BuildContext context, ResponsiveUtils responsive) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      padding: const EdgeInsets.all(4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Divider mode button
+          _buildToggleButton(
+            context: context,
+            responsive: responsive,
+            isSelected: !isLensMode,
+            icon: Icons.drag_handle,
+            label: context.l10n.dividerLabel,
+            onTap: isLensMode ? onToggleMode : null,
+          ),
+          // Lens mode button
+          _buildToggleButton(
+            context: context,
+            responsive: responsive,
+            isSelected: isLensMode,
+            icon: Icons.circle_outlined,
+            label: context.l10n.lensLabel,
+            onTap: !isLensMode ? onToggleMode : null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToggleButton({
+    required BuildContext context,
+    required ResponsiveUtils responsive,
+    required bool isSelected,
+    required IconData icon,
+    required String label,
+    required VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: responsive.spacing(16),
+          vertical: responsive.spacing(8),
+        ),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? category.color : Colors.white,
+              size: responsive.iconSize(20),
+            ),
+            SizedBox(width: responsive.spacing(4)),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? category.color : Colors.white,
+                fontSize: responsive.fontSize(28),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

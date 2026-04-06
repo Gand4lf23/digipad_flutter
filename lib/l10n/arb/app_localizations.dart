@@ -1263,6 +1263,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Vision correction with a single focal point'**
   String get simCatMonofocalDesc;
+
+  /// No description provided for @menuPhotoSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo Sync'**
+  String get menuPhotoSync;
+
+  /// No description provided for @photoSyncTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo Sync'**
+  String get photoSyncTitle;
+
+  /// No description provided for @photoSyncSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo transfer without internet'**
+  String get photoSyncSubtitle;
+
+  /// No description provided for @photoSyncHost.
+  ///
+  /// In en, this message translates to:
+  /// **'TÓTEM'**
+  String get photoSyncHost;
+
+  /// No description provided for @photoSyncHostDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'This device receives photos'**
+  String get photoSyncHostDesc;
+
+  /// No description provided for @photoSyncClient.
+  ///
+  /// In en, this message translates to:
+  /// **'PHONE'**
+  String get photoSyncClient;
+
+  /// No description provided for @photoSyncClientDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'This device sends photos'**
+  String get photoSyncClientDesc;
+
+  /// No description provided for @photoSyncScanQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan QR code'**
+  String get photoSyncScanQr;
+
+  /// No description provided for @photoSyncAutoReconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-reconnect'**
+  String get photoSyncAutoReconnect;
+
+  /// No description provided for @photoSyncConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to tótem'**
+  String get photoSyncConnected;
+
+  /// No description provided for @photoSyncTakePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photo'**
+  String get photoSyncTakePhoto;
+
+  /// No description provided for @photoSyncSending.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending photo...'**
+  String get photoSyncSending;
+
+  /// No description provided for @photoSyncSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo sent!'**
+  String get photoSyncSent;
+
+  /// No description provided for @photoSyncSendError.
+  ///
+  /// In en, this message translates to:
+  /// **'Send error. Try again.'**
+  String get photoSyncSendError;
+
+  /// No description provided for @photoSyncWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for connections...'**
+  String get photoSyncWaiting;
 }
 
 class _AppLocalizationsDelegate

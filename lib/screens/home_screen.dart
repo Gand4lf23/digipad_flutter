@@ -11,6 +11,7 @@ import 'package:digipad_flutter/screens/features/visual_health/cubit/visual_heal
 import 'package:digipad_flutter/screens/features/visual_health/presentation/visual_health_screen.dart';
 import 'package:digipad_flutter/screens/features/cosmetic_lenses/cubit/cosmetic_lenses_cubit.dart';
 import 'package:digipad_flutter/screens/features/cosmetic_lenses/presentation/cosmetic_lenses_screen.dart';
+import 'package:digipad_flutter/screens/features/photo_sync/presentation/photo_sync_role_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:digipad_flutter/l10n/l10n.dart';
@@ -95,7 +96,16 @@ class HomeScreen extends StatelessWidget {
                 left: 70,
                 onTap: () => _navigateToModule(context, 'visual_health'),
               ),
-
+              _buildArchMenuItem(
+                context: context,
+                title: 'Photo Sync',
+                moduleId: 'photo_sync',
+                icon: Icons.sync_alt_rounded,
+                color: const Color(0xFF00BFA6),
+                top: screenHeight * 0.79,
+                left: 55,
+                onTap: () => _navigateToModule(context, 'photo_sync'),
+              ),
               Positioned(
                 top: 8,
                 right: 12,
@@ -281,6 +291,13 @@ class HomeScreen extends StatelessWidget {
             create: (_) => VisualHealthCubit(),
             child: const VisualHealthScreen(),
           ),
+        ),
+      );
+    } else if (moduleId == 'photo_sync') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const PhotoSyncRoleScreen(),
         ),
       );
     } else {

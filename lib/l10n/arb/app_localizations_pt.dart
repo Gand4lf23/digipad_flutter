@@ -632,4 +632,49 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get simCatMonofocalDesc => 'Correção visual com um único ponto focal';
+
+  @override
+  String get menuPhotoSync => 'Photo Sync';
+
+  @override
+  String get photoSyncTitle => 'Photo Sync';
+
+  @override
+  String get photoSyncSubtitle => 'Transferência de fotos sem internet';
+
+  @override
+  String get photoSyncHost => 'TOTEM';
+
+  @override
+  String get photoSyncHostDesc => 'Este dispositivo recebe fotos';
+
+  @override
+  String get photoSyncClient => 'CELULAR';
+
+  @override
+  String get photoSyncClientDesc => 'Este dispositivo envia fotos';
+
+  @override
+  String get photoSyncScanQr => 'Escanear código QR';
+
+  @override
+  String get photoSyncAutoReconnect => 'Reconectar automaticamente';
+
+  @override
+  String get photoSyncConnected => 'Conectado ao totem';
+
+  @override
+  String get photoSyncTakePhoto => 'Tirar foto';
+
+  @override
+  String get photoSyncSending => 'Enviando foto...';
+
+  @override
+  String get photoSyncSent => 'Foto enviada!';
+
+  @override
+  String get photoSyncSendError => 'Erro ao enviar. Tente novamente.';
+
+  @override
+  String get photoSyncWaiting => 'Aguardando conexões...';
 }

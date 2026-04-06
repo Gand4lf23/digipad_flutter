@@ -81,7 +81,7 @@ class SimulationsCubit extends Cubit<SimulationsState> {
 
   /// Set lens radius.
   void setLensRadius(double radius) {
-    emit(state.copyWith(lensRadius: radius.clamp(50.0, 200.0)));
+    emit(state.copyWith(lensRadius: radius.clamp(50.0, 400.0)));
   }
 
   /// Toggle between lens dragging mode and divider mode.

@@ -32,8 +32,12 @@ class SimulationCanvas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isFullImageMode = ['multifocal', 'presbyopia', 'myopia', 'monofocal'].contains(category.id);
-    final isLensMode = state.isLensDraggingMode || category.id == 'tint';
+    final isFullImageMode =
+        ['multifocal', 'presbyopia', 'myopia', 'monofocal', 'aspheric', 'bifocal']
+            .contains(
+      category.id,
+    );
+    final isLensMode = state.isLensDraggingMode;
 
     return LayoutBuilder(
       builder: (context, constraints) {

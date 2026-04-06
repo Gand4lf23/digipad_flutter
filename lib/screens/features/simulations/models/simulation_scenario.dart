@@ -6,6 +6,8 @@ class SimulationCategory {
   final String name;
   final String displayName;
   final String description;
+  final IconData icon;
+  final Color color;
   final List<SimulationScenario> scenarios;
 
   const SimulationCategory({
@@ -13,6 +15,8 @@ class SimulationCategory {
     required this.name,
     required this.displayName,
     required this.description,
+    required this.icon,
+    required this.color,
     required this.scenarios,
   });
 }

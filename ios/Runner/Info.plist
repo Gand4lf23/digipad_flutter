@@ -42,6 +42,8 @@
 	<string>This app needs microphone access for audio recording functionality</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs photo library access to save measurement images</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>This app needs local network access to transfer photos between devices</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

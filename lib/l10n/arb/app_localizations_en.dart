@@ -632,4 +632,49 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get simCatMonofocalDesc =>
       'Vision correction with a single focal point';
+
+  @override
+  String get menuPhotoSync => 'Photo Sync';
+
+  @override
+  String get photoSyncTitle => 'Photo Sync';
+
+  @override
+  String get photoSyncSubtitle => 'Photo transfer without internet';
+
+  @override
+  String get photoSyncHost => 'TÓTEM';
+
+  @override
+  String get photoSyncHostDesc => 'This device receives photos';
+
+  @override
+  String get photoSyncClient => 'PHONE';
+
+  @override
+  String get photoSyncClientDesc => 'This device sends photos';
+
+  @override
+  String get photoSyncScanQr => 'Scan QR code';
+
+  @override
+  String get photoSyncAutoReconnect => 'Auto-reconnect';
+
+  @override
+  String get photoSyncConnected => 'Connected to tótem';
+
+  @override
+  String get photoSyncTakePhoto => 'Take photo';
+
+  @override
+  String get photoSyncSending => 'Sending photo...';
+
+  @override
+  String get photoSyncSent => 'Photo sent!';
+
+  @override
+  String get photoSyncSendError => 'Send error. Try again.';
+
+  @override
+  String get photoSyncWaiting => 'Waiting for connections...';
 }

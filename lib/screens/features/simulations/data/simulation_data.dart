@@ -33,6 +33,8 @@ class SimulationData {
     name: 'myopia',
     displayName: 'Myopia',
     description: 'Difficulty seeing distant objects clearly (nearsightedness)',
+    icon: Icons.remove_red_eye_outlined,
+    color: Colors.blue,
     scenarios: [
       // Kitchen scene
       SimulationScenario(
@@ -135,6 +137,8 @@ class SimulationData {
     name: 'monofocal',
     displayName: 'Monofocal',
     description: 'Vision correction with a single focal point',
+    icon: Icons.adjust_outlined,
+    color: Colors.indigo,
     scenarios: _myopiaCategory.scenarios,
   );
 
@@ -145,6 +149,8 @@ class SimulationData {
     name: 'multifocal',
     displayName: 'Multifocal',
     description: 'Progressive lens quality comparison',
+    icon: Icons.view_stream_outlined,
+    color: Colors.teal,
     scenarios: [
       // Kitchen 2
       SimulationScenario(
@@ -279,6 +285,8 @@ class SimulationData {
     displayName: 'Presbyopia',
     description:
         'Difficulty focusing on close objects (age-related farsightedness)',
+    icon: Icons.visibility_outlined,
+    color: Colors.purple,
     scenarios: [
       SimulationScenario(
         id: 'presbyopia_kitchen',
@@ -334,6 +342,8 @@ class SimulationData {
     name: 'bifocal',
     displayName: 'Bifocal',
     description: 'Comparison between bifocal and multifocal lenses',
+    icon: Icons.center_focus_weak_outlined,
+    color: Colors.indigo,
     scenarios: [
       SimulationScenario(
         id: 'bifocal_office',
@@ -362,13 +372,20 @@ class SimulationData {
       SimulationScenario(
         id: 'bifocal_driving',
         sceneName: 'driving',
-        displayName: 'Driving',
-        problemImagePath: '$_basePath/bifocal/BifocalManejando.webp',
+        displayName: 'Driving Comparison',
+        problemImagePath: '$_basePath/bifocal/BifocalManejando.webp', // Using as base if no separate no-lens exists
         correctionLenses: [
+          CorrectionLens(
+            id: 'bifocal_driving_standard',
+            name: 'bifocal',
+            displayName: 'Bifocal Lens',
+            correctedImagePath: '$_basePath/bifocal/BifocalManejando.webp',
+            quality: LensQuality.standard,
+          ),
           CorrectionLens(
             id: 'bifocal_driving_multifocal',
             name: 'multifocal',
-            displayName: 'Multifocal',
+            displayName: 'Multifocal Lens',
             correctedImagePath:
                 '$_basePath/bifocal/BifocalManejandoMultifocal.webp',
             quality: LensQuality.premium,
@@ -384,6 +401,8 @@ class SimulationData {
     name: 'polarized',
     displayName: 'Polarized',
     description: 'Reduction of reflections and glare',
+    icon: Icons.filter_hdr_outlined,
+    color: Colors.cyan,
     scenarios: [
       // Golf
       SimulationScenario(
@@ -545,6 +564,8 @@ class SimulationData {
     name: 'anti_reflective',
     displayName: 'Anti-Reflective',
     description: 'Reduction of lens reflections and better clarity',
+    icon: Icons.layers_outlined,
+    color: Colors.green,
     scenarios: [
       // Driving - with AR options
       SimulationScenario(
@@ -737,6 +758,8 @@ class SimulationData {
     name: 'drive',
     displayName: 'DriveWear',
     description: 'Lenses optimized for driving in different conditions',
+    icon: Icons.directions_car_outlined,
+    color: Colors.orange,
     scenarios: [
       // Driving Sunny
       SimulationScenario(
@@ -939,6 +962,8 @@ class SimulationData {
     name: 'fotocromático',
     displayName: 'Fotocromático',
     description: 'Lentes que se adaptan a las condiciones de luz',
+    icon: Icons.wb_sunny_outlined,
+    color: Colors.amber,
     scenarios: [
       // Indoor (Optic)
       SimulationScenario(
@@ -1050,6 +1075,8 @@ class SimulationData {
     displayName: 'Solar',
     description:
         'Sun protection lenses with and without anti-reflective coating',
+    icon: Icons.wb_sunny_outlined,
+    color: Colors.amber.shade700,
     scenarios: [
       // Driving - Without Solar vs With Solar
       SimulationScenario(
@@ -1175,6 +1202,8 @@ class SimulationData {
     name: 'tint',
     displayName: 'Tint',
     description: 'Customizable lens tints for different environments',
+    icon: Icons.color_lens_outlined,
+    color: Colors.pink,
     scenarios: [
       SimulationScenario(
         id: 'tint_beach',
@@ -1347,6 +1376,8 @@ class SimulationData {
     name: 'blue_filter',
     displayName: 'Blue Filter',
     description: 'Protection against blue light from digital screens',
+    icon: Icons.laptop_mac,
+    color: Colors.indigoAccent,
     scenarios: [
       SimulationScenario(
         id: 'blue_filter_notebook',
@@ -1417,75 +1448,62 @@ class SimulationData {
     name: 'aspheric',
     displayName: 'Aspheric',
     description: 'Slimmer and flatter lens design for better aesthetics',
+    icon: Icons.unfold_less,
+    color: Colors.deepPurple,
     scenarios: [
       SimulationScenario(
-        id: 'aspheric_strong_prescription',
-        sceneName: 'strong_prescription',
-        displayName: 'Strong Prescription',
-        problemImagePath: '$_basePath/aspheric/aspheric_strong_noLens.webp',
+        id: 'aspheric_comparison',
+        sceneName: 'comparison',
+        displayName: 'Lens Comparison',
+        problemImagePath: '$_basePath/aspheric/asferico_sin.jpg',
         correctionLenses: [
           CorrectionLens(
-            id: 'aspheric_strong_standard',
-            name: 'standard',
-            displayName: 'Standard Lens',
-            correctedImagePath:
-                '$_basePath/aspheric/aspheric_strong_standard.webp',
+            id: 'estandar_ma4',
+            name: 'standard_4',
+            displayName: '+4.00 Standard',
+            correctedImagePath: '$_basePath/aspheric/asferico_no_4.jpg',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
-            id: 'aspheric_strong_aspheric',
-            name: 'aspheric',
-            displayName: 'Aspheric Lens',
-            correctedImagePath:
-                '$_basePath/aspheric/aspheric_strong_aspheric.webp',
-            quality: LensQuality.premium,
-          ),
-        ],
-      ),
-      SimulationScenario(
-        id: 'aspheric_moderate_prescription',
-        sceneName: 'moderate_prescription',
-        displayName: 'Moderate Prescription',
-        problemImagePath: '$_basePath/aspheric/aspheric_moderate_noLens.webp',
-        correctionLenses: [
-          CorrectionLens(
-            id: 'aspheric_moderate_standard',
-            name: 'standard',
-            displayName: 'Standard Lens',
-            correctedImagePath:
-                '$_basePath/aspheric/aspheric_moderate_standard.webp',
+            id: 'estandar_ma6',
+            name: 'standard_6',
+            displayName: '+6.00 Standard',
+            correctedImagePath: '$_basePath/aspheric/asferico_no_6.jpg',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
-            id: 'aspheric_moderate_aspheric',
-            name: 'aspheric',
-            displayName: 'Aspheric Lens',
-            correctedImagePath:
-                '$_basePath/aspheric/aspheric_moderate_aspheric.webp',
-            quality: LensQuality.premium,
-          ),
-        ],
-      ),
-      SimulationScenario(
-        id: 'aspheric_daily_wear',
-        sceneName: 'daily_wear',
-        displayName: 'Daily Wear',
-        problemImagePath: '$_basePath/aspheric/aspheric_daily_noLens.webp',
-        correctionLenses: [
-          CorrectionLens(
-            id: 'aspheric_daily_standard',
-            name: 'standard',
-            displayName: 'Standard Lens',
-            correctedImagePath:
-                '$_basePath/aspheric/aspheric_daily_standard.webp',
+            id: 'estandar_ma8',
+            name: 'standard_8',
+            displayName: '+8.00 Standard',
+            correctedImagePath: '$_basePath/aspheric/asferico_no_8.jpg',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
-            id: 'aspheric_daily_aspheric',
+            id: 'estandar_me4',
+            name: 'standard__4',
+            displayName: '-4.00 Standard',
+            correctedImagePath: '$_basePath/aspheric/asferico_no__4.jpg',
+            quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'estandar_me6',
+            name: 'standard__6',
+            displayName: '-6.00 Standard',
+            correctedImagePath: '$_basePath/aspheric/asferico_no__6.jpg', // corrected path
+            quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'estandar_me8',
+            name: 'standard__8',
+            displayName: '-8.00 Standard',
+            correctedImagePath: '$_basePath/aspheric/asferico_no__8.jpg',
+            quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'asferico',
             name: 'aspheric',
             displayName: 'Aspheric Lens',
-            correctedImagePath:
-                '$_basePath/aspheric/aspheric_daily_aspheric.webp',
+            correctedImagePath: '$_basePath/aspheric/asferico_si.jpg',
             quality: LensQuality.premium,
           ),
         ],

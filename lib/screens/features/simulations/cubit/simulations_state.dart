@@ -50,9 +50,9 @@ class SimulationsState {
     this.isVerticalDivider = true, // Default to vertical divider
     this.lensOpacity = 0.5,
     this.isDragging = false,
-    this.lensPosition = const Offset(200, 200), // Default lens position
-    this.lensRadius = 100, // Default lens radius
-    this.isLensDraggingMode = false, // Default to divider mode
+    this.lensPosition = const Offset(500, 400), // Default lens position (will be centered in UI)
+    this.lensRadius = 200, // Default lens radius (twice the previous size)
+    this.isLensDraggingMode = true, // Default to lens mode instead of divider
     this.isLoading = false,
     this.errorMessage,
   });

@@ -286,5 +286,20 @@
   "simCatBlueFilter": "Blue Filter",
   "simCatBlueFilterDesc": "Protection against blue light",
   "simCatMonofocal": "Monofocal",
-  "simCatMonofocalDesc": "Vision correction with a single focal point"
+  "simCatMonofocalDesc": "Vision correction with a single focal point",
+  "menuPhotoSync": "Photo Sync",
+  "photoSyncTitle": "Photo Sync",
+  "photoSyncSubtitle": "Photo transfer without internet",
+  "photoSyncHost": "TÓTEM",
+  "photoSyncHostDesc": "This device receives photos",
+  "photoSyncClient": "PHONE",
+  "photoSyncClientDesc": "This device sends photos",
+  "photoSyncScanQr": "Scan QR code",
+  "photoSyncAutoReconnect": "Auto-reconnect",
+  "photoSyncConnected": "Connected to tótem",
+  "photoSyncTakePhoto": "Take photo",
+  "photoSyncSending": "Sending photo...",
+  "photoSyncSent": "Photo sent!",
+  "photoSyncSendError": "Send error. Try again.",
+  "photoSyncWaiting": "Waiting for connections..."
 }

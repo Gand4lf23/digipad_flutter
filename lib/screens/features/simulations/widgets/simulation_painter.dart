@@ -17,6 +17,9 @@ class SimulationPainter extends CustomPainter {
   final double lensRadius;
   final double fontSize;
 
+  /// NEW: velocity input to simulate drag reaction
+  final Offset dragVelocity;
+
   SimulationPainter({
     required this.problemImage,
     this.correctedImage,
@@ -30,101 +33,184 @@ class SimulationPainter extends CustomPainter {
     required this.lensPosition,
     required this.lensRadius,
     required this.fontSize,
+    this.dragVelocity = Offset.zero, // 👈 default safe
   });
 
   @override
   void paint(Canvas canvas, Size size) {
+    /// ENTRY POINT
+    /// Decides which rendering mode to use
+
     if (showFullCorrection && correctedImage != null) {
-      // Multifocal mode: show full corrected image
-      _drawImage(canvas, size, correctedImage!);
+      _drawImage(canvas, size, correctedImage!, applyTint: true);
       return;
     }
 
     if (isLensDraggingMode && correctedImage != null) {
-      // LENS DRAGGING MODE: Draw lens effect
       _drawLensMode(canvas, size);
     } else if (correctedImage != null) {
-      // DIVIDER MODE: Draw split view
       _drawDividerMode(canvas, size);
     } else {
-      // No correction: just show problem image
       _drawImage(canvas, size, problemImage);
     }
   }
 
+  /// ------------------------------------------------------------
+  /// 🟢 LENS MODE (main feature)
+  /// ------------------------------------------------------------
   void _drawLensMode(Canvas canvas, Size size) {
-    // Draw problem image as background (blurred/affected)
+    /// 1. Draw base image
     _drawImage(canvas, size, problemImage);
 
-    // Draw corrected image inside circular lens
-    canvas.save();
+    /// 2. Build lens shape (reactive)
+    final lensPath = _buildLensPath();
 
-    // Create path for lens (like a real lens frame, slightly wider than tall)
+    /// 3. Clip to lens
+    canvas.save();
+    canvas.clipPath(lensPath);
+
+    /// 4. Draw corrected image inside lens
+    _drawImage(canvas, size, correctedImage!, applyTint: true);
+
+    /// 5. Add subtle optical vignette (depth realism)
+    _drawLensVignette(canvas);
+
+    canvas.restore();
+
+    /// 6. Draw border AFTER restore (so it’s not clipped)
+    _drawLensBorder(canvas, lensPath);
+  }
+
+  /// ------------------------------------------------------------
+  /// 🟣 LENS SHAPE (reacts to drag)
+  /// ------------------------------------------------------------
+  Path _buildLensPath() {
     final frameWidth = lensRadius * 2.2;
     final frameHeight = lensRadius * 1.5;
-    final lensRect = Rect.fromCenter(
+
+    /// 🧠 Velocity-based deformation (subtle!)
+    final dx = dragVelocity.dx.clamp(-20, 20) / 20;
+    final dy = dragVelocity.dy.clamp(-20, 20) / 20;
+
+    final stretchX = 1 + (dx * 0.05);
+    final stretchY = 1 + (dy * 0.05);
+
+    final width = frameWidth * stretchX;
+    final height = frameHeight * stretchY;
+
+    final left = lensPosition.dx - width / 2;
+    final right = lensPosition.dx + width / 2;
+    final top = lensPosition.dy - height / 2;
+    final bottom = lensPosition.dy + height / 2;
+
+    return Path()
+      ..moveTo(left, top)
+      /// Top (almost flat)
+      ..quadraticBezierTo(lensPosition.dx, top - lensRadius * 0.1, right, top)
+      /// Right
+      ..quadraticBezierTo(
+        right + lensRadius * 0.2,
+        lensPosition.dy,
+        right,
+        bottom,
+      )
+      /// Bottom (more curved)
+      ..quadraticBezierTo(
+        lensPosition.dx,
+        bottom + lensRadius * 0.4,
+        left,
+        bottom,
+      )
+      /// Left
+      ..quadraticBezierTo(left - lensRadius * 0.2, lensPosition.dy, left, top)
+      ..close();
+  }
+
+  /// ------------------------------------------------------------
+  /// 🟡 LENS VIGNETTE (realism, replaces fake shimmer)
+  /// ------------------------------------------------------------
+  void _drawLensVignette(Canvas canvas) {
+    final frameWidth = lensRadius * 2.2;
+    final frameHeight = lensRadius * 1.5;
+
+    final rect = Rect.fromCenter(
       center: lensPosition,
       width: frameWidth,
       height: frameHeight,
     );
-    final lensPath = Path()
-      ..addRRect(RRect.fromRectAndRadius(lensRect, Radius.circular(lensRadius * 0.5)));
-    canvas.clipPath(lensPath);
 
-    // Draw corrected image inside lens
-    _drawImage(canvas, size, correctedImage!);
+    final paint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          Colors.transparent,
+          Colors.black.withValues(alpha: 0.15), // subtle dark edge
+        ],
+        stops: const [1.7, 1.0],
+      ).createShader(rect);
 
-    canvas.restore();
-
-    // Draw lens border
-    _drawLensBorder(canvas);
+    canvas.drawRect(rect, paint);
   }
 
+  /// ------------------------------------------------------------
+  /// 🔵 LENS BORDER (clean, no glow, no shimmer)
+  /// ------------------------------------------------------------
+  void _drawLensBorder(Canvas canvas, Path lensPath) {
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..color = Colors.white.withValues(alpha: 0.6);
+
+    canvas.drawPath(lensPath, paint);
+  }
+
+  /// ------------------------------------------------------------
+  /// 🟠 DIVIDER MODE (unchanged)
+  /// ------------------------------------------------------------
   void _drawDividerMode(Canvas canvas, Size size) {
     if (isVerticalDivider) {
-      // Vertical divider: left side shows problem, right side shows correction
       final dividerX = size.width * dividerPosition;
 
-      // Draw problem image on left
       canvas.save();
       canvas.clipRect(Rect.fromLTWH(0, 0, dividerX, size.height));
       _drawImage(canvas, size, problemImage);
       canvas.restore();
 
-      // Draw corrected image on right
       canvas.save();
       canvas.clipRect(
         Rect.fromLTWH(dividerX, 0, size.width - dividerX, size.height),
       );
-      _drawImage(canvas, size, correctedImage!);
+      _drawImage(canvas, size, correctedImage!, applyTint: true);
       canvas.restore();
 
-      // Draw vertical divider line
       _drawVerticalDivider(canvas, size, dividerX);
     } else {
-      // Horizontal divider: top shows problem, bottom shows correction
       final dividerY = size.height * dividerPosition;
 
-      // Draw problem image on top
       canvas.save();
       canvas.clipRect(Rect.fromLTWH(0, 0, size.width, dividerY));
       _drawImage(canvas, size, problemImage);
       canvas.restore();
 
-      // Draw corrected image on bottom
       canvas.save();
       canvas.clipRect(
         Rect.fromLTWH(0, dividerY, size.width, size.height - dividerY),
       );
-      _drawImage(canvas, size, correctedImage!);
+      _drawImage(canvas, size, correctedImage!, applyTint: true);
       canvas.restore();
 
-      // Draw horizontal divider line
       _drawHorizontalDivider(canvas, size, dividerY);
     }
   }
 
-  void _drawImage(Canvas canvas, Size size, ui.Image image) {
+  /// ------------------------------------------------------------
+  /// 🖼 IMAGE DRAWING (removed shimmer source)
+  /// ------------------------------------------------------------
+  void _drawImage(
+    Canvas canvas,
+    Size size,
+    ui.Image image, {
+    bool applyTint = false,
+  }) {
     final srcSize = Size(image.width.toDouble(), image.height.toDouble());
     final fittedSizes = applyBoxFit(boxFit, srcSize, size);
     final dst = Alignment.center.inscribe(
@@ -134,10 +220,10 @@ class SimulationPainter extends CustomPainter {
 
     final paint = Paint();
 
-    // Apply tint if specified
-    if (tintColor != null && lensOpacity > 0) {
+    /// ✅ ONLY tint (no shimmer, no gradients)
+    if (applyTint && tintColor != null && lensOpacity > 0) {
       paint.colorFilter = ColorFilter.mode(
-        tintColor!.withOpacity(lensOpacity),
+        tintColor!.withValues(alpha: lensOpacity),
         BlendMode.srcATop,
       );
     }
@@ -145,153 +231,34 @@ class SimulationPainter extends CustomPainter {
     canvas.drawImageRect(image, Offset.zero & srcSize, dst, paint);
   }
 
+  /// ------------------------------------------------------------
+  /// ➗ DIVIDER UI (unchanged)
+  /// ------------------------------------------------------------
   void _drawVerticalDivider(Canvas canvas, Size size, double x) {
     final paint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 4
-      ..style = PaintingStyle.stroke;
+      ..color = Colors.white.withValues(alpha: 0.6)
+      ..strokeWidth = 3;
 
-    // Draw line
     canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
 
-    // Draw handle circle in the middle
     final handleY = size.height / 2;
-    final handlePaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-
-    canvas.drawCircle(Offset(x, handleY), 20, handlePaint);
-
-    // Draw arrows
-    final arrowPaint = Paint()
-      ..color = Colors.black
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
-
-    // Left arrow
-    canvas.drawLine(
-      Offset(x - 8, handleY),
-      Offset(x - 2, handleY - 6),
-      arrowPaint,
-    );
-    canvas.drawLine(
-      Offset(x - 8, handleY),
-      Offset(x - 2, handleY + 6),
-      arrowPaint,
-    );
-
-    // Right arrow
-    canvas.drawLine(
-      Offset(x + 8, handleY),
-      Offset(x + 2, handleY - 6),
-      arrowPaint,
-    );
-    canvas.drawLine(
-      Offset(x + 8, handleY),
-      Offset(x + 2, handleY + 6),
-      arrowPaint,
-    );
+    canvas.drawCircle(Offset(x, handleY), 20, Paint()..color = Colors.white);
   }
 
   void _drawHorizontalDivider(Canvas canvas, Size size, double y) {
     final paint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 4
-      ..style = PaintingStyle.stroke;
+      ..color = Colors.white.withValues(alpha: 0.6)
+      ..strokeWidth = 3;
 
-    // Draw line
     canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
 
-    // Draw handle circle in the middle
     final handleX = size.width / 2;
-    final handlePaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-
-    canvas.drawCircle(Offset(handleX, y), 20, handlePaint);
-
-    // Draw arrows
-    final arrowPaint = Paint()
-      ..color = Colors.black
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
-
-    // Up arrow
-    canvas.drawLine(
-      Offset(handleX, y - 8),
-      Offset(handleX - 6, y - 2),
-      arrowPaint,
-    );
-    canvas.drawLine(
-      Offset(handleX, y - 8),
-      Offset(handleX + 6, y - 2),
-      arrowPaint,
-    );
-
-    // Down arrow
-    canvas.drawLine(
-      Offset(handleX, y + 8),
-      Offset(handleX - 6, y + 2),
-      arrowPaint,
-    );
-    canvas.drawLine(
-      Offset(handleX, y + 8),
-      Offset(handleX + 6, y + 2),
-      arrowPaint,
-    );
+    canvas.drawCircle(Offset(handleX, y), 20, Paint()..color = Colors.white);
   }
 
-  void _drawLensBorder(Canvas canvas) {
-    // Draw lens border with glow effect
-    final borderPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4
-      ..color = Colors.white.withOpacity(0.8)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
-
-    final frameWidth = lensRadius * 2.2;
-    final frameHeight = lensRadius * 1.5;
-    final lensRect = Rect.fromCenter(
-      center: lensPosition,
-      width: frameWidth,
-      height: frameHeight,
-    );
-    final lensRRect = RRect.fromRectAndRadius(lensRect, Radius.circular(lensRadius * 0.5));
-
-    canvas.drawRRect(lensRRect, borderPaint);
-
-    // Draw subtle sheen/reflection
-    final sheenPaint = Paint()
-      ..shader =
-          RadialGradient(
-            colors: [Colors.white.withOpacity(0.2), Colors.transparent],
-          ).createShader(
-            Rect.fromCenter(
-              center: Offset(
-                lensPosition.dx - frameWidth * 0.15,
-                lensPosition.dy - frameHeight * 0.15,
-              ),
-              width: frameWidth * 0.5,
-              height: frameHeight * 0.5,
-            ),
-          )
-      ..blendMode = BlendMode.plus;
-
-    final sheenPath = Path()
-      ..addOval(
-        Rect.fromCenter(
-          center: Offset(
-            lensPosition.dx - frameWidth * 0.15,
-            lensPosition.dy - frameHeight * 0.15,
-          ),
-          width: frameWidth * 0.4,
-          height: frameHeight * 0.4,
-        ),
-      );
-
-    canvas.drawPath(sheenPath, sheenPaint);
-  }
-
+  /// ------------------------------------------------------------
+  /// 🔁 REPAINT LOGIC
+  /// ------------------------------------------------------------
   @override
   bool shouldRepaint(covariant SimulationPainter oldDelegate) {
     return oldDelegate.dividerPosition != dividerPosition ||
@@ -300,6 +267,7 @@ class SimulationPainter extends CustomPainter {
         oldDelegate.isLensDraggingMode != isLensDraggingMode ||
         oldDelegate.lensPosition != lensPosition ||
         oldDelegate.lensRadius != lensRadius ||
+        oldDelegate.dragVelocity != dragVelocity || // 👈 NEW
         oldDelegate.correctedImage != correctedImage;
   }
 }

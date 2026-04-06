@@ -25,9 +25,16 @@ class SimulationControlPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Only hide the entire panel if there are no lenses to select
+    if (scenario.correctionLenses.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     final isTint = category.id == 'tint';
-    final isMultifocal = category.id == 'multifocal';
     final isLensMode = state.isLensDraggingMode;
+
+    // Categories that use full-screen static image mode (no draggable lens/divider controls)
+    final isStaticMode = ['myopia', 'presbyopia', 'aspheric', 'monofocal', 'multifocal', 'bifocal'].contains(category.id);
 
     return Container(
       decoration: BoxDecoration(
@@ -72,8 +79,8 @@ class SimulationControlPanel extends StatelessWidget {
                     ),
                   ),
 
-                  // Space around effect
-                  if (!isMultifocal) ...[
+                  // Show extra controls (radius/divider) only if NOT in static mode
+                  if (!isStaticMode) ...[
                     const SizedBox(width: 32),
 
                     // Vertical separator
@@ -128,7 +135,7 @@ class SimulationControlPanel extends StatelessWidget {
                   onPressed: () {
                     final newRadius = (state.lensRadius - 20).clamp(
                       50.0,
-                      200.0,
+                      400.0,
                     );
                     context.read<SimulationsCubit>().setLensRadius(newRadius);
                   },
@@ -160,7 +167,7 @@ class SimulationControlPanel extends StatelessWidget {
                   onPressed: () {
                     final newRadius = (state.lensRadius + 20).clamp(
                       50.0,
-                      200.0,
+                      400.0,
                     );
                     context.read<SimulationsCubit>().setLensRadius(newRadius);
                   },
@@ -168,13 +175,7 @@ class SimulationControlPanel extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 4),
-            Text(
-              'Drag lens anywhere',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.6),
-                fontSize: 16,
-              ),
-            ),
+            if (category.id == 'tint') _buildOpacitySlider(context),
           ],
         ),
       ],
@@ -185,8 +186,9 @@ class SimulationControlPanel extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Orientation Toggle Button
-        Column(
+        // Orientation Toggle Button (Hide if Tint as it paints the whole image)
+        if (!isTint)
+          Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
@@ -230,34 +232,41 @@ class SimulationControlPanel extends StatelessWidget {
           ],
         ),
         // Opacity Slider (Only if tint)
-        if (isTint) ...[
-          const SizedBox(height: 16),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.opacity,
-                color: Colors.white.withValues(alpha: 0.7),
-                size: 32,
+        if (isTint) _buildOpacitySlider(context),
+      ],
+    );
+  }
+
+  Widget _buildOpacitySlider(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(height: 16),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.opacity,
+              color: Colors.white.withValues(alpha: 0.7),
+              size: 32,
+            ),
+            SizedBox(
+              width: 180,
+              height: 60,
+              child: Slider(
+                value: state.lensOpacity,
+                min: 0.0,
+                max: 0.5,
+                divisions: 13,
+                activeColor: Colors.white,
+                inactiveColor: Colors.white24,
+                onChanged: (v) {
+                  context.read<SimulationsCubit>().setLensOpacity(v);
+                },
               ),
-              SizedBox(
-                width: 180,
-                height: 60,
-                child: Slider(
-                  value: state.lensOpacity,
-                  min: 0.0,
-                  max: 0.5,
-                  divisions: 13,
-                  activeColor: Colors.white,
-                  inactiveColor: Colors.white24,
-                  onChanged: (v) {
-                    context.read<SimulationsCubit>().setLensOpacity(v);
-                  },
-                ),
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ],
     );
   }

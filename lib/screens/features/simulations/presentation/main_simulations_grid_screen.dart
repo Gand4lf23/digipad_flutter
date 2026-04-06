@@ -47,102 +47,97 @@ class _SimulationsGridView extends StatelessWidget {
   }
 
   Widget _buildAppBar(BuildContext context, SimulationsState state) {
-    return SliverAppBar(
-      expandedHeight: 80,
-      floating: false,
-      pinned: true,
-      leading: LayoutBuilder(
-        builder: (context, constraints) {
-          return OrientationBuilder(
-            builder: (context, orientation) {
-              final responsive = context.responsive(constraints, orientation);
-              return IconButton(
-                icon: Icon(
-                  Icons.arrow_back_ios_new,
-                  size: responsive.iconSize(24),
-                ),
-                onPressed: () {
-                  if (state.selectedCategory != null) {
-                    context.read<SimulationsCubit>().goToCategories();
-                  } else {
-                    Navigator.pop(context);
-                  }
-                },
-              );
-            },
-          );
-        },
-      ),
-      flexibleSpace: LayoutBuilder(
-        builder: (context, constraints) {
-          return OrientationBuilder(
-            builder: (context, orientation) {
-              final responsive = context.responsive(constraints, orientation);
+    final theme = Theme.of(context);
 
-              return FlexibleSpaceBar(
-                title: Text(
-                  state.selectedCategory == null
-                      ? context.l10n.lensSimulatorTitle
-                      : SimulationStrings.categoryName(
-                          context,
-                          state.selectedCategory!,
-                        ),
-                  style: TextStyle(
+    final title = state.selectedCategory == null
+        ? context.l10n.lensSimulatorTitle
+        : SimulationStrings.categoryName(context, state.selectedCategory!);
+
+    final description = state.selectedCategory != null
+        ? SimulationStrings.categoryDescription(
+            context,
+            state.selectedCategory!,
+          )
+        : null;
+
+    return SliverAppBar(
+      pinned: true,
+      elevation: 0,
+      backgroundColor: theme.primaryColor,
+
+      // 👇 THIS is key
+      toolbarHeight: 64, // bigger than default (56)
+      expandedHeight: description != null ? 120 : 100,
+
+      leadingWidth: 72, // 👈 gives breathing room (tablet friendly)
+      leading: Center(
+        child: SizedBox(
+          width: 48,
+          height: 24,
+          child: IconButton(
+            padding: EdgeInsets.zero,
+            icon: const Icon(
+              Icons.arrow_back_ios_new,
+              size: 48,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              if (state.selectedCategory != null) {
+                context.read<SimulationsCubit>().goToCategories();
+              } else {
+                Navigator.pop(context);
+              }
+            },
+          ),
+        ),
+      ),
+
+      flexibleSpace: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              theme.primaryColor,
+              theme.primaryColor.withValues(alpha: 0.7),
+              Colors.deepPurple.shade700,
+            ],
+          ),
+        ),
+
+        child: SafeArea(
+          child: Padding(
+            // 👇 aligns with back button
+            padding: const EdgeInsets.fromLTRB(72, 0, 32, 12),
+
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: responsive.fontSize(22),
-                    shadows: const [
-                      Shadow(blurRadius: 8, color: Colors.black54),
-                    ],
+                    fontSize: 36, // 👈 bigger
+                    color: Colors.white,
                   ),
                 ),
-                background: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Theme.of(context).primaryColor,
-                        Theme.of(context).primaryColor.withValues(alpha: 0.7),
-                        Colors.deepPurple.shade700,
-                      ],
+                if (description != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 24, // 👈 bigger
+                      color: Colors.white70,
                     ),
                   ),
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        right: -30,
-                        top: 20,
-                        child: Icon(
-                          Icons.visibility_outlined,
-                          size: 150,
-                          color: Colors.white.withValues(alpha: 0.1),
-                        ),
-                      ),
-                      if (state.selectedCategory != null)
-                        Positioned(
-                          left: 20,
-                          bottom: 60,
-                          right: 20,
-                          child: Text(
-                            SimulationStrings.categoryDescription(
-                              context,
-                              state.selectedCategory!,
-                            ),
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.9),
-                              fontSize: responsive.fontSize(16),
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          );
-        },
+                ],
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -153,7 +148,9 @@ class _SimulationsGridView extends StatelessWidget {
     final lensTypes = ['monofocal', 'bifocal', 'multifocal'];
 
     final treatmentCategories = allCategories
-        .where((c) => !visionProblems.contains(c.id) && !lensTypes.contains(c.id))
+        .where(
+          (c) => !visionProblems.contains(c.id) && !lensTypes.contains(c.id),
+        )
         .toList();
     final typeCategories = allCategories
         .where((c) => lensTypes.contains(c.id))
@@ -277,59 +274,8 @@ class _CategoryCard extends StatelessWidget {
 
   const _CategoryCard({required this.category, required this.onTap});
 
-  IconData get _icon {
-    switch (category.id) {
-      case 'myopia':
-        return Icons.remove_red_eye_outlined;
-      case 'presbyopia':
-        return Icons.visibility_outlined;
-      case 'multifocal':
-        return Icons.view_stream_outlined;
-      case 'bifocal':
-        return Icons.center_focus_weak_outlined;
-      case 'polarized':
-        return Icons.filter_hdr_outlined;
-      case 'anti_reflex':
-        return Icons.shield_outlined;
-      case 'drive':
-        return Icons.directions_car_outlined;
-      case 'photochromic':
-        return Icons.brightness_5_outlined;
-      case 'solar':
-        return Icons.wb_sunny_outlined;
-      case 'tint':
-        return Icons.color_lens_outlined;
-      default:
-        return Icons.lens_outlined;
-    }
-  }
-
-  Color get _iconColor {
-    switch (category.id) {
-      case 'myopia':
-        return Colors.blue;
-      case 'presbyopia':
-        return Colors.purple;
-      case 'multifocal':
-        return Colors.teal;
-      case 'bifocal':
-        return Colors.indigo;
-      case 'polarized':
-        return Colors.cyan;
-      case 'anti_reflex':
-        return Colors.green;
-      case 'drive':
-        return Colors.orange;
-      case 'photochromic':
-        return Colors.amber;
-      case 'solar':
-        return Colors.amber.shade700;
-      case 'tint':
-        return Colors.indigoAccent;
-      default:
-        return Colors.grey;
-    }
-  }
+  IconData get _icon => category.icon;
+  Color get _iconColor => category.color;
 
   @override
   Widget build(BuildContext context) {
@@ -466,13 +412,13 @@ class _ScenarioCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha:0.6),
+                        color: Colors.black.withValues(alpha: 0.6),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         context.l10n.withoutLens,
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha:0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
@@ -510,36 +456,41 @@ class _ScenarioCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: scenario.correctionLenses
-                          .take(3)
-                          .map(
-                            (lens) => Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: _getLensColor(
-                                  lens.quality,
-                                ).withValues(alpha:0.15),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: AutoSizeText(
-                                SimulationStrings.lensName(context, lens),
-                                style: TextStyle(
-                                  fontSize: isPhone ? 13 : 28,
-                                  color: _getLensColor(lens.quality),
-                                  fontWeight: FontWeight.w500,
+                    SizedBox(
+                      height: isPhone ? 32 : 48,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        child: Row(
+                          children: scenario.correctionLenses
+                              .map(
+                                (lens) => Container(
+                                  margin: const EdgeInsets.only(right: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: _getLensColor(
+                                      lens.quality,
+                                    ).withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: AutoSizeText(
+                                    SimulationStrings.lensName(context, lens),
+                                    style: TextStyle(
+                                      fontSize: isPhone ? 13 : 28,
+                                      color: _getLensColor(lens.quality),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    maxLines: 1,
+                                    minFontSize: 9,
+                                  ),
                                 ),
-                                maxLines: 1,
-                                minFontSize: 9,
-                              ),
-                            ),
-                          )
-                          .toList(),
+                              )
+                              .toList(),
+                        ),
+                      ),
                     ),
                   ],
                 ),

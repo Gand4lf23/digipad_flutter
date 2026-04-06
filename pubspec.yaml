@@ -84,6 +84,10 @@ dependencies:
   connectivity_plus: ^7.0.0
   widgets_to_image: ^2.0.1
 
+  # Photo Sync feature
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^6.0.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

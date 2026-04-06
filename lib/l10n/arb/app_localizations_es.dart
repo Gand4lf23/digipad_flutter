@@ -619,7 +619,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get lensType => 'Tipo de Lente';
 
   @override
-  String get simCatAspheric => 'Esférico';
+  String get simCatAspheric => 'Asférico';
 
   @override
   String get simCatAsphericDesc => 'Diseño de lente más plano y estético';
@@ -636,4 +636,49 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get simCatMonofocalDesc =>
       'Corrección visual con un único punto focal';
+
+  @override
+  String get menuPhotoSync => 'Photo Sync';
+
+  @override
+  String get photoSyncTitle => 'Photo Sync';
+
+  @override
+  String get photoSyncSubtitle => 'Transferencia de fotos sin internet';
+
+  @override
+  String get photoSyncHost => 'TÓTEM';
+
+  @override
+  String get photoSyncHostDesc => 'Este dispositivo recibe fotos';
+
+  @override
+  String get photoSyncClient => 'CELULAR';
+
+  @override
+  String get photoSyncClientDesc => 'Este dispositivo envía fotos';
+
+  @override
+  String get photoSyncScanQr => 'Escanear código QR';
+
+  @override
+  String get photoSyncAutoReconnect => 'Reconectar automáticamente';
+
+  @override
+  String get photoSyncConnected => 'Conectado al tótem';
+
+  @override
+  String get photoSyncTakePhoto => 'Sacar foto';
+
+  @override
+  String get photoSyncSending => 'Enviando foto...';
+
+  @override
+  String get photoSyncSent => '¡Foto enviada!';
+
+  @override
+  String get photoSyncSendError => 'Error al enviar. Intentá de nuevo.';
+
+  @override
+  String get photoSyncWaiting => 'Esperando conexiones...';
 }
