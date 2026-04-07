@@ -327,7 +327,7 @@ class _CategoryCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${category.scenarios.length} scenes',
+                  context.l10n.scenesCount(category.scenarios.length),
                   style: TextStyle(
                     fontSize: isPhone ? 11 : 22,
                     color: Colors.grey.shade600,

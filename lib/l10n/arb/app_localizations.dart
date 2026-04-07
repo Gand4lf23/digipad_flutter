@@ -1285,7 +1285,7 @@ abstract class AppLocalizations {
   /// No description provided for @photoSyncHost.
   ///
   /// In en, this message translates to:
-  /// **'TÓTEM'**
+  /// **'TOTEM'**
   String get photoSyncHost;
 
   /// No description provided for @photoSyncHostDesc.
@@ -1321,7 +1321,7 @@ abstract class AppLocalizations {
   /// No description provided for @photoSyncConnected.
   ///
   /// In en, this message translates to:
-  /// **'Connected to tótem'**
+  /// **'Connected to totem'**
   String get photoSyncConnected;
 
   /// No description provided for @photoSyncTakePhoto.
@@ -1353,6 +1353,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Waiting for connections...'**
   String get photoSyncWaiting;
+
+  /// No description provided for @photoSyncStarting.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting access point...'**
+  String get photoSyncStarting;
+
+  /// No description provided for @photoSyncStartingDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'This may take a few seconds'**
+  String get photoSyncStartingDesc;
+
+  /// No description provided for @photoSyncReceivedPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Received photos'**
+  String get photoSyncReceivedPhotos;
+
+  /// No description provided for @photoSyncDevicesConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} devices connected'**
+  String photoSyncDevicesConnected(int count);
+
+  /// No description provided for @photoSyncNoConnections.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for connections...'**
+  String get photoSyncNoConnections;
+
+  /// No description provided for @photoSyncRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get photoSyncRetry;
+
+  /// No description provided for @photoSyncRoleHostActiveSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Session active – receiving photos'**
+  String get photoSyncRoleHostActiveSubtitle;
+
+  /// No description provided for @photoSyncRoleHostInactiveSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This device receives photos'**
+  String get photoSyncRoleHostInactiveSubtitle;
+
+  /// No description provided for @photoSyncRoleHostActiveDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'You can use the rest of the app normally.\nPhotos will keep arriving in the background.'**
+  String get photoSyncRoleHostActiveDesc;
+
+  /// No description provided for @photoSyncRoleHostInactiveDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Will show a QR code for other\ndevices to connect'**
+  String get photoSyncRoleHostInactiveDesc;
+
+  /// No description provided for @photoSyncRoleClientTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'PHONE'**
+  String get photoSyncRoleClientTitle;
+
+  /// No description provided for @photoSyncRoleClientSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This device sends photos'**
+  String get photoSyncRoleClientSubtitle;
+
+  /// No description provided for @photoSyncRoleClientDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan the totem\'s QR to\nconnect and take photos'**
+  String get photoSyncRoleClientDesc;
+
+  /// No description provided for @photoSyncDisconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'DISCONNECT TOTEM'**
+  String get photoSyncDisconnect;
+
+  /// No description provided for @photoSyncPhotosCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} photos'**
+  String photoSyncPhotosCount(int count);
+
+  /// No description provided for @photoSyncRoleSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo synchronization'**
+  String get photoSyncRoleSubtitle;
+
+  /// No description provided for @simSceneBuildingPositive.
+  ///
+  /// In en, this message translates to:
+  /// **'Building Positive'**
+  String get simSceneBuildingPositive;
+
+  /// No description provided for @simSceneBuildingNegative.
+  ///
+  /// In en, this message translates to:
+  /// **'Building Negative'**
+  String get simSceneBuildingNegative;
+
+  /// No description provided for @simSceneTextPositive.
+  ///
+  /// In en, this message translates to:
+  /// **'Text Positive'**
+  String get simSceneTextPositive;
+
+  /// No description provided for @simSceneTextNegative.
+  ///
+  /// In en, this message translates to:
+  /// **'Text Negative'**
+  String get simSceneTextNegative;
+
+  /// No description provided for @galleryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get galleryTitle;
+
+  /// No description provided for @vmInternalGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal Gallery'**
+  String get vmInternalGallery;
+
+  /// No description provided for @cosmeticLensSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Image saved successfully!'**
+  String get cosmeticLensSaved;
+
+  /// No description provided for @cosmeticLensSaveError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save image'**
+  String get cosmeticLensSaveError;
 }
 
 class _AppLocalizationsDelegate

@@ -562,7 +562,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get activationEmailLabel => 'E-mail';
 
   @override
-  String get activationRequestAccess => 'Solicitar Acesso';
+  String get activationRequestAccess => 'Solicitar Aceso';
 
   @override
   String get activationAwaitingApproval => 'Aguardando Aprovação';
@@ -640,7 +640,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get photoSyncTitle => 'Photo Sync';
 
   @override
-  String get photoSyncSubtitle => 'Transferência de fotos sem internet';
+  String get photoSyncSubtitle => 'Transferencia de fotos sem internet';
 
   @override
   String get photoSyncHost => 'TOTEM';
@@ -677,4 +677,85 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get photoSyncWaiting => 'Aguardando conexões...';
+
+  @override
+  String get photoSyncStarting => 'Iniciando ponto de acesso...';
+
+  @override
+  String get photoSyncStartingDesc => 'Isso pode levar alguns segundos';
+
+  @override
+  String get photoSyncReceivedPhotos => 'Fotos recebidas';
+
+  @override
+  String photoSyncDevicesConnected(int count) {
+    return '$count dispositivo(s) conectado(s)';
+  }
+
+  @override
+  String get photoSyncNoConnections => 'Aguardando conexões...';
+
+  @override
+  String get photoSyncRetry => 'Tentar novamente';
+
+  @override
+  String get photoSyncRoleHostActiveSubtitle =>
+      'Sessão ativa – recebendo fotos';
+
+  @override
+  String get photoSyncRoleHostInactiveSubtitle =>
+      'Este dispositivo recebe fotos';
+
+  @override
+  String get photoSyncRoleHostActiveDesc =>
+      'Você pode usar o resto do app normalmente.\nAs fotos continuarão chegando em segundo plano.';
+
+  @override
+  String get photoSyncRoleHostInactiveDesc =>
+      'Mostrará um código QR para outros\ndispositivos conectarem';
+
+  @override
+  String get photoSyncRoleClientTitle => 'CELULAR';
+
+  @override
+  String get photoSyncRoleClientSubtitle => 'Este dispositivo envia fotos';
+
+  @override
+  String get photoSyncRoleClientDesc =>
+      'Escaneie o QR do totem para\nconectar e tirar fotos';
+
+  @override
+  String get photoSyncDisconnect => 'DESCONECTAR TOTEM';
+
+  @override
+  String photoSyncPhotosCount(int count) {
+    return '$count fotos';
+  }
+
+  @override
+  String get photoSyncRoleSubtitle => 'Sincronização de fotos';
+
+  @override
+  String get simSceneBuildingPositive => 'Edifício Positivo';
+
+  @override
+  String get simSceneBuildingNegative => 'Edifício Negativo';
+
+  @override
+  String get simSceneTextPositive => 'Leitura Positivo';
+
+  @override
+  String get simSceneTextNegative => 'Leitura Negativo';
+
+  @override
+  String get galleryTitle => 'Galeria';
+
+  @override
+  String get vmInternalGallery => 'Galeria Interna';
+
+  @override
+  String get cosmeticLensSaved => 'Imagem salva com sucesso!';
+
+  @override
+  String get cosmeticLensSaveError => 'Falha ao salvar a imagem';
 }

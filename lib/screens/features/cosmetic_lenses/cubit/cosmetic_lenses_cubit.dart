@@ -162,12 +162,43 @@ class CosmeticLensesCubit extends Cubit<CosmeticLensesState> {
       // Save to gallery storage (Sembast DB)
       await _galleryStorage.saveImage(file);
 
-      // Emit success (you can add a success message to state if needed)
+      // Emit success state for UI feedback
+      emit(
+        state.copyWith(
+          statusMessage: 'cosmeticLensSaved',
+          isSuccess: true,
+        ),
+      );
+
       debugPrint('Image saved successfully: $filePath');
+      // Refresh local gallery images in state
+      loadGallery();
     } catch (e) {
       debugPrint('Error saving image: $e');
-      rethrow;
+      emit(
+        state.copyWith(
+          statusMessage: 'cosmeticLensSaveError',
+          isSuccess: false,
+        ),
+      );
     }
+  }
+
+  Future<void> loadGallery() async {
+    try {
+      final files = await _galleryStorage.loadImages();
+      emit(state.copyWith(galleryImages: files.map((f) => f.path).toList()));
+    } catch (e) {
+      debugPrint('Error loading gallery: $e');
+    }
+  }
+
+  void pickFromInternalGallery(String imagePath) {
+    emit(state.copyWith(cameraPhoto: imagePath));
+  }
+
+  void clearStatus() {
+    emit(state.copyWith(statusMessage: null, isSuccess: null));
   }
 
   void selectLeftIris(String imagePath) {

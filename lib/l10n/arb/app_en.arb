@@ -290,16 +290,54 @@
   "menuPhotoSync": "Photo Sync",
   "photoSyncTitle": "Photo Sync",
   "photoSyncSubtitle": "Photo transfer without internet",
-  "photoSyncHost": "TÓTEM",
+  "photoSyncHost": "TOTEM",
   "photoSyncHostDesc": "This device receives photos",
   "photoSyncClient": "PHONE",
   "photoSyncClientDesc": "This device sends photos",
   "photoSyncScanQr": "Scan QR code",
   "photoSyncAutoReconnect": "Auto-reconnect",
-  "photoSyncConnected": "Connected to tótem",
+  "photoSyncConnected": "Connected to totem",
   "photoSyncTakePhoto": "Take photo",
   "photoSyncSending": "Sending photo...",
   "photoSyncSent": "Photo sent!",
   "photoSyncSendError": "Send error. Try again.",
-  "photoSyncWaiting": "Waiting for connections..."
+  "photoSyncWaiting": "Waiting for connections...",
+  "photoSyncStarting": "Starting access point...",
+  "photoSyncStartingDesc": "This may take a few seconds",
+  "photoSyncReceivedPhotos": "Received photos",
+  "photoSyncDevicesConnected": "{count} devices connected",
+  "@photoSyncDevicesConnected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "photoSyncNoConnections": "Waiting for connections...",
+  "photoSyncRetry": "Retry",
+  "photoSyncRoleHostActiveSubtitle": "Session active – receiving photos",
+  "photoSyncRoleHostInactiveSubtitle": "This device receives photos",
+  "photoSyncRoleHostActiveDesc": "You can use the rest of the app normally.\nPhotos will keep arriving in the background.",
+  "photoSyncRoleHostInactiveDesc": "Will show a QR code for other\ndevices to connect",
+  "photoSyncRoleClientTitle": "PHONE",
+  "photoSyncRoleClientSubtitle": "This device sends photos",
+  "photoSyncRoleClientDesc": "Scan the totem's QR to\nconnect and take photos",
+  "photoSyncDisconnect": "DISCONNECT TOTEM",
+  "photoSyncPhotosCount": "{count} photos",
+  "@photoSyncPhotosCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "photoSyncRoleSubtitle": "Photo synchronization",
+  "simSceneBuildingPositive": "Building Positive",
+  "simSceneBuildingNegative": "Building Negative",
+  "simSceneTextPositive": "Text Positive",
+  "simSceneTextNegative": "Text Negative",
+  "galleryTitle": "Gallery",
+  "vmInternalGallery": "Internal Gallery",
+  "cosmeticLensSaved": "Image saved successfully!",
+  "cosmeticLensSaveError": "Failed to save image"
 }

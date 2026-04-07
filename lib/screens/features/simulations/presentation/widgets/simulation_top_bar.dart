@@ -98,7 +98,7 @@ class SimulationTopBar extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              scenario.displayName,
+                              SimulationStrings.scenarioName(context, scenario),
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.9),
                                 fontSize: responsive.fontSize(isTablet ? 28 : 20),

@@ -138,6 +138,14 @@ class SimulationStrings {
         return context.l10n.simSceneConcert;
       case 'bridge':
         return context.l10n.simSceneBridge;
+      case 'building_positive':
+        return context.l10n.simSceneBuildingPositive;
+      case 'building_negative':
+        return context.l10n.simSceneBuildingNegative;
+      case 'text_positive':
+        return context.l10n.simSceneTextPositive;
+      case 'text_negative':
+        return context.l10n.simSceneTextNegative;
       case 'beach2':
         return context.l10n.simSceneBeach2;
       case 'car':

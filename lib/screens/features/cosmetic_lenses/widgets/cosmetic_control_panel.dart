@@ -4,6 +4,7 @@ import 'package:digipad_flutter/screens/features/cosmetic_lenses/cubit/cosmetic_
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:digipad_flutter/l10n/l10n.dart';
+import 'internal_gallery_dialog.dart';
 
 class CosmeticControlPanel extends StatelessWidget {
   const CosmeticControlPanel({super.key});
@@ -237,7 +238,71 @@ class CosmeticControlPanel extends StatelessWidget {
                       ),
                       _CircleIconButton(
                         icon: Icons.photo_library,
-                        onPressed: cubit.pickFromGallery,
+                        onPressed: () {
+                          // Show options for Phone Gallery or Internal Gallery
+                          showModalBottomSheet(
+                            context: context,
+                            backgroundColor: Colors.grey.shade900,
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.vertical(
+                                top: Radius.circular(24),
+                              ),
+                            ),
+                            builder: (context) {
+                              return SafeArea(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      ListTile(
+                                        leading: const Icon(
+                                          Icons.photo_album,
+                                          color: Colors.white,
+                                        ),
+                                        title: Text(
+                                          context.l10n.vmInternalGallery,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        onTap: () {
+                                          Navigator.of(context).pop();
+                                          showDialog(
+                                            context: context,
+                                            builder: (_) => BlocProvider.value(
+                                              value: cubit,
+                                              child:
+                                                  const InternalGalleryDialog(),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      ListTile(
+                                        leading: const Icon(
+                                          Icons.image_search,
+                                          color: Colors.white,
+                                        ),
+                                        title: Text(
+                                          context.l10n.galleryTitle,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        onTap: () {
+                                          Navigator.of(context).pop();
+                                          cubit.pickFromGallery();
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
                         size: responsive.controlPanelIconSize(32),
                         containerSize: responsive.controlPanelContainerSize(64),
                       ),

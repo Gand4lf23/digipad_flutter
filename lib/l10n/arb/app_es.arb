@@ -290,16 +290,54 @@
   "menuPhotoSync": "Photo Sync",
   "photoSyncTitle": "Photo Sync",
   "photoSyncSubtitle": "Transferencia de fotos sin internet",
-  "photoSyncHost": "TÓTEM",
+  "photoSyncHost": "TOTEM",
   "photoSyncHostDesc": "Este dispositivo recibe fotos",
   "photoSyncClient": "CELULAR",
   "photoSyncClientDesc": "Este dispositivo envía fotos",
   "photoSyncScanQr": "Escanear código QR",
   "photoSyncAutoReconnect": "Reconectar automáticamente",
-  "photoSyncConnected": "Conectado al tótem",
+  "photoSyncConnected": "Conectado al totem",
   "photoSyncTakePhoto": "Sacar foto",
   "photoSyncSending": "Enviando foto...",
   "photoSyncSent": "¡Foto enviada!",
   "photoSyncSendError": "Error al enviar. Intentá de nuevo.",
-  "photoSyncWaiting": "Esperando conexiones..."
+  "photoSyncWaiting": "Esperando conexiones...",
+  "photoSyncRoleHostActiveSubtitle": "Sesión activa – recibiendo fotos",
+  "photoSyncRoleHostInactiveSubtitle": "Este dispositivo recibe fotos",
+  "photoSyncRoleHostActiveDesc": "Podés usar el resto de la app normalmente.\nLas fotos seguirán llegando en segundo plano.",
+  "photoSyncRoleHostInactiveDesc": "Mostrará un código QR para que otros\ndispositivos se conecten",
+  "photoSyncRoleClientTitle": "CELULAR",
+  "photoSyncRoleClientSubtitle": "Este dispositivo envía fotos",
+  "photoSyncRoleClientDesc": "Escaneá el QR del totem para\nconectarte y sacar fotos",
+  "photoSyncDisconnect": "DESCONECTAR TOTEM",
+  "photoSyncPhotosCount": "{count} fotos",
+  "@photoSyncPhotosCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "photoSyncRoleSubtitle": "Sincronización de fotos",
+  "simSceneBuildingPositive": "Edificio Positivo",
+  "simSceneBuildingNegative": "Edificio Negativo",
+  "simSceneTextPositive": "Lectura Positivo",
+  "simSceneTextNegative": "Lectura Negativo",
+  "photoSyncStarting": "Iniciando punto de acceso...",
+  "photoSyncStartingDesc": "Esto puede tomar unos segundos",
+  "photoSyncReceivedPhotos": "Fotos recibidas",
+  "photoSyncDevicesConnected": "{count} dispositivo(s) conectado(s)",
+  "@photoSyncDevicesConnected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "photoSyncNoConnections": "Esperando conexiones...",
+  "photoSyncRetry": "Reintentar",
+  "galleryTitle": "Galería",
+  "vmInternalGallery": "Galería Interna",
+  "cosmeticLensSaved": "¡Imagen guardada con éxito!",
+  "cosmeticLensSaveError": "Error al guardar la imagen"
 }

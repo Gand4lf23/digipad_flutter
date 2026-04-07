@@ -258,7 +258,7 @@
   "activationTitle": "Ativação do Dispositivo",
   "activationEnterEmail": "Por favor, digite seu e-mail para solicitar acesso.",
   "activationEmailLabel": "E-mail",
-  "activationRequestAccess": "Solicitar Acesso",
+  "activationRequestAccess": "Solicitar Aceso",
   "activationAwaitingApproval": "Aguardando Aprovação",
   "activationPendingMessage": "Sua solicitação de ativação do dispositivo está aguardando aprovação.\nE-mail: {email}",
   "@activationPendingMessage": {
@@ -289,7 +289,7 @@
   "simCatMonofocalDesc": "Correção visual com um único ponto focal",
   "menuPhotoSync": "Photo Sync",
   "photoSyncTitle": "Photo Sync",
-  "photoSyncSubtitle": "Transferência de fotos sem internet",
+  "photoSyncSubtitle": "Transferencia de fotos sem internet",
   "photoSyncHost": "TOTEM",
   "photoSyncHostDesc": "Este dispositivo recebe fotos",
   "photoSyncClient": "CELULAR",
@@ -301,5 +301,43 @@
   "photoSyncSending": "Enviando foto...",
   "photoSyncSent": "Foto enviada!",
   "photoSyncSendError": "Erro ao enviar. Tente novamente.",
-  "photoSyncWaiting": "Aguardando conexões..."
+  "photoSyncWaiting": "Aguardando conexões...",
+  "photoSyncRoleHostActiveSubtitle": "Sessão ativa – recebendo fotos",
+  "photoSyncRoleHostInactiveSubtitle": "Este dispositivo recebe fotos",
+  "photoSyncRoleHostActiveDesc": "Você pode usar o resto do app normalmente.\nAs fotos continuarão chegando em segundo plano.",
+  "photoSyncRoleHostInactiveDesc": "Mostrará um código QR para outros\ndispositivos conectarem",
+  "photoSyncRoleClientTitle": "CELULAR",
+  "photoSyncRoleClientSubtitle": "Este dispositivo envia fotos",
+  "photoSyncRoleClientDesc": "Escaneie o QR do totem para\nconectar e tirar fotos",
+  "photoSyncDisconnect": "DESCONECTAR TOTEM",
+  "photoSyncPhotosCount": "{count} fotos",
+  "@photoSyncPhotosCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "photoSyncRoleSubtitle": "Sincronização de fotos",
+  "simSceneBuildingPositive": "Edifício Positivo",
+  "simSceneBuildingNegative": "Edifício Negativo",
+  "simSceneTextPositive": "Leitura Positivo",
+  "simSceneTextNegative": "Leitura Negativo",
+  "photoSyncStarting": "Iniciando ponto de acesso...",
+  "photoSyncStartingDesc": "Isso pode levar alguns segundos",
+  "photoSyncReceivedPhotos": "Fotos recebidas",
+  "photoSyncDevicesConnected": "{count} dispositivo(s) conectado(s)",
+  "@photoSyncDevicesConnected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "photoSyncNoConnections": "Aguardando conexões...",
+  "photoSyncRetry": "Tentar novamente",
+  "galleryTitle": "Galeria",
+  "vmInternalGallery": "Galeria Interna",
+  "cosmeticLensSaved": "Imagem salva com sucesso!",
+  "cosmeticLensSaveError": "Falha ao salvar a imagem"
 }

@@ -369,29 +369,6 @@ class SimulationData {
           ),
         ],
       ),
-      SimulationScenario(
-        id: 'bifocal_driving',
-        sceneName: 'driving',
-        displayName: 'Driving Comparison',
-        problemImagePath: '$_basePath/bifocal/BifocalManejando.webp', // Using as base if no separate no-lens exists
-        correctionLenses: [
-          CorrectionLens(
-            id: 'bifocal_driving_standard',
-            name: 'bifocal',
-            displayName: 'Bifocal Lens',
-            correctedImagePath: '$_basePath/bifocal/BifocalManejando.webp',
-            quality: LensQuality.standard,
-          ),
-          CorrectionLens(
-            id: 'bifocal_driving_multifocal',
-            name: 'multifocal',
-            displayName: 'Multifocal Lens',
-            correctedImagePath:
-                '$_basePath/bifocal/BifocalManejandoMultifocal.webp',
-            quality: LensQuality.premium,
-          ),
-        ],
-      ),
     ],
   );
 
@@ -1440,9 +1417,7 @@ class SimulationData {
         ],
       ),
     ],
-  );
-
-  // ===================== ASPHERIC =====================
+  );  // ===================== ASPHERIC =====================
   static final SimulationCategory _asphericCategory = SimulationCategory(
     id: 'aspheric',
     name: 'aspheric',
@@ -1451,10 +1426,11 @@ class SimulationData {
     icon: Icons.unfold_less,
     color: Colors.deepPurple,
     scenarios: [
+      // Building Positive
       SimulationScenario(
-        id: 'aspheric_comparison',
-        sceneName: 'comparison',
-        displayName: 'Lens Comparison',
+        id: 'aspheric_building_pos',
+        sceneName: 'building_positive',
+        displayName: 'Building Positive',
         problemImagePath: '$_basePath/aspheric/asferico_sin.jpg',
         correctionLenses: [
           CorrectionLens(
@@ -1479,6 +1455,22 @@ class SimulationData {
             quality: LensQuality.standard,
           ),
           CorrectionLens(
+            id: 'asferico_pos',
+            name: 'aspheric',
+            displayName: 'Aspheric Lens',
+            correctedImagePath: '$_basePath/aspheric/asferico_si.jpg',
+            quality: LensQuality.premium,
+          ),
+        ],
+      ),
+      // Building Negative
+      SimulationScenario(
+        id: 'aspheric_building_neg',
+        sceneName: 'building_negative',
+        displayName: 'Building Negative',
+        problemImagePath: '$_basePath/aspheric/asferico_sin.jpg',
+        correctionLenses: [
+          CorrectionLens(
             id: 'estandar_me4',
             name: 'standard__4',
             displayName: '-4.00 Standard',
@@ -1489,7 +1481,7 @@ class SimulationData {
             id: 'estandar_me6',
             name: 'standard__6',
             displayName: '-6.00 Standard',
-            correctedImagePath: '$_basePath/aspheric/asferico_no__6.jpg', // corrected path
+            correctedImagePath: '$_basePath/aspheric/asferico_no__6.jpg',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
@@ -1500,10 +1492,84 @@ class SimulationData {
             quality: LensQuality.standard,
           ),
           CorrectionLens(
-            id: 'asferico',
+            id: 'asferico_neg',
             name: 'aspheric',
             displayName: 'Aspheric Lens',
             correctedImagePath: '$_basePath/aspheric/asferico_si.jpg',
+            quality: LensQuality.premium,
+          ),
+        ],
+      ),
+      // Text Positive
+      SimulationScenario(
+        id: 'aspheric_text_pos',
+        sceneName: 'text_positive',
+        displayName: 'Text Positive',
+        problemImagePath: '$_basePath/aspheric/Asferico_Texto_Sin.jpg',
+        correctionLenses: [
+          CorrectionLens(
+            id: 'text_ma4',
+            name: 'standard_4',
+            displayName: '+4.00 Standard',
+            correctedImagePath: '$_basePath/aspheric/Asferico_Texto_4.jpg',
+            quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'text_ma6',
+            name: 'standard_6',
+            displayName: '+6.00 Standard',
+            correctedImagePath: '$_basePath/aspheric/Asferico_Texto_6.jpg',
+            quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'text_ma8',
+            name: 'standard_8',
+            displayName: '+8.00 Standard',
+            correctedImagePath: '$_basePath/aspheric/Asferico_Texto_8.jpg',
+            quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'text_asferico_pos',
+            name: 'aspheric',
+            displayName: 'Aspheric Lens',
+            correctedImagePath: '$_basePath/aspheric/Asferico_Texto_Si.jpg',
+            quality: LensQuality.premium,
+          ),
+        ],
+      ),
+      // Text Negative
+      SimulationScenario(
+        id: 'aspheric_text_neg',
+        sceneName: 'text_negative',
+        displayName: 'Text Negative',
+        problemImagePath: '$_basePath/aspheric/Asferico_Texto_Sin.jpg',
+        correctionLenses: [
+          CorrectionLens(
+            id: 'text_me4',
+            name: 'standard__4',
+            displayName: '-4.00 Standard',
+            correctedImagePath: '$_basePath/aspheric/Asferico_Texto__4.jpg',
+            quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'text_me6',
+            name: 'standard__6',
+            displayName: '-6.00 Standard',
+            correctedImagePath: '$_basePath/aspheric/Asferico_Texto__6.jpg',
+            quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'text_me8',
+            name: 'standard__8',
+            displayName: '-8.00 Standard',
+            correctedImagePath: '$_basePath/aspheric/Asferico_Texto__8.jpg',
+            quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'text_asferico_neg',
+            name: 'aspheric',
+            displayName: 'Aspheric Lens',
+            correctedImagePath: '$_basePath/aspheric/Asferico_Texto_Si.jpg',
             quality: LensQuality.premium,
           ),
         ],

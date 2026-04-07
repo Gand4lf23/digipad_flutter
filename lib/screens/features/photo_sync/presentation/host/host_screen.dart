@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../cubit/photo_sync_host_cubit.dart';
 import '../../cubit/photo_sync_host_state.dart';
+import 'package:digipad_flutter/l10n/l10n.dart';
 import 'host_qr_display.dart';
 import 'host_gallery.dart';
 
@@ -40,14 +41,15 @@ class HostScreen extends StatelessWidget {
             height: 64,
             child: CircularProgressIndicator(
               strokeWidth: 3,
-              valueColor:
-                  AlwaysStoppedAnimation<Color>(const Color(0xFF6C63FF)),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                const Color(0xFF6C63FF),
+              ),
             ),
           ),
           const SizedBox(height: 24),
           Text(
-            'Iniciando punto de acceso...',
-            style: TextStyle(
+            context.l10n.photoSyncStarting,
+            style: const TextStyle(
               color: Colors.white70,
               fontSize: 18,
               fontWeight: FontWeight.w500,
@@ -55,11 +57,8 @@ class HostScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Esto puede tomar unos segundos',
-            style: TextStyle(
-              color: Colors.white30,
-              fontSize: 14,
-            ),
+            context.l10n.photoSyncStartingDesc,
+            style: const TextStyle(color: Colors.white30, fontSize: 14),
           ),
         ],
       ),
@@ -78,8 +77,7 @@ class HostScreen extends StatelessWidget {
     }
   }
 
-  Widget _buildPortraitLayout(
-      BuildContext context, PhotoSyncHostReady state) {
+  Widget _buildPortraitLayout(BuildContext context, PhotoSyncHostReady state) {
     return Column(
       children: [
         _buildTopBar(context, state),
@@ -87,25 +85,23 @@ class HostScreen extends StatelessWidget {
         // QR Section
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: HostQrDisplay(
-            qrData: state.qrData,
-            ssid: state.ssid,
-          ),
+          child: HostQrDisplay(qrData: state.qrData, ssid: state.ssid),
         ),
         const SizedBox(height: 16),
         // Connection status
-        _buildConnectionStatus(state),
+        _buildConnectionStatus(context, state),
         const SizedBox(height: 12),
         // Gallery
-        Expanded(
-          child: HostGallery(images: state.receivedImages),
-        ),
+        Expanded(child: HostGallery(images: state.receivedImages)),
       ],
     );
   }
 
   Widget _buildLandscapeLayout(
-      BuildContext context, PhotoSyncHostReady state, double screenWidth) {
+    BuildContext context,
+    PhotoSyncHostReady state,
+    double screenWidth,
+  ) {
     return Row(
       children: [
         // Left: QR + status
@@ -127,7 +123,7 @@ class HostScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      _buildConnectionStatus(state),
+                      _buildConnectionStatus(context, state),
                     ],
                   ),
                 ),
@@ -145,17 +141,15 @@ class HostScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                 child: Text(
-                  'Fotos recibidas',
-                  style: TextStyle(
+                  context.l10n.photoSyncReceivedPhotos,
+                  style: const TextStyle(
                     color: Colors.white70,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
-              Expanded(
-                child: HostGallery(images: state.receivedImages),
-              ),
+              Expanded(child: HostGallery(images: state.receivedImages)),
             ],
           ),
         ),
@@ -170,16 +164,18 @@ class HostScreen extends StatelessWidget {
         children: [
           IconButton(
             onPressed: () {
-              context.read<PhotoSyncHostCubit>().stopHosting();
               Navigator.of(context).pop();
             },
-            icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                color: Colors.white70, size: 20),
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: Colors.white70,
+              size: 20,
+            ),
           ),
           Expanded(
             child: Text(
-              'Tótem - Photo Sync',
-              style: TextStyle(
+              '${context.l10n.photoSyncHost} - ${context.l10n.photoSyncTitle}',
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -190,16 +186,20 @@ class HostScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFF6C63FF).withOpacity(0.2),
+              color: const Color(0xFF6C63FF).withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                  color: const Color(0xFF6C63FF).withOpacity(0.3)),
+                color: const Color(0xFF6C63FF).withValues(alpha: 0.3),
+              ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.photo_library_rounded,
-                    color: const Color(0xFF9D97FF), size: 16),
+                Icon(
+                  Icons.photo_library_rounded,
+                  color: const Color(0xFF9D97FF),
+                  size: 16,
+                ),
                 const SizedBox(width: 6),
                 Text(
                   '${state.receivedImages.length}',
@@ -217,7 +217,7 @@ class HostScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildConnectionStatus(PhotoSyncHostReady state) {
+  Widget _buildConnectionStatus(BuildContext context, PhotoSyncHostReady state) {
     final clientCount = state.connectedClients.length;
     final isConnected = clientCount > 0;
 
@@ -228,12 +228,12 @@ class HostScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: isConnected
-              ? const Color(0xFF00BFA6).withOpacity(0.1)
-              : Colors.white.withOpacity(0.05),
+              ? const Color(0xFF00BFA6).withValues(alpha: 0.1)
+              : Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isConnected
-                ? const Color(0xFF00BFA6).withOpacity(0.3)
+                ? const Color(0xFF00BFA6).withValues(alpha: 0.3)
                 : Colors.white10,
           ),
         ),
@@ -241,23 +241,17 @@ class HostScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              isConnected
-                  ? Icons.wifi_rounded
-                  : Icons.wifi_find_rounded,
-              color: isConnected
-                  ? const Color(0xFF5EFCE8)
-                  : Colors.white38,
+              isConnected ? Icons.wifi_rounded : Icons.wifi_find_rounded,
+              color: isConnected ? const Color(0xFF5EFCE8) : Colors.white38,
               size: 20,
             ),
             const SizedBox(width: 10),
             Text(
               isConnected
-                  ? '$clientCount dispositivo${clientCount > 1 ? 's' : ''} conectado${clientCount > 1 ? 's' : ''}'
-                  : 'Esperando conexiones...',
+                  ? context.l10n.photoSyncDevicesConnected(clientCount)
+                  : context.l10n.photoSyncNoConnections,
               style: TextStyle(
-                color: isConnected
-                    ? const Color(0xFF5EFCE8)
-                    : Colors.white38,
+                color: isConnected ? const Color(0xFF5EFCE8) : Colors.white38,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -275,12 +269,15 @@ class HostScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline_rounded,
-                color: Colors.redAccent, size: 64),
+            Icon(
+              Icons.error_outline_rounded,
+              color: Colors.redAccent,
+              size: 64,
+            ),
             const SizedBox(height: 20),
             Text(
-              'Error',
-              style: TextStyle(
+              context.l10n.activationErrorTitle,
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
@@ -290,10 +287,7 @@ class HostScreen extends StatelessWidget {
             Text(
               state.message,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white54,
-                fontSize: 15,
-              ),
+              style: TextStyle(color: Colors.white54, fontSize: 15),
             ),
             const SizedBox(height: 28),
             ElevatedButton.icon(
@@ -301,14 +295,17 @@ class HostScreen extends StatelessWidget {
                 context.read<PhotoSyncHostCubit>().startHosting();
               },
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Reintentar'),
+              label: Text(context.l10n.photoSyncRetry),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF6C63FF),
                 foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 14,
+                ),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
             ),
           ],

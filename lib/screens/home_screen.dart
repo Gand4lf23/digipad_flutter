@@ -3,6 +3,8 @@ import 'package:digipad_flutter/common/components/d_image.dart';
 import 'package:digipad_flutter/data/local/gallery_storage.dart';
 import 'package:digipad_flutter/screens/features/lenses_3d/cubit/lenses_3d_cubit.dart';
 import 'package:digipad_flutter/screens/features/lenses_3d/presentation/lenses_3d_screen.dart';
+import 'package:digipad_flutter/screens/features/photo_sync/cubit/photo_sync_host_cubit.dart';
+import 'package:digipad_flutter/screens/features/photo_sync/cubit/photo_sync_host_state.dart';
 import 'package:digipad_flutter/screens/features/simulations/presentation/main_simulations_grid_screen.dart';
 import 'package:digipad_flutter/screens/features/virtual_mirror/cubit/virtual_mirror_cubit.dart';
 import 'package:digipad_flutter/screens/features/virtual_mirror/presentation/virtual_mirror_screen.dart';
@@ -18,227 +20,285 @@ import 'package:digipad_flutter/l10n/l10n.dart';
 import 'package:digipad_flutter/main.dart';
 import 'package:digipad_flutter/digi_locale.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
+  State<HomeScreen> createState() => _HomeScreenState();
+}
 
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: DImage(imageName: 'background').provider,
-            fit: BoxFit.cover,
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
+  // ── Session-scoped TOTEM cubit ──────────────────────────────────────────────
+  late final PhotoSyncHostCubit _hostCubit;
+  late final GalleryStorage _galleryStorage;
+
+  // ── Entrance animation ──────────────────────────────────────────────────────
+  late final AnimationController _entranceController;
+  static const int _moduleCount = 7;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _galleryStorage = GalleryStorage();
+    _hostCubit = PhotoSyncHostCubit(_galleryStorage);
+
+    _entranceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..forward();
+  }
+
+  @override
+  void dispose() {
+    _entranceController.dispose();
+    _hostCubit.close();
+    super.dispose();
+  }
+
+  // ── Module definitions (order = visual top-to-bottom) ──────────────────────
+  List<_ModuleDef> _modules(BuildContext context) => [
+    _ModuleDef(
+      key: 'virtual_mirror',
+      title: context.l10n.menuVirtualMirror,
+      icon: Icons.face_retouching_natural,
+      color: Colors.white,
+      top: MediaQuery.of(context).size.height * 0.05,
+      left: 75,
+    ),
+    _ModuleDef(
+      key: 'simulations',
+      title: context.l10n.menuSimulations,
+      icon: Icons.auto_fix_high,
+      color: const Color(0xFF4CAF50),
+      top: MediaQuery.of(context).size.height * 0.17,
+      left: 60,
+    ),
+    _ModuleDef(
+      key: 'lenses_3d',
+      title: context.l10n.menuLenses3D,
+      icon: Icons.view_in_ar,
+      color: Colors.white,
+      top: MediaQuery.of(context).size.height * 0.30,
+      left: 45,
+    ),
+    _ModuleDef(
+      key: 'cosmetic_lenses',
+      title: context.l10n.menuCosmeticLenses,
+      icon: Icons.remove_red_eye_outlined,
+      color: const Color(0xFF2196F3),
+      top: MediaQuery.of(context).size.height * 0.43,
+      left: 30,
+    ),
+    _ModuleDef(
+      key: 'measurements',
+      title: context.l10n.menuMeasurements,
+      icon: Icons.straighten,
+      color: const Color(0xFFFB8C00),
+      top: MediaQuery.of(context).size.height * 0.55,
+      left: 45,
+    ),
+    _ModuleDef(
+      key: 'visual_health',
+      title: context.l10n.menuVisualHealth,
+      icon: Icons.health_and_safety_outlined,
+      color: const Color(0xFFFFD600),
+      top: MediaQuery.of(context).size.height * 0.67,
+      left: 60,
+    ),
+    _ModuleDef(
+      key: 'photo_sync',
+      title: context.l10n.menuPhotoSync,
+      icon: Icons.sync_alt_rounded,
+      color: const Color(0xFF00BFA6),
+      top: MediaQuery.of(context).size.height * 0.79,
+      left: 75,
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final modules = _modules(context);
+
+    return BlocProvider.value(
+      value: _hostCubit,
+      child: Scaffold(
+        body: Container(
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: DImage(imageName: 'background').provider,
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: Stack(
-            children: [
-              _buildArchMenuItem(
-                context: context,
-                title: context.l10n.menuVirtualMirror,
-                moduleId: 'virtual_mirror',
-                icon: Icons.face_retouching_natural, // Face/Mirror icon
-                color: Colors.white,
-                top: screenHeight * 0.05,
-                left: 60,
-                onTap: () => _navigateToModule(context, 'virtual_mirror'),
-              ),
-              _buildArchMenuItem(
-                context: context,
-                title: context.l10n.menuSimulations,
-                moduleId: 'simulations',
-                icon: Icons.auto_fix_high, // Magic/Simulation icon
-                color: const Color(0xFF4CAF50),
-                top: screenHeight * 0.17,
-                left: 35,
-                onTap: () => _navigateToModule(context, 'simulations'),
-              ),
-              _buildArchMenuItem(
-                context: context,
-                title: context.l10n.menuLenses3D,
-                moduleId: 'lenses_3d',
-                icon: Icons.view_in_ar, // 3D/AR icon
-                color: Colors.white,
-                top: screenHeight * 0.30,
-                left: 20,
-                onTap: () => _navigateToModule(context, 'lenses_3d'),
-              ),
-              _buildArchMenuItem(
-                context: context,
-                title: context.l10n.menuCosmeticLenses,
-                moduleId: 'cosmetic_lenses',
-                icon: Icons.remove_red_eye_outlined, // Eye icon
-                color: const Color(0xFF2196F3),
-                top: screenHeight * 0.43,
-                left: 30,
-                onTap: () => _navigateToModule(context, 'cosmetic_lenses'),
-              ),
-              _buildArchMenuItem(
-                context: context,
-                title: context.l10n.menuMeasurements,
-                moduleId: 'measurements',
-                icon: Icons.straighten, // Ruler/Measurement icon
-                color: const Color(0xFFFB8C00),
-                top: screenHeight * 0.55,
-                left: 45,
-                onTap: () => _navigateToModule(context, 'measurements'),
-              ),
-              _buildArchMenuItem(
-                context: context,
-                title: context.l10n.menuVisualHealth,
-                moduleId: 'visual_health',
-                icon: Icons.health_and_safety_outlined, // Health icon
-                color: const Color(0xFFFFD600),
-                top: screenHeight * 0.67,
-                left: 70,
-                onTap: () => _navigateToModule(context, 'visual_health'),
-              ),
-              _buildArchMenuItem(
-                context: context,
-                title: 'Photo Sync',
-                moduleId: 'photo_sync',
-                icon: Icons.sync_alt_rounded,
-                color: const Color(0xFF00BFA6),
-                top: screenHeight * 0.79,
-                left: 55,
-                onTap: () => _navigateToModule(context, 'photo_sync'),
-              ),
-              Positioned(
-                top: 8,
-                right: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: Colors.white24),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<LanguageCodeType>(
-                      dropdownColor: Colors.grey.shade900,
-                      iconEnabledColor: Colors.white,
-                      value: LanguageCodeType.values.firstWhere(
-                        (e) =>
-                            e.name ==
-                            Localizations.localeOf(context).languageCode,
-                        orElse: () => LanguageCodeType.en,
+          child: SafeArea(
+            child: Stack(
+              children: [
+                // ── Staggered module cards ────────────────────────────────────
+                for (int i = 0; i < modules.length; i++)
+                  Positioned(
+                    top: modules[i].top,
+                    left: modules[i].left,
+                    child: _AnimatedModuleItem(
+                      index: i,
+                      total: _moduleCount,
+                      controller: _entranceController,
+                      child: _buildArchMenuItem(
+                        context: context,
+                        def: modules[i],
+                        onTap: () => _navigateToModule(context, modules[i].key),
                       ),
-                      items: LanguageCodeType.values.map((e) {
-                        final code = e.name;
-                        final label = code == 'en'
-                            ? context.l10n.languageEnglish
-                            : code == 'es'
-                            ? context.l10n.languageSpanish
-                            : context.l10n.languagePortuguese;
-                        return DropdownMenuItem(
-                          value: e,
-                          child: Text(
-                            label,
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val == null) return;
-                        MyApp.setLocale(context, Locale(val.name));
-                      },
+                    ),
+                  ),
+
+                // ── Language picker ───────────────────────────────────────────
+                Positioned(
+                  top: 8,
+                  right: 24,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: Colors.white24),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<LanguageCodeType>(
+                        dropdownColor: Colors.grey.shade900,
+                        iconEnabledColor: Colors.white,
+                        value: LanguageCodeType.values.firstWhere(
+                          (e) =>
+                              e.name ==
+                              Localizations.localeOf(context).languageCode,
+                          orElse: () => LanguageCodeType.en,
+                        ),
+                        items: LanguageCodeType.values.map((e) {
+                          final code = e.name;
+                          final label = code == 'en'
+                              ? context.l10n.languageEnglish
+                              : code == 'es'
+                              ? context.l10n.languageSpanish
+                              : context.l10n.languagePortuguese;
+                          return DropdownMenuItem(
+                            value: e,
+                            child: Text(
+                              label,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          if (val == null) return;
+                          MyApp.setLocale(context, Locale(val.name));
+                        },
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildArchMenuItem({
-    required BuildContext context,
-    required String title,
-    required String moduleId,
-    required IconData icon, // Changed from svgName to IconData
-    required Color color,
-    required double top,
-    required double left,
-    required VoidCallback onTap,
-  }) {
-    final buttonWidth = MediaQuery.of(context).size.width * 0.42;
-    final buttonHeight = MediaQuery.of(context).size.height * 0.06;
-    // Use a dark color for the icon when the button color is white
-    final iconColor = color;
-
-    return Positioned(
-      top: top,
-      left: left,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(50),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(50),
-            child: Container(
-              width: buttonWidth,
-              height: buttonHeight,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(50),
-                border: Border.all(color: color.withOpacity(0.4), width: 1.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.25),
-                    spreadRadius: 2,
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+                // ── TOTEM active badge (top-left, below language picker) ──────
+                Positioned(
+                  top: 8,
+                  left: 12,
+                  child: BlocBuilder<PhotoSyncHostCubit, PhotoSyncHostState>(
+                    bloc: _hostCubit,
+                    builder: (context, state) {
+                      if (state is! PhotoSyncHostReady) {
+                        return const SizedBox.shrink();
+                      }
+                      return _TotemActiveBadge(
+                        imageCount: state.receivedImages.length,
+                      );
+                    },
                   ),
-                ],
-              ),
-              padding: const EdgeInsets.only(left: 8, right: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    // Center the icon inside the circular container
-                    alignment: Alignment.center,
-                    decoration: const BoxDecoration(shape: BoxShape.circle),
-                    // Replaced DSvg with Icon
-                    child: Icon(icon, color: iconColor, size: 24),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.95),
-                        fontSize: 16,
-
-                        fontWeight: FontWeight.bold,
-                        shadows: [
-                          const Shadow(
-                            blurRadius: 4.0,
-                            color: Colors.black87,
-                            offset: Offset(1.0, 1.0),
-                          ),
-                        ],
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 2,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
       ),
     );
   }
+
+  // ── Individual pill button ────────────────────────────────────────────────
+
+  Widget _buildArchMenuItem({
+    required BuildContext context,
+    required _ModuleDef def,
+    required VoidCallback onTap,
+  }) {
+    final buttonWidth = MediaQuery.of(context).size.width * 0.4;
+    final buttonHeight = MediaQuery.of(context).size.height * 0.06;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(50),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(50),
+          child: Container(
+            width: buttonWidth,
+            height: buttonHeight,
+            decoration: BoxDecoration(
+              color: def.color.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(50),
+              border: Border.all(
+                color: def.color.withValues(alpha: 0.4),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.25),
+                  spreadRadius: 2,
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.only(left: 16, right: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(shape: BoxShape.circle),
+                  child: Icon(def.icon, color: def.color, size: 36),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    def.title,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.95),
+                      fontSize: 24,
+                      fontWeight: FontWeight.w500,
+                      shadows: const [
+                        Shadow(
+                          blurRadius: 4.0,
+                          color: Colors.black87,
+                          offset: Offset(1.0, 1.0),
+                        ),
+                      ],
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Navigation ────────────────────────────────────────────────────────────
 
   void _navigateToModule(BuildContext context, String moduleId) {
     if (moduleId == 'virtual_mirror') {
@@ -294,10 +354,14 @@ class HomeScreen extends StatelessWidget {
         ),
       );
     } else if (moduleId == 'photo_sync') {
+      // Pass the session-level cubit into the role screen.
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => const PhotoSyncRoleScreen(),
+          builder: (context) => BlocProvider.value(
+            value: _hostCubit,
+            child: const PhotoSyncRoleScreen(),
+          ),
         ),
       );
     } else {
@@ -324,5 +388,116 @@ class HomeScreen extends StatelessWidget {
         },
       );
     }
+  }
+}
+
+// ── Helper data class ──────────────────────────────────────────────────────────
+
+class _ModuleDef {
+  final String key;
+  final String title;
+  final IconData icon;
+  final Color color;
+  final double top;
+  final double left;
+
+  const _ModuleDef({
+    required this.key,
+    required this.title,
+    required this.icon,
+    required this.color,
+    required this.top,
+    required this.left,
+  });
+}
+
+// ── Staggered entrance widget ─────────────────────────────────────────────────
+
+class _AnimatedModuleItem extends StatelessWidget {
+  final int index;
+  final int total;
+  final AnimationController controller;
+  final Widget child;
+
+  const _AnimatedModuleItem({
+    required this.index,
+    required this.total,
+    required this.controller,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Each card starts 80 ms later than the previous one.
+    final stagger = index / total;
+    final start = stagger * 0.55;
+    final end = (start + 0.45).clamp(0.0, 1.0);
+
+    final slide = Tween<Offset>(begin: const Offset(0, -0.6), end: Offset.zero)
+        .animate(
+          CurvedAnimation(
+            parent: controller,
+            curve: Interval(start, end, curve: Curves.easeOutBack),
+          ),
+        );
+
+    final fade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: controller,
+        curve: Interval(start, end, curve: Curves.easeIn),
+      ),
+    );
+
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) => FadeTransition(
+        opacity: fade,
+        child: SlideTransition(position: slide, child: child),
+      ),
+    );
+  }
+}
+
+// ── TOTEM active badge ────────────────────────────────────────────────────────
+
+class _TotemActiveBadge extends StatelessWidget {
+  final int imageCount;
+  const _TotemActiveBadge({required this.imageCount});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF00BFA6).withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF5EFCE8), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF00BFA6).withValues(alpha: 0.5),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.wifi_tethering_rounded,
+            color: Colors.white,
+            size: 14,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            'TÓTEM · $imageCount 📷',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

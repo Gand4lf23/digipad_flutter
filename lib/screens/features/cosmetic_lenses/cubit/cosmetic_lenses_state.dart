@@ -39,16 +39,22 @@ class CosmeticLensesState {
   final Map<String, List<String>> availableIris;
   final IrisConfig leftIris;
   final IrisConfig rightIris;
+  final List<String> galleryImages; // Paths to images in Sembast
   final EyeSelection activeEye;
   final bool isInitialized;
+  final String? statusMessage;
+  final bool? isSuccess;
 
   CosmeticLensesState({
     this.cameraPhoto,
     this.availableIris = const {},
     IrisConfig? leftIris,
     IrisConfig? rightIris,
+    this.galleryImages = const [],
     this.activeEye = EyeSelection.both,
     this.isInitialized = false,
+    this.statusMessage,
+    this.isSuccess,
   }) : leftIris = leftIris ?? IrisConfig(),
        rightIris = rightIris ?? IrisConfig();
 
@@ -57,8 +63,11 @@ class CosmeticLensesState {
     Map<String, List<String>>? availableIris,
     IrisConfig? leftIris,
     IrisConfig? rightIris,
+    List<String>? galleryImages,
     EyeSelection? activeEye,
     bool? isInitialized,
+    Object? statusMessage = _sentinel,
+    bool? isSuccess,
   }) {
     return CosmeticLensesState(
       cameraPhoto: cameraPhoto == _sentinel
@@ -67,8 +76,13 @@ class CosmeticLensesState {
       availableIris: availableIris ?? this.availableIris,
       leftIris: leftIris ?? this.leftIris,
       rightIris: rightIris ?? this.rightIris,
+      galleryImages: galleryImages ?? this.galleryImages,
       activeEye: activeEye ?? this.activeEye,
       isInitialized: isInitialized ?? this.isInitialized,
+      statusMessage: statusMessage == _sentinel
+          ? this.statusMessage
+          : statusMessage as String?,
+      isSuccess: isSuccess ?? this.isSuccess,
     );
   }
 
