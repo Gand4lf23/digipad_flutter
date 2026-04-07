@@ -51,7 +51,7 @@ class SimulationsState {
     this.lensOpacity = 0.5,
     this.isDragging = false,
     this.lensPosition = const Offset(500, 400), // Default lens position (will be centered in UI)
-    this.lensRadius = 200, // Default lens radius (twice the previous size)
+    this.lensRadius = 150, // Default lens radius reduced by 25%
     this.isLensDraggingMode = true, // Default to lens mode instead of divider
     this.isLoading = false,
     this.errorMessage,

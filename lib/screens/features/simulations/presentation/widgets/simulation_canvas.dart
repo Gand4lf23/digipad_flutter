@@ -33,7 +33,7 @@ class SimulationCanvas extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isFullImageMode =
-        ['multifocal', 'presbyopia', 'myopia', 'monofocal', 'aspheric', 'bifocal']
+        ['multifocal', 'presbyopia', 'myopia', 'aspheric', 'bifocal']
             .contains(
       category.id,
     );

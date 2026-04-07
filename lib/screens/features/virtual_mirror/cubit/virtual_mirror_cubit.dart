@@ -5,6 +5,8 @@ import 'package:digipad_flutter/data/local/gallery_storage.dart';
 import 'package:digipad_flutter/screens/features/virtual_mirror/cubit/virtual_mirror_state.dart';
 import 'package:digipad_flutter/screens/features/virtual_mirror/presentation/virtual_mirror_screen.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 
 class VirtualMirrorCubit extends Cubit<VirtualMirrorState> {
   final ImagePicker _picker = ImagePicker();
@@ -22,7 +24,7 @@ class VirtualMirrorCubit extends Cubit<VirtualMirrorState> {
     final photo = await _picker.pickImage(source: ImageSource.camera);
     if (photo != null) {
       File file = File(photo.path);
-      //file = await fixImageRotation(file);
+      file = await _persistFile(file, 'image');
       await storage.saveImage(file);
       emit(state.copyWith(galleryImages: [file, ...state.galleryImages]));
     }
@@ -31,7 +33,8 @@ class VirtualMirrorCubit extends Cubit<VirtualMirrorState> {
   Future<void> captureVideo() async {
     final video = await _picker.pickVideo(source: ImageSource.camera);
     if (video != null) {
-      final file = File(video.path);
+      File file = File(video.path);
+      file = await _persistFile(file, 'video');
       await storage.saveVideo(file);
       emit(state.copyWith(galleryImages: [file, ...state.galleryImages]));
     }
@@ -52,9 +55,27 @@ class VirtualMirrorCubit extends Cubit<VirtualMirrorState> {
   Future<void> pickFromGallery() async {
     final files = await _picker.pickMultipleMedia();
     if (files.isNotEmpty) {
-      final media = files.map((xfile) => File(xfile.path)).toList();
-      emit(state.copyWith(galleryImages: [...media, ...state.galleryImages]));
+      final List<File> persistentMedia = [];
+      for (final xfile in files) {
+        final file = await _persistFile(File(xfile.path), 'gallery');
+        await storage.saveImage(file);
+        persistentMedia.add(file);
+      }
+      emit(state.copyWith(galleryImages: [...persistentMedia, ...state.galleryImages]));
     }
+  }
+
+  Future<File> _persistFile(File file, String prefix) async {
+    final docsDir = await getApplicationDocumentsDirectory();
+    if (file.path.startsWith(docsDir.path)) return file;
+    
+    final galleryDir = Directory(p.join(docsDir.path, 'gallery'));
+    if (!await galleryDir.exists()) await galleryDir.create(recursive: true);
+    
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final ext = p.extension(file.path);
+    final newPath = p.join(galleryDir.path, '${prefix}_$timestamp$ext');
+    return await file.copy(newPath);
   }
 
   Future<void> deleteImage(File file) async {

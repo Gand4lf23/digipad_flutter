@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 import 'package:digipad_flutter/screens/native_impl/optical_editor_screen.dart';
+import 'package:digipad_flutter/data/local/gallery_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -23,10 +24,10 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
   late final ValueNotifier<bool> _galleryModeNotifier;
 
   bool _detectionEnabled = true;
-  bool _torchEnabled = false;
+  final bool _torchEnabled = false;
   bool _frontCamera = false;
   bool _overlayVisible = true;
-  bool _streamDetections = false;
+  final bool _streamDetections = false;
 
   String? _lastPhotoPath;
   bool _lastPhotoWasFront = false;
@@ -515,7 +516,7 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
                   children: [
                     _buildIconButton(
                       icon: Icons.photo_library,
-                      onPressed: () => _pickImage(ImageSource.gallery),
+                      onPressed: () => _showGalleryOptions(),
                     ),
                     const SizedBox(width: 24),
                     _buildPhotoButton(isGalleryOnly),
@@ -648,16 +649,12 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
     );
   }
 
-  Future<void> _pickImage(ImageSource source) async {
-    if (_isCapturing) return;
+  Future<void> _processImagePath(String path) async {
+    setState(() => _isCapturing = true);
+
     try {
-      final XFile? image = await _picker.pickImage(source: source);
-      if (image == null) return;
-
-      setState(() => _isCapturing = true);
-
       final result = await _channel?.invokeMethod('detectFromImage', {
-        'path': image.path,
+        'path': path,
       });
 
       if (result != null) {
@@ -672,7 +669,7 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
           final List circles = detections['circles'] as List;
 
           setState(() {
-            _lastPhotoPath = image.path;
+            _lastPhotoPath = path;
             _lastPhotoWasFront = false;
             _lastPhotoDetections = detections;
             _isCapturing = false;
@@ -682,7 +679,7 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
             Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (_) => OpticalEditorScreen(
-                  imagePath: image.path,
+                  imagePath: path,
                   detections: detections,
                   isFrontCamera: false,
                 ),
@@ -705,6 +702,155 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
       debugPrint("Error picking/processing image: $e");
       if (mounted) setState(() => _isCapturing = false);
     }
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    if (_isCapturing) return;
+    try {
+      final XFile? image = await _picker.pickImage(source: source);
+      if (image == null) return;
+      await _processImagePath(image.path);
+    } catch (e) {
+      debugPrint("Error capturing using image picker: $e");
+      if (mounted) setState(() => _isCapturing = false);
+    }
+  }
+
+  Future<void> _showInternalGallery() async {
+    final storage = GalleryStorage();
+    await storage.init();
+    final images = await storage.loadImages();
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.grey.shade900,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+            side: BorderSide(color: Colors.grey.shade700),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            width: MediaQuery.of(context).size.width * 0.8,
+            height: MediaQuery.of(context).size.height * 0.7,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      context.l10n.vmInternalGallery,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white70),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Expanded(
+                  child: images.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.no_photography,
+                                size: 64,
+                                color: Colors.white24,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                context.l10n.vmNoImages,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.white38,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : GridView.builder(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                crossAxisSpacing: 12,
+                                mainAxisSpacing: 12,
+                                childAspectRatio: 1,
+                              ),
+                          itemCount: images.length,
+                          itemBuilder: (context, index) {
+                            final imagePath = images[index].path;
+                            return GestureDetector(
+                              onTap: () async {
+                                Navigator.of(context).pop();
+                                await _processImagePath(imagePath);
+                              },
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.file(
+                                  File(imagePath),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showGalleryOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.grey[900],
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: Colors.white),
+              title: Text(
+                context.l10n.galleryTitle,
+                style: const TextStyle(color: Colors.white),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.sd_storage, color: Colors.white),
+              title: Text(
+                context.l10n.vmInternalGallery,
+                style: const TextStyle(color: Colors.white),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                _showInternalGallery();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _capturePhoto() async {

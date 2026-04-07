@@ -33,8 +33,7 @@ class SimulationControlPanel extends StatelessWidget {
     final isTint = category.id == 'tint';
     final isLensMode = state.isLensDraggingMode;
 
-    // Categories that use full-screen static image mode (no draggable lens/divider controls)
-    final isStaticMode = ['myopia', 'presbyopia', 'aspheric', 'monofocal', 'multifocal', 'bifocal'].contains(category.id);
+    final isStaticMode = ['myopia', 'presbyopia', 'aspheric', 'multifocal', 'bifocal'].contains(category.id);
 
     return Container(
       decoration: BoxDecoration(

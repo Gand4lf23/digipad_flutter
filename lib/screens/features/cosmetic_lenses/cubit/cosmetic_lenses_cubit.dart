@@ -152,10 +152,14 @@ class CosmeticLensesCubit extends Cubit<CosmeticLensesState> {
         throw Exception('Failed to convert image to bytes.');
       }
 
-      // Save to temporary file
-      final tempDir = await getTemporaryDirectory();
+      // Save to application documents directory
+      final dir = await getApplicationDocumentsDirectory();
+      final syncDir = Directory('${dir.path}/gallery');
+      if (!await syncDir.exists()) {
+        await syncDir.create(recursive: true);
+      }
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final filePath = '${tempDir.path}/cosmetic_lens_$timestamp.webp';
+      final filePath = '${syncDir.path}/cosmetic_lens_$timestamp.webp';
       final file = File(filePath);
       await file.writeAsBytes(byteData.buffer.asUint8List());
 

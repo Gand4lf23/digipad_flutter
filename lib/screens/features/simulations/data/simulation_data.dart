@@ -1063,13 +1063,6 @@ class SimulationData {
         problemImagePath: '$_basePath/solar/solar_driving_without.webp',
         correctionLenses: [
           CorrectionLens(
-            id: 'solar_driving_standard',
-            name: 'standard',
-            displayName: 'Standard',
-            correctedImagePath: '$_basePath/solar/solar_driving_withAr.webp',
-            quality: LensQuality.standard,
-          ),
-          CorrectionLens(
             id: 'solar_driving_premium',
             name: 'premium',
             displayName: 'Premium',
@@ -1085,13 +1078,6 @@ class SimulationData {
         displayName: 'Golf',
         problemImagePath: '$_basePath/solar/solar_golf_without.webp',
         correctionLenses: [
-          CorrectionLens(
-            id: 'solar_golf_standard',
-            name: 'standard',
-            displayName: 'Standard',
-            correctedImagePath: '$_basePath/solar/solar_golf_withAr.webp',
-            quality: LensQuality.standard,
-          ),
           CorrectionLens(
             id: 'solar_golf_premium',
             name: 'premium',
@@ -1109,13 +1095,6 @@ class SimulationData {
         problemImagePath: '$_basePath/solar/solar_moto_without.webp',
         correctionLenses: [
           CorrectionLens(
-            id: 'solar_moto_standard',
-            name: 'standard',
-            displayName: 'Standard',
-            correctedImagePath: '$_basePath/solar/solar_moto_withAr.webp',
-            quality: LensQuality.standard,
-          ),
-          CorrectionLens(
             id: 'solar_moto_premium',
             name: 'premium',
             displayName: 'Premium',
@@ -1132,13 +1111,6 @@ class SimulationData {
         problemImagePath: '$_basePath/solar/solar_tennis_without.webp',
         correctionLenses: [
           CorrectionLens(
-            id: 'solar_tennis_standard',
-            name: 'standard',
-            displayName: 'Standard',
-            correctedImagePath: '$_basePath/solar/solar_tennis_withAr.webp',
-            quality: LensQuality.standard,
-          ),
-          CorrectionLens(
             id: 'solar_tennis_premium',
             name: 'premium',
             displayName: 'Premium',
@@ -1154,13 +1126,6 @@ class SimulationData {
         displayName: 'Yacht',
         problemImagePath: '$_basePath/solar/solar_yacht_without.webp',
         correctionLenses: [
-          CorrectionLens(
-            id: 'solar_yacht_standard',
-            name: 'standard',
-            displayName: 'Standard',
-            correctedImagePath: '$_basePath/solar/solar_yacht_withAr.webp',
-            quality: LensQuality.standard,
-          ),
           CorrectionLens(
             id: 'solar_yacht_premium',
             name: 'premium',
@@ -1417,7 +1382,8 @@ class SimulationData {
         ],
       ),
     ],
-  );  // ===================== ASPHERIC =====================
+  );
+  // ===================== ASPHERIC =====================
   static final SimulationCategory _asphericCategory = SimulationCategory(
     id: 'aspheric',
     name: 'aspheric',

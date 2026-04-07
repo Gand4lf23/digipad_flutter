@@ -10,13 +10,21 @@ class GalleryStorage {
 
   late Database _db;
 
-  Future<void> init() async {
+  Future<void>? _initFuture;
+
+  Future<void> init() {
+    _initFuture ??= _doInit();
+    return _initFuture!;
+  }
+
+  Future<void> _doInit() async {
     final dir = await getApplicationDocumentsDirectory();
     final dbPath = p.join(dir.path, 'gallery.db');
     _db = await databaseFactoryIo.openDatabase(dbPath);
   }
 
   Future<void> saveImage(File file) async {
+    await init();
     await _store.record(file.path).put(_db, {
       'path': file.path,
       'timestamp': DateTime.now().toIso8601String(),
@@ -25,6 +33,7 @@ class GalleryStorage {
   }
 
   Future<void> saveVideo(File file) async {
+    await init();
     await _store.record(file.path).put(_db, {
       'path': file.path,
       'timestamp': DateTime.now().toIso8601String(),
@@ -48,6 +57,7 @@ class GalleryStorage {
 
   Future<bool> deleteImage(File file) async {
     try {
+      await init();
       await _store.record(file.path).delete(_db);
       if (await file.exists()) {
         await file.delete();
@@ -59,6 +69,7 @@ class GalleryStorage {
   }
 
   Future<void> clearDatabase() async {
+    await init();
     await _store.delete(_db);
   }
 }

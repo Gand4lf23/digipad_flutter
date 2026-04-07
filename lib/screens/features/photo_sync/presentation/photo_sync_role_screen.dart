@@ -54,10 +54,9 @@ class PhotoSyncRoleScreen extends StatelessWidget {
                           onTap: () => _navigateToHost(context),
                           badge: isTotemActive
                               ? context.l10n.photoSyncPhotosCount(
-                                  (hostState as PhotoSyncHostReady?)
-                                          ?.receivedImages
-                                          .length ??
-                                      0,
+                                  hostState is PhotoSyncHostReady
+                                      ? hostState.receivedImages.length
+                                      : 0,
                                 )
                               : null,
                           isActive: isTotemActive,

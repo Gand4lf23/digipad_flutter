@@ -110,7 +110,7 @@ class SimulationTopBar extends StatelessWidget {
                       ),
                       if (onToggleMode != null &&
                           scenario.correctionLenses.isNotEmpty &&
-                          !['myopia', 'presbyopia', 'monofocal', 'aspheric', 'bifocal', 'multifocal']
+                          !['myopia', 'presbyopia', 'aspheric', 'bifocal', 'multifocal']
                               .contains(
                             category.id,
                           ))

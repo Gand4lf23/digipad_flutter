@@ -56,13 +56,23 @@ class HotspotManager(private val context: Context) : MethodChannel.MethodCallHan
                     val config = reservation?.wifiConfiguration
 
                     if (config != null) {
-                        val map = HashMap<String, String>()
-                        map["ssid"] = config.SSID ?: ""
-                        map["password"] = config.preSharedKey ?: ""
-                        // The gateway IP for local-only hotspot is typically the device's IP
-                        map["gateway"] = getGatewayIp() ?: "192.168.43.1"
-                        Log.d(TAG, "Hotspot started: SSID=${config.SSID}")
-                        result.success(map)
+                        var retries = 0
+                        fun checkIpAndReturn() {
+                            val ip = getGatewayIp()
+                            // If we find a valid IP, or we tried enough times (10 times = 5 seconds)
+                            if (ip != null || retries > 10) {
+                                val map = HashMap<String, String>()
+                                map["ssid"] = config.SSID ?: ""
+                                map["password"] = config.preSharedKey ?: ""
+                                map["gateway"] = ip ?: "192.168.43.1"
+                                Log.d(TAG, "Hotspot started: SSID=${config.SSID}, IP=$ip")
+                                result.success(map)
+                            } else {
+                                retries++
+                                Handler(Looper.getMainLooper()).postDelayed(::checkIpAndReturn, 500)
+                            }
+                        }
+                        checkIpAndReturn()
                     } else {
                         result.error("NO_CONFIG", "Hotspot started but no config available", null)
                     }

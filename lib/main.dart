@@ -2,7 +2,6 @@ import 'package:digipad_flutter/screens/activation/cubit/activation_cubit.dart';
 import 'package:digipad_flutter/screens/activation/data/activation_service.dart';
 import 'package:digipad_flutter/screens/activation/presentation/activation_wrapper.dart';
 import 'package:digipad_flutter/screens/activation/presentation/interaction_observer.dart';
-import 'package:digipad_flutter/screens/home_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,6 +11,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Force portrait orientation app-wide
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
   try {
     await Firebase.initializeApp();
   } catch (e) {
@@ -64,11 +70,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    // Force portrait orientation
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
+    // Portait orientation is now handled in main()
 
     return BlocProvider(
       create: (context) => ActivationCubit(_activationService),
