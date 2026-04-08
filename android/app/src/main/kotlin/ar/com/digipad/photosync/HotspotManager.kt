@@ -59,8 +59,9 @@ class HotspotManager(private val context: Context) : MethodChannel.MethodCallHan
                         var retries = 0
                         fun checkIpAndReturn() {
                             val ip = getGatewayIp()
+                            val isValid = ip != null && ip != "0.0.0.0" && ip != "127.0.0.1"
                             // If we find a valid IP, or we tried enough times (10 times = 5 seconds)
-                            if (ip != null || retries > 10) {
+                            if (isValid || retries > 10) {
                                 val map = HashMap<String, String>()
                                 map["ssid"] = config.SSID ?: ""
                                 map["password"] = config.preSharedKey ?: ""
@@ -192,7 +193,7 @@ class HotspotManager(private val context: Context) : MethodChannel.MethodCallHan
                 if (name.contains("swlan") || name.contains("ap") || 
                     name.contains("wlan") || name.contains("eth")) {
                     for (addr in networkInterface.inetAddresses) {
-                        if (addr is Inet4Address && !addr.isLoopbackAddress) {
+                        if (addr is Inet4Address && !addr.isLoopbackAddress && addr.hostAddress != "0.0.0.0" && addr.hostAddress != "127.0.0.1") {
                             return addr.hostAddress
                         }
                     }
@@ -204,7 +205,7 @@ class HotspotManager(private val context: Context) : MethodChannel.MethodCallHan
                 val networkInterface = interfaces2.nextElement()
                 if (networkInterface.isLoopback || !networkInterface.isUp) continue
                 for (addr in networkInterface.inetAddresses) {
-                    if (addr is Inet4Address && !addr.isLoopbackAddress) {
+                    if (addr is Inet4Address && !addr.isLoopbackAddress && addr.hostAddress != "0.0.0.0" && addr.hostAddress != "127.0.0.1") {
                         return addr.hostAddress
                     }
                 }

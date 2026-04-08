@@ -21,8 +21,9 @@ class PhotoSyncClientScanning extends PhotoSyncClientState {
 
 /// Connecting to WiFi hotspot.
 class PhotoSyncClientConnecting extends PhotoSyncClientState {
-  final String ssid;
-  const PhotoSyncClientConnecting({required this.ssid});
+  final PhotoSyncConfig config;
+  const PhotoSyncClientConnecting({required this.config});
+  String get ssid => config.ssid;
 }
 
 /// Connected and ready to capture photos.

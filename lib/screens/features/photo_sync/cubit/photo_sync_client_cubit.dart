@@ -69,7 +69,7 @@ class PhotoSyncClientCubit extends Cubit<PhotoSyncClientState> {
   }
 
   Future<void> _connectToHost(PhotoSyncConfig config) async {
-    emit(PhotoSyncClientConnecting(ssid: config.ssid));
+    emit(PhotoSyncClientConnecting(config: config));
 
     try {
       // 1. Try to connect to WiFi

@@ -173,13 +173,26 @@ class HostScreen extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Text(
-              '${context.l10n.photoSyncHost} - ${context.l10n.photoSyncTitle}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${context.l10n.photoSyncHost} - ${context.l10n.photoSyncTitle}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  'DEBUG: ${state.qrData}',
+                  style: const TextStyle(
+                    color: Colors.yellowAccent,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
             ),
           ),
           // Received count badge

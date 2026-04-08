@@ -51,8 +51,11 @@ class PhotoSyncHostCubit extends Cubit<PhotoSyncHostState> {
         password = hotspotInfo['password'] ?? '';
         hostIp = hotspotInfo['gateway'] ?? '';
 
-        if (hostIp.isEmpty) {
+        if (hostIp.isEmpty || hostIp == '0.0.0.0' || hostIp == '127.0.0.1') {
           hostIp = await PhotoSyncPlatform.getLocalIpDart() ?? '192.168.43.1';
+        }
+        if (hostIp.isEmpty || hostIp == '0.0.0.0' || hostIp == '127.0.0.1') {
+          hostIp = '192.168.43.1';
         }
       } else {
         // Fallback: use current network IP (for testing / WiFi already shared)

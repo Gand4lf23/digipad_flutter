@@ -1060,8 +1060,15 @@ class SimulationData {
         id: 'solar_driving_no_ar',
         sceneName: 'driving',
         displayName: 'Driving',
-        problemImagePath: '$_basePath/solar/solar_driving_without.webp',
+        problemImagePath: '$_basePath/polarized/polarized_driving_noLens.webp',
         correctionLenses: [
+          CorrectionLens(
+            id: 'solar_driving_estandar',
+            name: 'estandar',
+            displayName: 'Estandar',
+            correctedImagePath: '$_basePath/solar/solar_driving_without.webp',
+            quality: LensQuality.standard,
+          ),
           CorrectionLens(
             id: 'solar_driving_premium',
             name: 'premium',
@@ -1076,8 +1083,15 @@ class SimulationData {
         id: 'solar_golf_no_ar',
         sceneName: 'golf',
         displayName: 'Golf',
-        problemImagePath: '$_basePath/solar/solar_golf_without.webp',
+        problemImagePath: '$_basePath/polarized/polarized_golf_noLens.webp',
         correctionLenses: [
+          CorrectionLens(
+            id: 'solar_golf_estandar',
+            name: 'estandar',
+            displayName: 'Estandar',
+            correctedImagePath: '$_basePath/solar/solar_golf_without.webp',
+            quality: LensQuality.standard,
+          ),
           CorrectionLens(
             id: 'solar_golf_premium',
             name: 'premium',
@@ -1092,8 +1106,16 @@ class SimulationData {
         id: 'solar_moto_no_ar',
         sceneName: 'motorcycle',
         displayName: 'Motorcycle',
-        problemImagePath: '$_basePath/solar/solar_moto_without.webp',
+        problemImagePath:
+            '$_basePath/polarized/polarized_motorcycle_noLens.webp',
         correctionLenses: [
+          CorrectionLens(
+            id: 'solar_moto_estandar',
+            name: 'estandar',
+            displayName: 'Estandar',
+            correctedImagePath: '$_basePath/solar/solar_moto_without.webp',
+            quality: LensQuality.standard,
+          ),
           CorrectionLens(
             id: 'solar_moto_premium',
             name: 'premium',
@@ -1108,8 +1130,15 @@ class SimulationData {
         id: 'solar_tennis_no_ar',
         sceneName: 'tennis',
         displayName: 'Tennis',
-        problemImagePath: '$_basePath/solar/solar_tennis_without.webp',
+        problemImagePath: '$_basePath/polarized/polarized_tennis_noLens.webp',
         correctionLenses: [
+          CorrectionLens(
+            id: 'solar_tennis_estandar',
+            name: 'estandar',
+            displayName: 'Estandar',
+            correctedImagePath: '$_basePath/solar/solar_tennis_without.webp',
+            quality: LensQuality.standard,
+          ),
           CorrectionLens(
             id: 'solar_tennis_premium',
             name: 'premium',
@@ -1124,8 +1153,15 @@ class SimulationData {
         id: 'solar_yacht_no_ar',
         sceneName: 'yacht',
         displayName: 'Yacht',
-        problemImagePath: '$_basePath/solar/solar_yacht_without.webp',
+        problemImagePath: '$_basePath/polarized/polarized_yacht_noLens.webp',
         correctionLenses: [
+          CorrectionLens(
+            id: 'solar_yacht_estandar',
+            name: 'estandar',
+            displayName: 'Estandar',
+            correctedImagePath: '$_basePath/solar/solar_yacht_without.webp',
+            quality: LensQuality.standard,
+          ),
           CorrectionLens(
             id: 'solar_yacht_premium',
             name: 'premium',

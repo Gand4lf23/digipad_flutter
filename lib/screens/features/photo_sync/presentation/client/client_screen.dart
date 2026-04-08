@@ -196,7 +196,8 @@ class ClientScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Red: ${state.ssid}',
+            'Red: ${state.ssid}\nIP Objetivo: ${state.config.hostIp}:${state.config.port}',
+            textAlign: TextAlign.center,
             style: TextStyle(
               color: const Color(0xFF5EFCE8),
               fontSize: 15,
