@@ -123,7 +123,6 @@ class Lenses3DState {
     );
   }
 
-  @override
   List<Object?> get props => [
     materialIndex,
     prescription,

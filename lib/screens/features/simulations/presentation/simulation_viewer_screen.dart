@@ -35,7 +35,7 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
   bool _isLoading = true;
 
   late AnimationController _pulseController;
-  late Animation<double> _pulseAnimation;
+  late Animation<double> pulseAnimation;
 
   CorrectionLens? _currentLens;
 
@@ -47,7 +47,7 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
 
-    _pulseAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+    pulseAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
@@ -240,8 +240,6 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
     );
   }
 
-
-
   Widget _buildErrorView() {
     return Center(
       child: Column(
@@ -273,7 +271,7 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
           const SizedBox(height: 24),
           Text(
             context.l10n.loadingSimulation,
-            style: TextStyle(color: Colors.white.withOpacity(0.8)),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
           ),
         ],
       ),

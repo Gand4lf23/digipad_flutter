@@ -22,12 +22,12 @@ class LensSelectorPanel extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.1),
+          color: Colors.white.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
           context.l10n.lensesAvailable(0),
-          style: TextStyle(color: Colors.white.withOpacity(0.7)),
+          style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
         ),
       );
     }
@@ -104,19 +104,19 @@ class _LensCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: isSelected
-                  ? _qualityColor.withOpacity(0.25)
-                  : Colors.white.withOpacity(0.1),
+                  ? _qualityColor.withValues(alpha: 0.25)
+                  : Colors.white.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: isSelected
                     ? _qualityColor
-                    : Colors.white.withOpacity(0.2),
+                    : Colors.white.withValues(alpha: 0.2),
                 width: isSelected ? 2 : 1,
               ),
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: _qualityColor.withOpacity(0.3),
+                        color: _qualityColor.withValues(alpha: 0.3),
                         blurRadius: 8,
                         spreadRadius: 0,
                       ),
@@ -133,7 +133,7 @@ class _LensCard extends StatelessWidget {
                       _qualityIcon,
                       color: isSelected
                           ? _qualityColor
-                          : Colors.white.withOpacity(0.7),
+                          : Colors.white.withValues(alpha: 0.7),
                       size: 20,
                     ),
                     const SizedBox(width: 8),
@@ -142,7 +142,7 @@ class _LensCard extends StatelessWidget {
                       style: TextStyle(
                         color: isSelected
                             ? Colors.white
-                            : Colors.white.withOpacity(0.8),
+                            : Colors.white.withValues(alpha: 0.8),
                         fontWeight: isSelected
                             ? FontWeight.bold
                             : FontWeight.w500,
@@ -158,7 +158,7 @@ class _LensCard extends StatelessWidget {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: _qualityColor.withOpacity(0.2),
+                    color: _qualityColor.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(

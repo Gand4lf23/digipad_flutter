@@ -5,7 +5,6 @@ import 'package:bloc/bloc.dart';
 import 'package:digipad_flutter/data/local/gallery_storage.dart';
 import 'package:digipad_flutter/screens/features/cosmetic_lenses/cubit/cosmetic_lenses_state.dart';
 import 'package:digipad_flutter/screens/features/cosmetic_lenses/widgets/photo_canvas_widget.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -167,12 +166,7 @@ class CosmeticLensesCubit extends Cubit<CosmeticLensesState> {
       await _galleryStorage.saveImage(file);
 
       // Emit success state for UI feedback
-      emit(
-        state.copyWith(
-          statusMessage: 'cosmeticLensSaved',
-          isSuccess: true,
-        ),
-      );
+      emit(state.copyWith(statusMessage: 'cosmeticLensSaved', isSuccess: true));
 
       debugPrint('Image saved successfully: $filePath');
       // Refresh local gallery images in state

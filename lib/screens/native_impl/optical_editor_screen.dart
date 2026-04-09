@@ -488,7 +488,7 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
                 const Spacer(),
                 Switch(
                   value: ctrl.isBifocal,
-                  activeColor: Colors.orangeAccent,
+                  activeThumbColor: Colors.orangeAccent,
                   onChanged: (v) => ctrl.toggleBifocal(v),
                 ),
                 if (ctrl.isBifocal) ...[
@@ -737,7 +737,7 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
           right: 20,
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.4),
+              color: Colors.black.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(16),
             ),
             padding: const EdgeInsets.all(8),
@@ -790,7 +790,7 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
         width: 38,
         height: 38,
         decoration: BoxDecoration(
-          color: Colors.grey[800]!.withOpacity(0.8),
+          color: Colors.grey[800]!.withValues(alpha: 0.8),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: Colors.white24),
         ),

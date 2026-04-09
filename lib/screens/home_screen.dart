@@ -3,8 +3,9 @@ import 'package:digipad_flutter/common/components/d_image.dart';
 import 'package:digipad_flutter/data/local/gallery_storage.dart';
 import 'package:digipad_flutter/screens/features/lenses_3d/cubit/lenses_3d_cubit.dart';
 import 'package:digipad_flutter/screens/features/lenses_3d/presentation/lenses_3d_screen.dart';
-import 'package:digipad_flutter/screens/features/photo_sync/cubit/photo_sync_host_cubit.dart';
-import 'package:digipad_flutter/screens/features/photo_sync/cubit/photo_sync_host_state.dart';
+import 'package:digipad_flutter/features/nearby_sync/cubit/nearby_host_cubit.dart';
+import 'package:digipad_flutter/features/nearby_sync/cubit/nearby_host_state.dart';
+import 'package:digipad_flutter/features/nearby_sync/presentation/nearby_sync_role_screen.dart';
 import 'package:digipad_flutter/screens/features/simulations/presentation/main_simulations_grid_screen.dart';
 import 'package:digipad_flutter/screens/features/virtual_mirror/cubit/virtual_mirror_cubit.dart';
 import 'package:digipad_flutter/screens/features/virtual_mirror/presentation/virtual_mirror_screen.dart';
@@ -13,7 +14,6 @@ import 'package:digipad_flutter/screens/features/visual_health/cubit/visual_heal
 import 'package:digipad_flutter/screens/features/visual_health/presentation/visual_health_screen.dart';
 import 'package:digipad_flutter/screens/features/cosmetic_lenses/cubit/cosmetic_lenses_cubit.dart';
 import 'package:digipad_flutter/screens/features/cosmetic_lenses/presentation/cosmetic_lenses_screen.dart';
-import 'package:digipad_flutter/screens/features/photo_sync/presentation/photo_sync_role_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:digipad_flutter/l10n/l10n.dart';
@@ -30,7 +30,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   // ── Session-scoped TOTEM cubit ──────────────────────────────────────────────
-  late final PhotoSyncHostCubit _hostCubit;
+  late final NearbyHostCubit _hostCubit;
   late final GalleryStorage _galleryStorage;
 
   // ── Entrance animation ──────────────────────────────────────────────────────
@@ -42,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen>
     super.initState();
 
     _galleryStorage = GalleryStorage();
-    _hostCubit = PhotoSyncHostCubit(_galleryStorage);
+    _hostCubit = NearbyHostCubit(storage: _galleryStorage);
 
     _entranceController = AnimationController(
       vsync: this,
@@ -203,14 +203,14 @@ class _HomeScreenState extends State<HomeScreen>
                 Positioned(
                   top: 8,
                   left: 12,
-                  child: BlocBuilder<PhotoSyncHostCubit, PhotoSyncHostState>(
+                  child: BlocBuilder<NearbyHostCubit, NearbyHostState>(
                     bloc: _hostCubit,
                     builder: (context, state) {
-                      if (state is! PhotoSyncHostReady) {
+                      if (state is! NearbyHostAdvertising) {
                         return const SizedBox.shrink();
                       }
                       return _TotemActiveBadge(
-                        imageCount: state.receivedImages.length,
+                        imageCount: state.photoCount,
                       );
                     },
                   ),
@@ -354,13 +354,12 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       );
     } else if (moduleId == 'photo_sync') {
-      // Pass the session-level cubit into the role screen.
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => BlocProvider.value(
             value: _hostCubit,
-            child: const PhotoSyncRoleScreen(),
+            child: const NearbySyncRoleScreen(),
           ),
         ),
       );

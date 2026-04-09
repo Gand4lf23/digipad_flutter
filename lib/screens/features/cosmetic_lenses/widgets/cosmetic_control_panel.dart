@@ -449,7 +449,7 @@ class _VerticalToggle extends StatelessWidget {
               child: Switch(
                 value: value,
                 onChanged: onChanged,
-                activeColor: color,
+                activeThumbColor: color,
               ),
             ),
           ),

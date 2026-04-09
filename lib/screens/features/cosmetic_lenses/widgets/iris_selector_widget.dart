@@ -203,7 +203,7 @@ class _IrisSelectorWidgetState extends State<IrisSelectorWidget> {
                             path,
                             width: 30,
                             height: 30,
-                            errorBuilder: (_, __, ___) => const Icon(
+                            errorBuilder: (_, _, _) => const Icon(
                               Icons.error,
                               color: Colors.red,
                               size: 30,

@@ -35,6 +35,18 @@ subprojects {
     }
 
     plugins.withId("com.android.library") {
+        val android = extensions.findByName("android")
+        if (android != null) {
+            val getNamespace = android.javaClass.methods.find { it.name == "getNamespace" }
+            val setNamespace = android.javaClass.methods.find { it.name == "setNamespace" && it.parameterCount == 1 }
+            
+            if (getNamespace != null && setNamespace != null) {
+                if (getNamespace.invoke(android) == null) {
+                    setNamespace.invoke(android, "ar.com.digipad.${project.name.replace("-", "_")}")
+                }
+            }
+        }
+        
         dependencies {
             add("implementation", "androidx.concurrent:concurrent-futures:1.1.0")
         }

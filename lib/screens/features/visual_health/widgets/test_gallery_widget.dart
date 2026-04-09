@@ -150,7 +150,7 @@ class _TestThumbnail extends StatelessWidget {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Colors.yellow.shade600.withOpacity(0.5),
+                    color: Colors.yellow.shade600.withValues(alpha: 0.5),
                     blurRadius: 8,
                     spreadRadius: 2,
                   ),

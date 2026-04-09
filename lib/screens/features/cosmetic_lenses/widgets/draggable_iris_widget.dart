@@ -116,8 +116,8 @@ class _DraggableIrisWidgetState extends State<DraggableIrisWidget> {
                 border: isActive
                     ? Border.all(
                         color: widget.isLeftEye
-                            ? Colors.blue.withOpacity(0.3)
-                            : Colors.green.withOpacity(0.3),
+                            ? Colors.blue.withValues(alpha: 0.3)
+                            : Colors.green.withValues(alpha: 0.3),
                         width: 2,
                       )
                     : null,
@@ -133,8 +133,8 @@ class _DraggableIrisWidgetState extends State<DraggableIrisWidget> {
                         fit: BoxFit.cover,
                         height: irisSize,
                         width: irisSize, // Added width to ensure circle
-                        errorBuilder: (_, __, ___) => Container(
-                          color: Colors.red.withOpacity(0.3),
+                        errorBuilder: (_, _, _) => Container(
+                          color: Colors.red.withValues(alpha: 0.3),
                           child: const Icon(Icons.error, color: Colors.white),
                         ),
                       ),
@@ -168,8 +168,8 @@ class _EyelidPainter extends CustomPainter {
       begin: Alignment.topCenter,
       end: Alignment.center,
       colors: [
-        Colors.black.withOpacity(0.6),
-        Colors.black.withOpacity(0.3),
+        Colors.black.withValues(alpha: 0.6),
+        Colors.black.withValues(alpha: 0.3),
         Colors.transparent,
       ],
       stops: const [0.0, 0.3, 0.5],
@@ -185,8 +185,8 @@ class _EyelidPainter extends CustomPainter {
       begin: Alignment.bottomCenter,
       end: Alignment.center,
       colors: [
-        Colors.black.withOpacity(0.4),
-        Colors.black.withOpacity(0.2),
+        Colors.black.withValues(alpha: 0.4),
+        Colors.black.withValues(alpha: 0.2),
         Colors.transparent,
       ],
       stops: const [0.0, 0.2, 0.4],

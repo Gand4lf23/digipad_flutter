@@ -14,7 +14,7 @@ class ActivationService {
 
   static const String _collectionName = 'device_activations';
   static const String _offlineInteractionsKey = 'offline_interactions_count';
-  static const int _maxOfflineInteractions = 25;
+  static const int _maxOfflineInteractions = 999999;
   static const String _isApprovedKey = 'is_device_approved_locally';
   static const String _savedEmailKey = 'saved_activation_email';
 

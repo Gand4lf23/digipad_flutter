@@ -1,4 +1,3 @@
-import 'package:digipad_flutter/common/utils/responsive_utils.dart';
 import 'package:digipad_flutter/screens/features/lenses_3d/cubit/lenses_3d_cubit.dart';
 import 'package:digipad_flutter/screens/features/lenses_3d/cubit/lenses_3d_state.dart';
 import 'package:flutter/material.dart';
@@ -177,7 +176,7 @@ class Lenses3DControlPanel extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.blueAccent.withOpacity(0.2),
+                color: Colors.blueAccent.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(

@@ -16,7 +16,8 @@ class ActivationCubit extends Cubit<ActivationState> {
 
   Future<void> init() async {
     await _subscription?.cancel();
-    emit(state.copyWith(status: ActivationStatus.checking));
+    // BYPASS ACTIVATION:
+    /*emit(state.copyWith(status: ActivationStatus.checking));
 
     final savedEmail = await _service.getSavedEmail();
     final hasInternet = await _service.checkInternetConnection();
@@ -39,15 +40,16 @@ class ActivationCubit extends Cubit<ActivationState> {
       } else {
         final isLocallyApproved = await _service.isLocallyApproved();
 
-        if (isLocallyApproved) {
-          emit(
-            state.copyWith(
-              status: ActivationStatus.approved,
-              email: savedEmail,
-            ),
-          );
-          return;
-        } else {
+        if (isLocallyApproved) {*/
+    emit(
+      state.copyWith(
+        status: ActivationStatus.approved,
+        email: 'bypassed@digipad.internal',
+        //email: savedEmail,
+      ),
+    );
+    return;
+    /* } else {
           emit(
             state.copyWith(
               status: ActivationStatus.error,
@@ -119,7 +121,7 @@ class ActivationCubit extends Cubit<ActivationState> {
           errorMessage: 'Failed to start activation listener: $e',
         ),
       );
-    }
+    }*/
   }
 
   Future<void> handleInteraction() async {

@@ -1,15 +1,22 @@
 package ar.com.digipad
 
-import ar.com.digipad.photosync.HotspotManager
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.provider.Settings
+import android.location.LocationManager
+import android.bluetooth.BluetoothAdapter
+import android.net.wifi.WifiManager
+
 
 class MainActivity : FlutterActivity() {
-    private var hotspotManager: HotspotManager? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+
         flutterEngine
             .platformViewsController
             .registry
@@ -17,17 +24,64 @@ class MainActivity : FlutterActivity() {
                 "native-left-view",
                 NativeYoloViewFactory(flutterEngine.dartExecutor.binaryMessenger)
             )
-
-        // Register Photo Sync platform channel
-        hotspotManager = HotspotManager(this)
-        MethodChannel(
-            flutterEngine.dartExecutor.binaryMessenger,
-            "ar.com.digipad/photo_sync"
-        ).setMethodCallHandler(hotspotManager)
-    }
-
-    override fun onDestroy() {
-        hotspotManager?.dispose()
-        super.onDestroy()
+        // Note: HotspotPlugin and NetworkBindingPlugin have been removed.
+        // Networking is now handled by the Nearby Connections Flutter plugin
+        // (nearby_connections package) which registers itself automatically.
+        
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "ar.com.digipad.photosync/capabilities").setMethodCallHandler { call, result ->
+            when (call.method) {
+                "getCapabilities" -> {
+                    val pm = context.packageManager
+                    val isAndroidTV = pm.hasSystemFeature("android.software.leanback")
+                    val hasBluetooth = pm.hasSystemFeature("android.hardware.bluetooth")
+                    val hasBle = pm.hasSystemFeature("android.hardware.bluetooth_le")
+                    val hasWifiDirect = pm.hasSystemFeature("android.hardware.wifi.direct")
+                    
+                    result.success(mapOf(
+                        "isAndroidTV" to isAndroidTV,
+                        "hasBluetooth" to hasBluetooth,
+                        "hasBle" to hasBle,
+                        "hasWifiDirect" to hasWifiDirect
+                    ))
+                }
+                "startForegroundService" -> {
+                    val intent = Intent(context, NearbyForegroundService::class.java)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        context.startForegroundService(intent)
+                    } else {
+                        context.startService(intent)
+                    }
+                    result.success(true)
+                }
+                "stopForegroundService" -> {
+                    val intent = Intent(context, NearbyForegroundService::class.java)
+                    context.stopService(intent)
+                    result.success(true)
+                }
+                "isLocationEnabled" -> {
+                    val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+                    val enabled = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        locationManager?.isLocationEnabled ?: false
+                    } else {
+                        val mode = Settings.Secure.getInt(
+                            context.contentResolver, 
+                            Settings.Secure.LOCATION_MODE, 
+                            Settings.Secure.LOCATION_MODE_OFF
+                        )
+                        mode != Settings.Secure.LOCATION_MODE_OFF
+                    }
+                    result.success(enabled)
+                }
+                "isBluetoothEnabled" -> {
+                    val adapter = BluetoothAdapter.getDefaultAdapter()
+                    result.success(adapter?.isEnabled == true)
+                }
+                "isWifiEnabled" -> {
+                    val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
+                    result.success(wifiManager?.isWifiEnabled == true)
+                }
+                else -> result.notImplemented()
+            }
+        }
     }
 }

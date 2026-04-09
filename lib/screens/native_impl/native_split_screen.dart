@@ -273,9 +273,12 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
       child: Container(
         padding: const EdgeInsets.only(left: 12, right: 4, top: 4, bottom: 4),
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.4),
+          color: Colors.black.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.3),
+            width: 1.5,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -300,8 +303,8 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
                 onChanged: (val) {
                   _galleryModeNotifier.value = val;
                 },
-                activeColor: _accentColor,
-                activeTrackColor: _accentColor.withOpacity(0.5),
+                activeThumbColor: _accentColor,
+                activeTrackColor: _accentColor.withValues(alpha: 0.5),
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
             ),
@@ -329,7 +332,7 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
             height: 120,
             decoration: BoxDecoration(
               border: Border.all(
-                color: Colors.white.withOpacity(0.5),
+                color: Colors.white.withValues(alpha: 0.5),
                 width: 2.0,
               ),
               borderRadius: BorderRadius.circular(12),
@@ -338,12 +341,16 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.add, color: Colors.white.withOpacity(0.3), size: 40),
+                Icon(
+                  Icons.add,
+                  color: Colors.white.withValues(alpha: 0.3),
+                  size: 40,
+                ),
                 const SizedBox(height: 8),
                 Text(
                   context.l10n.placeReferenceHere,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.5),
+                    color: Colors.white.withValues(alpha: 0.5),
                     fontSize: 12,
                   ),
                 ),
@@ -369,10 +376,10 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.25),
+                color: Colors.black.withValues(alpha: 0.25),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.3),
+                  color: Colors.white.withValues(alpha: 0.3),
                   width: 1.5,
                 ),
               ),
@@ -563,7 +570,7 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: _accentColor,
+          activeThumbColor: _accentColor,
           inactiveThumbColor: Colors.grey[400],
           inactiveTrackColor: Colors.grey[800],
         ),

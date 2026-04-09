@@ -52,7 +52,7 @@ class OpticalPainter extends CustomPainter {
     // --- 1. CIRCLES ---
     if (showCircles && pixelFactorX > 0) {
       Paint circlePaint = Paint()
-        ..color = Colors.blueAccent.withOpacity(0.6)
+        ..color = Colors.blueAccent.withValues(alpha: 0.6)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.0 / scale;
 
@@ -131,7 +131,7 @@ class OpticalPainter extends CustomPainter {
     // --- 3. BIFOCAL LINE ---
     if (isBifocal && pixelFactorY > 0) {
       Paint bifocalPaint = Paint()
-        ..color = Colors.orangeAccent.withOpacity(0.9)
+        ..color = Colors.orangeAccent.withValues(alpha: 0.9)
         ..strokeWidth = 1.0 / scale;
 
       double drop = (15.0 / pixelFactorY) + (bifocalOffset / scale);
@@ -186,7 +186,7 @@ class OpticalPainter extends CustomPainter {
     if (rTL == null || rBR == null || lTL == null || lBR == null) return;
 
     Paint framePaint = Paint()
-      ..color = Colors.white.withOpacity(0.15)
+      ..color = Colors.white.withValues(alpha: 0.15)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.3 / scale;
 
