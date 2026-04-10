@@ -7,7 +7,6 @@ import 'package:digipad_flutter/features/nearby_sync/cubit/nearby_host_cubit.dar
 import 'package:digipad_flutter/features/nearby_sync/cubit/nearby_host_state.dart';
 import 'package:digipad_flutter/features/nearby_sync/presentation/widgets/host_gallery.dart';
 import 'package:digipad_flutter/data/local/gallery_storage.dart';
-import 'package:digipad_flutter/features/nearby_sync/debug_logger.dart';
 
 /// TÓTEM screen — advertises via Nearby and shows received photos.
 class NearbyHostScreen extends StatefulWidget {
@@ -55,7 +54,6 @@ class _NearbyHostScreenState extends State<NearbyHostScreen> {
                 return _buildLoading(context);
               },
             ),
-            const DebugConsoleToggle(),
           ],
         ),
       ),
@@ -99,9 +97,7 @@ class _NearbyHostScreenState extends State<NearbyHostScreen> {
       children: [
         _buildTopBar(context, state),
         _buildStatusCard(state),
-        Expanded(
-          child: HostGallery(images: _images),
-        ),
+        Expanded(child: HostGallery(images: _images)),
       ],
     );
   }
@@ -122,8 +118,11 @@ class _NearbyHostScreenState extends State<NearbyHostScreen> {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back_ios_rounded,
-                color: Colors.white60, size: 20),
+            icon: const Icon(
+              Icons.arrow_back_ios_rounded,
+              color: Colors.white60,
+              size: 20,
+            ),
             onPressed: () => Navigator.of(context).pop(),
           ),
           const SizedBox(width: 4),
@@ -156,18 +155,14 @@ class _NearbyHostScreenState extends State<NearbyHostScreen> {
                 const SizedBox(height: 2),
                 Text(
                   '${state.photoCount} foto${state.photoCount == 1 ? '' : 's'} recibidas',
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                  ),
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
                 ),
               ],
             ),
           ),
           // Client count badge
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: state.connectedClientIds.isEmpty
                   ? Colors.white10
@@ -215,7 +210,9 @@ class _NearbyHostScreenState extends State<NearbyHostScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFF1A1A2E),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF00BFA6).withValues(alpha: 0.2)),
+        border: Border.all(
+          color: const Color(0xFF00BFA6).withValues(alpha: 0.2),
+        ),
       ),
       child: Row(
         children: [
@@ -250,33 +247,46 @@ class _NearbyHostScreenState extends State<NearbyHostScreen> {
                   state.connectedClientIds.isEmpty
                       ? 'Los celulares conectados enviarán fotos aquí'
                       : '${state.connectedClientIds.length} celular${state.connectedClientIds.length == 1 ? '' : 'es'} conectado${state.connectedClientIds.length == 1 ? '' : 's'}',
-                  style: const TextStyle(
-                    color: Colors.white54,
-                    fontSize: 13,
-                  ),
+                  style: const TextStyle(color: Colors.white54, fontSize: 13),
                 ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
                     ElevatedButton.icon(
-                      onPressed: () => context.read<NearbyHostCubit>().stopTotem(),
+                      onPressed: () =>
+                          context.read<NearbyHostCubit>().stopTotem(),
                       icon: const Icon(Icons.stop_rounded, size: 16),
-                      label: const Text('Detener Tótem', style: TextStyle(fontSize: 12)),
+                      label: const Text(
+                        'Detener Tótem',
+                        style: TextStyle(fontSize: 12),
+                      ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red.withOpacity(0.2),
+                        backgroundColor: Colors.red.withValues(alpha: 0.2),
                         foregroundColor: Colors.redAccent,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton.icon(
-                      onPressed: () => context.read<NearbyHostCubit>().restartTotem(),
+                      onPressed: () =>
+                          context.read<NearbyHostCubit>().restartTotem(),
                       icon: const Icon(Icons.refresh_rounded, size: 16),
-                      label: const Text('Reiniciar', style: TextStyle(fontSize: 12)),
+                      label: const Text(
+                        'Reiniciar',
+                        style: TextStyle(fontSize: 12),
+                      ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF00BFA6).withOpacity(0.2),
+                        backgroundColor: const Color(
+                          0xFF00BFA6,
+                        ).withValues(alpha: 0.2),
                         foregroundColor: const Color(0xFF00BFA6),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                       ),
                     ),
                   ],
@@ -332,7 +342,9 @@ class _NearbyHostScreenState extends State<NearbyHostScreen> {
                 backgroundColor: const Color(0xFF00BFA6),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 28, vertical: 14),
+                  horizontal: 28,
+                  vertical: 14,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),

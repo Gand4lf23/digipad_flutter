@@ -2,10 +2,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
 
 import 'nearby_service.dart';
-import 'debug_logger.dart';
 
 class FallbackServer {
   static HttpServer? _server;
@@ -16,7 +14,6 @@ class FallbackServer {
   static Future<bool> startServer() async {
     try {
       _server = await HttpServer.bind(InternetAddress.anyIPv4, 8080);
-      DebugLogger.instance.info('[FallbackServer] Listening on port ${_server!.port}');
 
       _server!.listen((HttpRequest request) async {
         if (request.method == 'POST' && request.uri.path == '/upload') {
@@ -25,12 +22,15 @@ class FallbackServer {
             await for (var chunk in request) {
               bytes.addAll(chunk);
             }
-            final fileName = 'fallback_${DateTime.now().millisecondsSinceEpoch}.jpg';
-            _imageCtrl.add(NearbyReceivedImage(
-              endpointId: 'fallback-client',
-              fileName: fileName,
-              bytes: Uint8List.fromList(bytes),
-            ));
+            final fileName =
+                'fallback_${DateTime.now().millisecondsSinceEpoch}.jpg';
+            _imageCtrl.add(
+              NearbyReceivedImage(
+                endpointId: 'fallback-client',
+                fileName: fileName,
+                bytes: Uint8List.fromList(bytes),
+              ),
+            );
             request.response
               ..statusCode = HttpStatus.ok
               ..write('OK');
@@ -50,7 +50,6 @@ class FallbackServer {
       });
       return true;
     } catch (e) {
-      DebugLogger.instance.error('[FallbackServer] Failed to start server: $e');
       return false;
     }
   }
@@ -58,6 +57,5 @@ class FallbackServer {
   static Future<void> stopServer() async {
     await _server?.close(force: true);
     _server = null;
-    DebugLogger.instance.info('[FallbackServer] Stopped');
   }
 }

@@ -10,7 +10,6 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:digipad_flutter/data/local/gallery_storage.dart';
 import 'package:digipad_flutter/features/nearby_sync/nearby_service.dart';
 import 'package:digipad_flutter/features/nearby_sync/fallback_server.dart';
-import 'package:digipad_flutter/features/nearby_sync/debug_logger.dart';
 import 'nearby_host_state.dart';
 
 /// Manages the TÓTEM role.
@@ -31,9 +30,9 @@ class NearbyHostCubit extends Cubit<NearbyHostState> {
   NearbyHostCubit({
     required GalleryStorage storage,
     NearbyService? nearbyService,
-  })  : _storage = storage,
-        _nearby = nearbyService ?? NearbyService.instance,
-        super(const NearbyHostIdle());
+  }) : _storage = storage,
+       _nearby = nearbyService ?? NearbyService.instance,
+       super(const NearbyHostIdle());
 
   // ── Start advertising ────────────────────────────────────────────────────
 
@@ -67,7 +66,6 @@ class NearbyHostCubit extends Cubit<NearbyHostState> {
 
       final ok = await _nearby.startAdvertising('DigiPad-Totem');
       if (!ok) {
-        DebugLogger.instance.warning('[NearbyHostCubit] Nearby failed, triggering FallbackServer');
         final fallbackOk = await FallbackServer.startServer();
         if (!fallbackOk) {
           emit(
@@ -78,18 +76,16 @@ class NearbyHostCubit extends Cubit<NearbyHostState> {
           );
           return;
         } else {
-          DebugLogger.instance.info('[NearbyHostCubit] FallbackServer started successfully.');
           _fallbackImageSub?.cancel();
-          _fallbackImageSub = FallbackServer.imageReceived.listen(_onImageReceived);
+          _fallbackImageSub = FallbackServer.imageReceived.listen(
+            _onImageReceived,
+          );
         }
       }
 
       final images = await _storage.loadImages();
       emit(NearbyHostAdvertising(photoCount: images.length));
-      DebugLogger.instance.info('[NearbyHostCubit] Advertising started. '
-          'Photos stored: ${images.length}');
     } catch (e) {
-      DebugLogger.instance.error('[NearbyHostCubit] startAdvertising error: $e');
       emit(NearbyHostError('Error al iniciar el Tótem: $e'));
     }
   }
@@ -103,13 +99,11 @@ class NearbyHostCubit extends Cubit<NearbyHostState> {
     await _nearby.stopAll();
     await FallbackServer.stopServer();
     emit(const NearbyHostIdle());
-    DebugLogger.instance.info('[NearbyHostCubit] Stopped advertising');
   }
 
   // ── Hard Reset ────────────────────────────────────────────────────────────
 
   Future<void> stopTotem() async {
-    DebugLogger.instance.info('[NearbyHostCubit] HARD STOP called');
     await stopAdvertising();
     // Re-ensure streams are disposed
     _connSub?.cancel();
@@ -118,7 +112,6 @@ class NearbyHostCubit extends Cubit<NearbyHostState> {
   }
 
   Future<void> restartTotem() async {
-    DebugLogger.instance.info('[NearbyHostCubit] RESTART called');
     await stopTotem();
     await Future.delayed(const Duration(milliseconds: 500));
     await startAdvertising();
@@ -133,10 +126,8 @@ class NearbyHostCubit extends Cubit<NearbyHostState> {
     final clients = List<String>.from(current.connectedClientIds);
     if (event.connected) {
       if (!clients.contains(event.endpointId)) clients.add(event.endpointId);
-      DebugLogger.instance.info('[NearbyHostCubit] Client connected: ${event.endpointId}');
     } else {
       clients.remove(event.endpointId);
-      DebugLogger.instance.info('[NearbyHostCubit] Client disconnected: ${event.endpointId}');
     }
     emit(current.copyWith(connectedClientIds: clients));
   }
@@ -144,8 +135,6 @@ class NearbyHostCubit extends Cubit<NearbyHostState> {
   // ── Image received ────────────────────────────────────────────────────────
 
   Future<void> _onImageReceived(NearbyReceivedImage img) async {
-    DebugLogger.instance.info('[NearbyHostCubit] Image received: ${img.fileName} '
-        '(${img.bytes.length} bytes)');
     try {
       final file = await _saveImageToStorage(img.bytes, img.fileName);
       await _storage.saveImage(file);
@@ -154,9 +143,8 @@ class NearbyHostCubit extends Cubit<NearbyHostState> {
       if (current is NearbyHostAdvertising) {
         emit(current.copyWith(photoCount: current.photoCount + 1));
       }
-      DebugLogger.instance.info('[NearbyHostCubit] Image saved: ${file.path}');
     } catch (e) {
-      DebugLogger.instance.error('[NearbyHostCubit] Failed to save image: $e');
+      debugPrint(e.toString());
     }
   }
 
@@ -184,15 +172,14 @@ class NearbyHostCubit extends Cubit<NearbyHostState> {
       Permission.nearbyWifiDevices,
     ].request();
 
-    DebugLogger.instance.info('[NearbyHostCubit] Permissions: '
-        '${statuses.map((k, v) => MapEntry(k.toString(), v.toString()))}');
-
     // On Android 12+, Bluetooth Scan/Connect/Advertise are the primary requirements.
     // Location is often reported as denied if Nearby Wifi Devices is granted.
     final scanOk = statuses[Permission.bluetoothScan]?.isGranted ?? false;
     final connectOk = statuses[Permission.bluetoothConnect]?.isGranted ?? false;
-    final advertiseOk = statuses[Permission.bluetoothAdvertise]?.isGranted ?? false;
-    final locationOk = statuses[Permission.locationWhenInUse]?.isGranted ?? false;
+    final advertiseOk =
+        statuses[Permission.bluetoothAdvertise]?.isGranted ?? false;
+    final locationOk =
+        statuses[Permission.locationWhenInUse]?.isGranted ?? false;
     final wifiOk = statuses[Permission.nearbyWifiDevices]?.isGranted ?? false;
 
     // Successful if (Modern Bluetooth) OR (Legacy Location)

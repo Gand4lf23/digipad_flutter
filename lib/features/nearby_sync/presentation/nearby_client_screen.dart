@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:digipad_flutter/features/nearby_sync/cubit/nearby_client_cubit.dart';
 import 'package:digipad_flutter/features/nearby_sync/cubit/nearby_client_state.dart';
-import 'package:digipad_flutter/features/nearby_sync/debug_logger.dart';
 
 /// CLIENT screen — discovers Totem devices and sends photos via Nearby.
 class NearbyClientScreen extends StatefulWidget {
@@ -55,29 +54,48 @@ class _NearbyClientScreenState extends State<NearbyClientScreen> {
                 // Hard Reset Controls Persistent bar
                 Container(
                   color: Colors.black26,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       ElevatedButton.icon(
-                        onPressed: () => context.read<NearbyClientCubit>().stopClient(),
+                        onPressed: () =>
+                            context.read<NearbyClientCubit>().stopClient(),
                         icon: const Icon(Icons.stop_rounded, size: 16),
-                        label: const Text('Detener (Hard Stop)', style: TextStyle(fontSize: 12)),
+                        label: const Text(
+                          'Detener (Hard Stop)',
+                          style: TextStyle(fontSize: 12),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red.withOpacity(0.2),
                           foregroundColor: Colors.redAccent,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
                       ElevatedButton.icon(
-                        onPressed: () => context.read<NearbyClientCubit>().restartClient(),
+                        onPressed: () =>
+                            context.read<NearbyClientCubit>().restartClient(),
                         icon: const Icon(Icons.refresh_rounded, size: 16),
-                        label: const Text('Reiniciar', style: TextStyle(fontSize: 12)),
+                        label: const Text(
+                          'Reiniciar',
+                          style: TextStyle(fontSize: 12),
+                        ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6C63FF).withOpacity(0.2),
+                          backgroundColor: const Color(
+                            0xFF6C63FF,
+                          ).withOpacity(0.2),
                           foregroundColor: const Color(0xFF9D97FF),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                         ),
                       ),
                     ],
@@ -85,7 +103,6 @@ class _NearbyClientScreenState extends State<NearbyClientScreen> {
                 ),
               ],
             ),
-            const DebugConsoleToggle(),
           ],
         ),
       ),
@@ -94,15 +111,17 @@ class _NearbyClientScreenState extends State<NearbyClientScreen> {
 
   // ── Common top bar ─────────────────────────────────────────────────────────
 
-  Widget _buildTopBar(BuildContext context, String title,
-      {Widget? trailing}) {
+  Widget _buildTopBar(BuildContext context, String title, {Widget? trailing}) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 12, 16, 0),
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back_ios_rounded,
-                color: Colors.white60, size: 20),
+            icon: const Icon(
+              Icons.arrow_back_ios_rounded,
+              color: Colors.white60,
+              size: 20,
+            ),
             onPressed: () {
               context.read<NearbyClientCubit>().reset();
               Navigator.of(context).pop();
@@ -188,17 +207,21 @@ class _NearbyClientScreenState extends State<NearbyClientScreen> {
   // ── Discovering ────────────────────────────────────────────────────────────
 
   Widget _buildDiscovering(
-      BuildContext context, NearbyClientDiscovering state) {
+    BuildContext context,
+    NearbyClientDiscovering state,
+  ) {
     return Column(
       children: [
         _buildTopBar(
           context,
           'Buscando Tótem…',
           trailing: IconButton(
-            icon: const Icon(Icons.refresh_rounded,
-                color: Colors.white38, size: 22),
-            onPressed: () =>
-                context.read<NearbyClientCubit>().startDiscovery(),
+            icon: const Icon(
+              Icons.refresh_rounded,
+              color: Colors.white38,
+              size: 22,
+            ),
+            onPressed: () => context.read<NearbyClientCubit>().startDiscovery(),
           ),
         ),
         const SizedBox(height: 8),
@@ -255,8 +278,7 @@ class _NearbyClientScreenState extends State<NearbyClientScreen> {
             height: 56,
             child: CircularProgressIndicator(
               strokeWidth: 3,
-              valueColor:
-                  AlwaysStoppedAnimation<Color>(Color(0xFF5EFCE8)),
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF5EFCE8)),
             ),
           ),
           SizedBox(height: 24),
@@ -289,8 +311,11 @@ class _NearbyClientScreenState extends State<NearbyClientScreen> {
           trailing: TextButton.icon(
             onPressed: () =>
                 context.read<NearbyClientCubit>().forgetAndDisconnect(),
-            icon: const Icon(Icons.link_off_rounded,
-                color: Colors.white38, size: 18),
+            icon: const Icon(
+              Icons.link_off_rounded,
+              color: Colors.white38,
+              size: 18,
+            ),
             label: const Text(
               'Desconectar',
               style: TextStyle(color: Colors.white38, fontSize: 13),
@@ -305,13 +330,13 @@ class _NearbyClientScreenState extends State<NearbyClientScreen> {
                 // Status badge
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 20, vertical: 10),
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF00BFA6).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: const Color(0xFF00BFA6),
-                    ),
+                    border: Border.all(color: const Color(0xFF00BFA6)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -342,10 +367,7 @@ class _NearbyClientScreenState extends State<NearbyClientScreen> {
                 if (state.sentCount > 0) ...[
                   Text(
                     '${state.sentCount} foto${state.sentCount == 1 ? '' : 's'} enviada${state.sentCount == 1 ? '' : 's'}',
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 16,
-                    ),
+                    style: const TextStyle(color: Colors.white70, fontSize: 16),
                   ),
                   const SizedBox(height: 24),
                 ],
@@ -355,8 +377,8 @@ class _NearbyClientScreenState extends State<NearbyClientScreen> {
                   onTap: state.isSending
                       ? null
                       : () => context
-                          .read<NearbyClientCubit>()
-                          .captureAndSendPhoto(),
+                            .read<NearbyClientCubit>()
+                            .captureAndSendPhoto(),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     width: 130,
@@ -377,8 +399,9 @@ class _NearbyClientScreenState extends State<NearbyClientScreen> {
                           ? []
                           : [
                               BoxShadow(
-                                color: const Color(0xFF6C63FF)
-                                    .withValues(alpha: 0.5),
+                                color: const Color(
+                                  0xFF6C63FF,
+                                ).withValues(alpha: 0.5),
                                 blurRadius: 30,
                                 spreadRadius: 4,
                               ),
@@ -392,7 +415,8 @@ class _NearbyClientScreenState extends State<NearbyClientScreen> {
                               child: CircularProgressIndicator(
                                 strokeWidth: 2.5,
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white),
+                                  Colors.white,
+                                ),
                               ),
                             ),
                           )
@@ -407,10 +431,7 @@ class _NearbyClientScreenState extends State<NearbyClientScreen> {
                 const SizedBox(height: 18),
                 Text(
                   state.isSending ? 'Enviando…' : 'Toca para fotografiar',
-                  style: const TextStyle(
-                    color: Colors.white54,
-                    fontSize: 14,
-                  ),
+                  style: const TextStyle(color: Colors.white54, fontSize: 14),
                 ),
               ],
             ),
@@ -431,8 +452,7 @@ class _NearbyClientScreenState extends State<NearbyClientScreen> {
             tween: Tween(begin: 0.5, end: 1.0),
             duration: const Duration(milliseconds: 500),
             curve: Curves.elasticOut,
-            builder: (_, v, child) =>
-                Transform.scale(scale: v, child: child),
+            builder: (_, v, child) => Transform.scale(scale: v, child: child),
             child: Container(
               width: 100,
               height: 100,
@@ -494,8 +514,7 @@ class _NearbyClientScreenState extends State<NearbyClientScreen> {
             _primaryButton(
               icon: Icons.radar_rounded,
               label: 'Buscar Tótem',
-              onTap: () =>
-                  context.read<NearbyClientCubit>().startDiscovery(),
+              onTap: () => context.read<NearbyClientCubit>().startDiscovery(),
             ),
           ],
         ),
@@ -556,9 +575,10 @@ class _PulseIconState extends State<_PulseIcon>
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     )..repeat(reverse: true);
-    _scale = Tween(begin: 0.85, end: 1.15).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
+    _scale = Tween(
+      begin: 0.85,
+      end: 1.15,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -607,7 +627,9 @@ class _EndpointTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF1A1A2E),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF6C63FF).withValues(alpha: 0.3)),
+        border: Border.all(
+          color: const Color(0xFF6C63FF).withValues(alpha: 0.3),
+        ),
       ),
       child: ListTile(
         onTap: onTap,

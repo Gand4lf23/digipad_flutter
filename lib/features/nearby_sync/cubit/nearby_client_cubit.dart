@@ -11,7 +11,6 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:digipad_flutter/data/local/gallery_storage.dart';
 import 'package:digipad_flutter/features/nearby_sync/nearby_preferences.dart';
 import 'package:digipad_flutter/features/nearby_sync/nearby_service.dart';
-import 'package:digipad_flutter/features/nearby_sync/debug_logger.dart';
 import 'nearby_client_state.dart';
 
 /// Manages the CLIENTE role.
@@ -37,10 +36,10 @@ class NearbyClientCubit extends Cubit<NearbyClientState> {
     required GalleryStorage storage,
     NearbyPreferences? prefs,
     NearbyService? nearbyService,
-  })  : _storage = storage,
-        _prefs = prefs ?? NearbyPreferences(),
-        _nearby = nearbyService ?? NearbyService.instance,
-        super(const NearbyClientIdle());
+  }) : _storage = storage,
+       _prefs = prefs ?? NearbyPreferences(),
+       _nearby = nearbyService ?? NearbyService.instance,
+       super(const NearbyClientIdle());
 
   // ── Start discovery ────────────────────────────────────────────────────────
 
@@ -69,9 +68,9 @@ class NearbyClientCubit extends Cubit<NearbyClientState> {
     _foundSub = _nearby.endpointFound.listen((ep) {
       _foundEndpoints.addAll(ep);
       if (state is NearbyClientDiscovering) {
-        emit(NearbyClientDiscovering(
-          foundEndpoints: Map.from(_foundEndpoints),
-        ));
+        emit(
+          NearbyClientDiscovering(foundEndpoints: Map.from(_foundEndpoints)),
+        );
       }
     });
 
@@ -81,13 +80,12 @@ class NearbyClientCubit extends Cubit<NearbyClientState> {
 
     final ok = await _nearby.startDiscovery('DigiPad-Client');
     if (!ok) {
-      DebugLogger.instance.error('[NearbyClientCubit] startDiscovery failed');
-      emit(const NearbyClientError(
-        'No se pudo iniciar la búsqueda. '
-        'Verifica que Bluetooth y WiFi estén activos.',
-      ));
-    } else {
-      DebugLogger.instance.info('[NearbyClientCubit] startDiscovery successful');
+      emit(
+        const NearbyClientError(
+          'No se pudo iniciar la búsqueda. '
+          'Verifica que Bluetooth y WiFi estén activos.',
+        ),
+      );
     }
   }
 
@@ -102,9 +100,11 @@ class NearbyClientCubit extends Cubit<NearbyClientState> {
 
     final ok = await _nearby.connectToEndpoint(endpointId, 'DigiPad-Client');
     if (!ok) {
-      emit(NearbyClientError(
-        'No se pudo conectar con "$endpointName". Intenta de nuevo.',
-      ));
+      emit(
+        NearbyClientError(
+          'No se pudo conectar con "$endpointName". Intenta de nuevo.',
+        ),
+      );
       return;
     }
     // Connection result will be emitted via _onConnectionEvent
@@ -116,9 +116,6 @@ class NearbyClientCubit extends Cubit<NearbyClientState> {
     final saved = await _prefs.loadEndpoint();
     if (saved == null) return;
 
-    DebugLogger.instance.info('[NearbyClientCubit] Trying auto-reconnect to '
-        '${saved.name} (${saved.id})');
-
     // Start discovery and wait briefly for the saved endpoint to appear
     await startDiscovery();
 
@@ -126,13 +123,11 @@ class NearbyClientCubit extends Cubit<NearbyClientState> {
     for (int i = 0; i < 16; i++) {
       await Future.delayed(const Duration(milliseconds: 500));
       if (_foundEndpoints.containsKey(saved.id)) {
-        DebugLogger.instance.info('[NearbyClientCubit] Saved endpoint found — connecting');
         await connectToEndpoint(saved.id);
         return;
       }
       if (state is! NearbyClientDiscovering) return; // user navigated away
     }
-    DebugLogger.instance.warning('[NearbyClientCubit] Auto-reconnect: endpoint not found');
     // Stay in discovering state — user can tap manually
   }
 
@@ -140,23 +135,25 @@ class NearbyClientCubit extends Cubit<NearbyClientState> {
 
   void _onConnectionEvent(NearbyConnectionEvent event) {
     if (event.connected) {
-      DebugLogger.instance.info('[NearbyClientCubit] Connected to ${event.endpointId}');
       // Persist for next session
       _prefs.saveEndpoint(event.endpointId, event.endpointName);
 
-      emit(NearbyClientConnected(
-        endpointId: event.endpointId,
-        endpointName: event.endpointName,
-      ));
+      emit(
+        NearbyClientConnected(
+          endpointId: event.endpointId,
+          endpointName: event.endpointName,
+        ),
+      );
     } else {
       final current = state;
       if (current is NearbyClientConnected &&
           current.endpointId == event.endpointId) {
-        DebugLogger.instance.info('[NearbyClientCubit] Disconnected from ${event.endpointId}');
-        emit(const NearbyClientError(
-          'Se perdió la conexión con el Tótem.\n'
-          'Toca "Buscar Tótem" para reconectar.',
-        ));
+        emit(
+          const NearbyClientError(
+            'Se perdió la conexión con el Tótem.\n'
+            'Toca "Buscar Tótem" para reconectar.',
+          ),
+        );
       }
     }
   }
@@ -166,12 +163,10 @@ class NearbyClientCubit extends Cubit<NearbyClientState> {
   Future<void> captureAndSendPhoto() async {
     final current = state;
     if (current is! NearbyClientConnected) {
-      DebugLogger.instance.warning('[NearbyClientCubit] captureAndSendPhoto called in wrong state');
       return;
     }
 
     try {
-      DebugLogger.instance.info('[NearbyClientCubit] Opening camera...');
       final XFile? photo = await _picker.pickImage(
         source: ImageSource.camera,
         imageQuality: 85,
@@ -180,13 +175,11 @@ class NearbyClientCubit extends Cubit<NearbyClientState> {
       );
 
       if (photo == null) {
-        DebugLogger.instance.info('[NearbyClientCubit] User cancelled camera');
         return;
       }
 
       // Re-validate state after async camera call (Activity may have changed)
       if (state is! NearbyClientConnected) {
-        DebugLogger.instance.warning('[NearbyClientCubit] State changed during capture — aborting');
         return;
       }
       final activeState = state as NearbyClientConnected;
@@ -196,18 +189,13 @@ class NearbyClientCubit extends Cubit<NearbyClientState> {
       // 1. Save locally (never fail the upload if this fails)
       try {
         await _saveLocally(photo.path);
-        DebugLogger.instance.info('[NearbyClientCubit] Local save OK');
       } catch (e) {
-        DebugLogger.instance.error('[NearbyClientCubit] Local save failed (non-fatal): $e');
+        debugPrint(e.toString());
       }
 
       // 2. Read bytes and send via Nearby
       final bytes = Uint8List.fromList(await File(photo.path).readAsBytes());
-      final fileName =
-          'photo_${DateTime.now().millisecondsSinceEpoch}.jpg';
-
-      DebugLogger.instance.info('[NearbyClientCubit] Sending ${bytes.length} bytes '
-          'to ${activeState.endpointId}...');
+      final fileName = 'photo_${DateTime.now().millisecondsSinceEpoch}.jpg';
 
       final ok = await _nearby.sendImage(
         endpointId: activeState.endpointId,
@@ -220,20 +208,23 @@ class NearbyClientCubit extends Cubit<NearbyClientState> {
         emit(NearbyClientSendSuccess(newCount));
         await Future.delayed(const Duration(milliseconds: 700));
         if (state is NearbyClientSendSuccess) {
-          emit(NearbyClientConnected(
-            endpointId: activeState.endpointId,
-            endpointName: activeState.endpointName,
-            sentCount: newCount,
-          ));
+          emit(
+            NearbyClientConnected(
+              endpointId: activeState.endpointId,
+              endpointName: activeState.endpointName,
+              sentCount: newCount,
+            ),
+          );
         }
       } else {
         emit(activeState.copyWith(isSending: false));
-        emit(const NearbyClientError(
-          'Error al enviar la foto. La conexión pudo haberse perdido.',
-        ));
+        emit(
+          const NearbyClientError(
+            'Error al enviar la foto. La conexión pudo haberse perdido.',
+          ),
+        );
       }
     } catch (e) {
-      DebugLogger.instance.error('[NearbyClientCubit] captureAndSendPhoto error: $e');
       emit(const NearbyClientError('Error inesperado al enviar la foto.'));
     }
   }
@@ -256,7 +247,6 @@ class NearbyClientCubit extends Cubit<NearbyClientState> {
   // ── Hard Reset ────────────────────────────────────────────────────────────
 
   Future<void> stopClient() async {
-    DebugLogger.instance.info('[NearbyClientCubit] HARD STOP called');
     final current = state;
     if (current is NearbyClientConnected) {
       await _nearby.disconnectFromEndpoint(current.endpointId);
@@ -269,7 +259,6 @@ class NearbyClientCubit extends Cubit<NearbyClientState> {
   }
 
   Future<void> restartClient() async {
-    DebugLogger.instance.info('[NearbyClientCubit] RESTART called');
     await stopClient();
     await Future.delayed(const Duration(milliseconds: 500));
     await startDiscovery();
@@ -307,16 +296,14 @@ class NearbyClientCubit extends Cubit<NearbyClientState> {
       Permission.locationWhenInUse,
       Permission.nearbyWifiDevices,
     ].request();
-
-    DebugLogger.instance.info('[NearbyClientCubit] Permissions: '
-        '${statuses.map((k, v) => MapEntry(k.toString(), v.toString()))}');
-
     // On Android 12+, Bluetooth Scan/Connect/Advertise are the primary requirements.
     // Location is often reported as denied if Nearby Wifi Devices is granted.
     final scanOk = statuses[Permission.bluetoothScan]?.isGranted ?? false;
     final connectOk = statuses[Permission.bluetoothConnect]?.isGranted ?? false;
-    final advertiseOk = statuses[Permission.bluetoothAdvertise]?.isGranted ?? false;
-    final locationOk = statuses[Permission.locationWhenInUse]?.isGranted ?? false;
+    final advertiseOk =
+        statuses[Permission.bluetoothAdvertise]?.isGranted ?? false;
+    final locationOk =
+        statuses[Permission.locationWhenInUse]?.isGranted ?? false;
     final wifiOk = statuses[Permission.nearbyWifiDevices]?.isGranted ?? false;
 
     // Successful if (Modern Bluetooth) OR (Legacy Location) OR (Nearby Wifi)
