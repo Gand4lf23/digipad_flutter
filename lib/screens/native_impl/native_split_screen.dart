@@ -1,11 +1,14 @@
 import 'dart:io';
 import 'dart:ui';
+import 'dart:async';
+import 'dart:math';
 import 'package:digipad_flutter/screens/native_impl/optical_editor_screen.dart';
 import 'package:digipad_flutter/data/local/gallery_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:sensors_plus/sensors_plus.dart';
 import 'package:digipad_flutter/l10n/l10n.dart';
 
 class NativeSplitScreen extends StatefulWidget {
@@ -37,6 +40,10 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
   bool _isCheckingPermission = true;
   bool _isCapturing = false;
 
+  StreamSubscription<AccelerometerEvent>? _accelerometerSubscription;
+  double _pantoscopicAngle = 0.0;
+  double _rollAngle = 0.0;
+
   static const Color _backgroundColor = Color(0xFF121212);
   static const Color _accentColor = Colors.deepPurpleAccent;
 
@@ -49,12 +56,28 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
     _galleryModeNotifier = ValueNotifier<bool>(true);
     _galleryModeNotifier.addListener(_onGalleryModeChanged);
 
+    _accelerometerSubscription = accelerometerEvents.listen((AccelerometerEvent event) {
+      if (!mounted) return;
+      final x = event.x;
+      final y = event.y;
+      final z = event.z;
+
+      final newPitch = atan2(-x, sqrt(y * y + z * z)) * (180 / pi);
+      final newRoll = atan2(y, z) * (180 / pi);
+
+      setState(() {
+        _pantoscopicAngle = newPitch;
+        _rollAngle = newRoll;
+      });
+    });
+
     _checkCameraPermission();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _accelerometerSubscription?.cancel();
     _galleryModeNotifier.removeListener(_onGalleryModeChanged);
     _galleryModeNotifier.dispose();
     super.dispose();
@@ -252,6 +275,7 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
                 ),
                 _buildBackButton(context),
                 _buildGalleryToggle(), // Toggle arriba a la derecha
+                if (!isGalleryOnly) _buildInclinometerOverlay(),
                 if (_isCapturing)
                   Container(
                     color: Colors.black54,
@@ -306,6 +330,43 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
                 activeThumbColor: _accentColor,
                 activeTrackColor: _accentColor.withValues(alpha: 0.5),
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInclinometerOverlay() {
+    final isGoodAngle = _pantoscopicAngle >= 0 && _pantoscopicAngle <= 15;
+    return Positioned(
+      top: 80.0,
+      right: 16.0,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isGoodAngle ? Colors.greenAccent : Colors.redAccent,
+            width: 2,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.screen_rotation, 
+              color: isGoodAngle ? Colors.greenAccent : Colors.redAccent, 
+              size: 24,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${_pantoscopicAngle.toStringAsFixed(1)}°',
+              style: TextStyle(
+                color: isGoodAngle ? Colors.greenAccent : Colors.redAccent,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
               ),
             ),
           ],
@@ -656,7 +717,7 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
     );
   }
 
-  Future<void> _processImagePath(String path) async {
+  Future<void> _processImagePath(String path, {double? angle}) async {
     setState(() => _isCapturing = true);
 
     try {
@@ -689,6 +750,7 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
                   imagePath: path,
                   detections: detections,
                   isFrontCamera: false,
+                  pantoscopicAngle: angle,
                 ),
               ),
             );
@@ -716,7 +778,7 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
     try {
       final XFile? image = await _picker.pickImage(source: source);
       if (image == null) return;
-      await _processImagePath(image.path);
+      await _processImagePath(image.path, angle: source == ImageSource.camera ? _pantoscopicAngle : null);
     } catch (e) {
       debugPrint("Error capturing using image picker: $e");
       if (mounted) setState(() => _isCapturing = false);
@@ -896,6 +958,7 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
                     imagePath: nativePath,
                     detections: detectionsSnapshot,
                     isFrontCamera: wasFront,
+                    pantoscopicAngle: _pantoscopicAngle,
                   ),
                 ),
               );

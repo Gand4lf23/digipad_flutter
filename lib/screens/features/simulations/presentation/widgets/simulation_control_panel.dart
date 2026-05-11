@@ -25,15 +25,29 @@ class SimulationControlPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Only hide the entire panel if there are no lenses to select
     if (scenario.correctionLenses.isEmpty) {
       return const SizedBox.shrink();
     }
 
+    final isPhotochromic = category.id == 'photochromic';
     final isTint = category.id == 'tint';
     final isLensMode = state.isLensDraggingMode;
+    final isStaticMode = ['myopia', 'aspheric', 'multifocal', 'bifocal'].contains(category.id);
 
-    final isStaticMode = ['myopia', 'presbyopia', 'aspheric', 'multifocal', 'bifocal'].contains(category.id);
+    Widget selectorWidget;
+    if (isPhotochromic) {
+      selectorWidget = _PhotochromicColorPicker(
+        lenses: scenario.correctionLenses,
+        selectedLens: selectedLens,
+        onLensSelected: onLensSelected,
+      );
+    } else {
+      selectorWidget = LensSelectorPanel(
+        lenses: scenario.correctionLenses,
+        selectedLens: selectedLens,
+        onLensSelected: onLensSelected,
+      );
+    }
 
     return Container(
       decoration: BoxDecoration(
@@ -56,33 +70,27 @@ class SimulationControlPanel extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                context.l10n.selectLensLabel,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.8),
-                  fontSize: 32,
-                  fontWeight: FontWeight.w500,
+              if (!isPhotochromic)
+                Text(
+                  context.l10n.selectLensLabel,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 32,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
+              if (!isPhotochromic) const SizedBox(height: 20),
 
               // Selector and Controls Row
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Expanded(
-                    child: LensSelectorPanel(
-                      lenses: scenario.correctionLenses,
-                      selectedLens: selectedLens,
-                      onLensSelected: onLensSelected,
-                    ),
-                  ),
+                  Expanded(child: selectorWidget),
 
-                  // Show extra controls (radius/divider) only if NOT in static mode
-                  if (!isStaticMode) ...[
+                  // Show extra controls (radius/divider) only if NOT in static mode and NOT photochromic
+                  if (!isStaticMode && !isPhotochromic) ...[
                     const SizedBox(width: 32),
 
-                    // Vertical separator
                     Container(
                       height: 120,
                       width: 2,
@@ -91,7 +99,6 @@ class SimulationControlPanel extends StatelessWidget {
 
                     const SizedBox(width: 32),
 
-                    // Mode-specific controls
                     if (isLensMode)
                       _buildLensModeControls(context)
                     else
@@ -268,5 +275,109 @@ class SimulationControlPanel extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+class _PhotochromicColorPicker extends StatelessWidget {
+  final List<CorrectionLens> lenses;
+  final CorrectionLens? selectedLens;
+  final ValueChanged<CorrectionLens> onLensSelected;
+
+  const _PhotochromicColorPicker({
+    required this.lenses,
+    required this.selectedLens,
+    required this.onLensSelected,
+  });
+
+  Color _colorForLens(CorrectionLens lens) {
+    switch (lens.name) {
+      case 'gray':
+        return Colors.grey.shade600;
+      case 'brown':
+        return const Color(0xFF6D4C41);
+      case 'green':
+        return Colors.green.shade700;
+      case 'sin_lente':
+      default:
+        return Colors.white;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: lenses.map((lens) {
+          final isSelected = selectedLens?.id == lens.id;
+          final color = _colorForLens(lens);
+          final isSinLente = lens.name == 'sin_lente';
+
+          return Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: GestureDetector(
+              onTap: () => onLensSelected(lens),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? color.withValues(alpha: isSinLente ? 0.15 : 0.25)
+                      : Colors.white.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: isSelected ? color : Colors.white.withValues(alpha: 0.3),
+                    width: isSelected ? 2 : 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isSinLente ? Colors.transparent : color,
+                        border: isSinLente
+                            ? Border.all(color: Colors.white54, width: 1.5)
+                            : null,
+                      ),
+                      child: isSinLente
+                          ? const Icon(Icons.block, color: Colors.white54, size: 14)
+                          : null,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _localizedName(context, lens),
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : Colors.white70,
+                        fontSize: 16,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  String _localizedName(BuildContext context, CorrectionLens lens) {
+    switch (lens.name) {
+      case 'gray':
+        return context.l10n.simColorGray;
+      case 'brown':
+        return context.l10n.simColorBrown;
+      case 'green':
+        return context.l10n.simColorGreen;
+      case 'sin_lente':
+        return context.l10n.simLensNoLens;
+      default:
+        return lens.displayName;
+    }
   }
 }

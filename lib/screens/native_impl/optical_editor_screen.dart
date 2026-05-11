@@ -16,12 +16,14 @@ class OpticalEditorScreen extends StatefulWidget {
   final String imagePath;
   final Map<String, dynamic> detections;
   final bool isFrontCamera;
+  final double? pantoscopicAngle;
 
   const OpticalEditorScreen({
     super.key,
     required this.imagePath,
     required this.detections,
     this.isFrontCamera = false,
+    this.pantoscopicAngle,
   });
 
   @override
@@ -39,8 +41,10 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
       WidgetsToImageController();
   late final TextEditingController _calibrationHorizontalController;
   late final TextEditingController _calibrationVerticalController;
+  late final TextEditingController _calibrationAngleController;
   late final FocusNode _calibrationHorizontalFocusNode;
   late final FocusNode _calibrationVerticalFocusNode;
+  late final FocusNode _calibrationAngleFocusNode;
   bool _isSyncingCalibrationText = false;
 
   bool _isMoveMode = false;
@@ -54,14 +58,19 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
     super.initState();
     _imageFile = File(widget.imagePath);
     _controller = OpticalController();
+    _controller.pantoscopicAngle = widget.pantoscopicAngle;
     _calibrationHorizontalController = TextEditingController(
       text: _formatCalibrationValue(_controller.ajusteHorizontal),
     );
     _calibrationVerticalController = TextEditingController(
       text: _formatCalibrationValue(_controller.ajusteVertical),
     );
+    _calibrationAngleController = TextEditingController(
+      text: _controller.pantoscopicAngle?.toStringAsFixed(1) ?? '0.0',
+    );
     _calibrationHorizontalFocusNode = FocusNode();
     _calibrationVerticalFocusNode = FocusNode();
+    _calibrationAngleFocusNode = FocusNode();
     _controller.addListener(_syncCalibrationTextFromController);
     _loadImageAndInit();
   }
@@ -73,8 +82,10 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
     _controller.removeListener(_syncCalibrationTextFromController);
     _calibrationHorizontalController.dispose();
     _calibrationVerticalController.dispose();
+    _calibrationAngleController.dispose();
     _calibrationHorizontalFocusNode.dispose();
     _calibrationVerticalFocusNode.dispose();
+    _calibrationAngleFocusNode.dispose();
     super.dispose();
   }
 
@@ -105,6 +116,16 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
         final next = _formatCalibrationValue(_controller.ajusteVertical);
         if (_calibrationVerticalController.text != next) {
           _calibrationVerticalController.value = TextEditingValue(
+            text: next,
+            selection: TextSelection.collapsed(offset: next.length),
+          );
+        }
+      }
+
+      if (!_calibrationAngleFocusNode.hasFocus) {
+        final next = _controller.pantoscopicAngle?.toStringAsFixed(1) ?? '0.0';
+        if (_calibrationAngleController.text != next) {
+          _calibrationAngleController.value = TextEditingValue(
             text: next,
             selection: TextSelection.collapsed(offset: next.length),
           );
@@ -720,6 +741,63 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
                 ),
               ],
             ),
+            Row(
+              children: [
+                SizedBox(
+                  width: 140,
+                  child: Text(
+                    'Ángulo Pantoscópico',
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                  ),
+                ),
+                Expanded(
+                  child: Slider(
+                    value: ctrl.pantoscopicAngle ?? 0.0,
+                    min: 0.0,
+                    max: 30.0,
+                    divisions: 300,
+                    activeColor: Colors.orangeAccent,
+                    onChanged: (v) => ctrl.setPantoscopicAngle(v),
+                  ),
+                ),
+                SizedBox(
+                  width: 72,
+                  child: TextField(
+                    controller: _calibrationAngleController,
+                    focusNode: _calibrationAngleFocusNode,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9\.,]')),
+                    ],
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 8,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white24),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.orangeAccent),
+                      ),
+                    ),
+                    onSubmitted: (value) {
+                      final val = double.tryParse(value.replaceAll(',', '.'));
+                      if (val != null) ctrl.setPantoscopicAngle(val.clamp(0.0, 45.0));
+                    },
+                    onEditingComplete: () {
+                      final val = double.tryParse(_calibrationAngleController.text.replaceAll(',', '.'));
+                      if (val != null) ctrl.setPantoscopicAngle(val.clamp(0.0, 45.0));
+                    },
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -821,6 +899,13 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
                   _statItem(context, context.l10n.bridge, ctrl.puente),
                   _statItem(context, context.l10n.frameW, ctrl.aroAnc),
                   _statItem(context, context.l10n.frameH, ctrl.aroAlt),
+                  if (ctrl.pantoscopicAngle != null)
+                    _statItem(
+                      context, 
+                      'Ángulo Pant.', 
+                      ctrl.pantoscopicAngle!,
+                      unit: '°',
+                    ),
                 ],
               ),
               const Divider(color: Colors.white24),
@@ -859,7 +944,9 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
     String label,
     double value, {
     bool isLarge = false,
+    String unit = '',
   }) {
+    final displayUnit = unit.isEmpty ? context.l10n.unitMm : unit;
     return Column(
       children: [
         Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
@@ -873,7 +960,7 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
           ),
         ),
         Text(
-          context.l10n.unitMm,
+          displayUnit,
           style: const TextStyle(color: Colors.grey, fontSize: 10),
         ),
       ],
@@ -921,6 +1008,7 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
       builder: (context) => _ResultsSheet(
         controller: _controller,
         screenshotController: _screenshotController,
+        pantoscopicAngle: widget.pantoscopicAngle,
       ),
     );
   }
@@ -929,10 +1017,12 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
 class _ResultsSheet extends StatelessWidget {
   final OpticalController controller;
   final WidgetsToImageController screenshotController;
+  final double? pantoscopicAngle;
 
   const _ResultsSheet({
     required this.controller,
     required this.screenshotController,
+    this.pantoscopicAngle,
   });
 
   @override
@@ -982,6 +1072,13 @@ class _ResultsSheet extends StatelessWidget {
                 _resultRow(context, context.l10n.bridge, controller.puente),
                 _resultRow(context, context.l10n.frameW, controller.aroAnc),
                 _resultRow(context, context.l10n.frameH, controller.aroAlt),
+                if (controller.pantoscopicAngle != null)
+                  _resultRow(
+                    context, 
+                    'Ángulo Pantoscópico', 
+                    controller.pantoscopicAngle!,
+                    unit: '°',
+                  ),
               ],
             ),
           ),
@@ -1097,7 +1194,9 @@ class _ResultsSheet extends StatelessWidget {
     double value, {
     bool highlight = false,
     bool compact = false,
+    String unit = '',
   }) {
+    final displayUnit = unit.isEmpty ? context.l10n.unitMm : unit;
     return Padding(
       padding: EdgeInsets.symmetric(vertical: compact ? 4 : 8),
       child: Row(
@@ -1111,7 +1210,7 @@ class _ResultsSheet extends StatelessWidget {
             ),
           ),
           Text(
-            "${value.toStringAsFixed(1)} ${context.l10n.unitMm}",
+            "${value.toStringAsFixed(1)} $displayUnit",
             style: TextStyle(
               color: highlight ? Colors.cyanAccent : Colors.white,
               fontWeight: highlight ? FontWeight.bold : FontWeight.normal,
@@ -1127,7 +1226,13 @@ class _ResultsSheet extends StatelessWidget {
       ..writeln(context.l10n.measurementsResultsTitle)
       ..writeln(
         "${context.l10n.ipdDi}: ${controller.di.toStringAsFixed(1)} ${context.l10n.unitMm}",
-      )
+      );
+
+    if (controller.pantoscopicAngle != null) {
+      buffer.writeln("Ángulo Pantoscópico: ${controller.pantoscopicAngle!.toStringAsFixed(1)} °");
+    }
+
+    buffer
       ..writeln(
         "${context.l10n.bridge}: ${controller.puente.toStringAsFixed(1)} ${context.l10n.unitMm}",
       )

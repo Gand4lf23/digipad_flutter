@@ -69,12 +69,13 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
     setState(() => _isLoading = true);
 
     try {
-      // Load problem image
       _problemImage = await _loadImage(widget.scenario.problemImagePath);
 
-      // Load corrected image if lens is selected
-      if (_currentLens != null) {
+      // 'sin_lente' shows only the problem image (no correction)
+      if (_currentLens != null && _currentLens!.name != 'sin_lente') {
         _correctedImage = await _loadImage(_currentLens!.correctedImagePath);
+      } else {
+        _correctedImage = null;
       }
 
       if (mounted) {
@@ -106,7 +107,12 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
     });
 
     try {
-      _correctedImage = await _loadImage(lens.correctedImagePath);
+      // 'sin_lente' shows only the problem image (no correction overlay)
+      if (lens.name == 'sin_lente') {
+        _correctedImage = null;
+      } else {
+        _correctedImage = await _loadImage(lens.correctedImagePath);
+      }
       if (mounted) {
         setState(() => _isLoading = false);
       }

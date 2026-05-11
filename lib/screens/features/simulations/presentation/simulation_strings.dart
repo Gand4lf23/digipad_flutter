@@ -152,6 +152,10 @@ class SimulationStrings {
         return context.l10n.simSceneCar;
       case 'optic':
         return context.l10n.simSceneOpticStore;
+      case 'smartphone':
+        return context.l10n.simSceneSmartphone;
+      case 'store':
+        return context.l10n.simSceneStore;
       default:
         return scenario.displayName;
     }

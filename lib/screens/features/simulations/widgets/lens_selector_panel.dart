@@ -210,6 +210,18 @@ class _LensCard extends StatelessWidget {
         return context.l10n.simColorOrange;
       case 'red':
         return context.l10n.simColorRed;
+      case 'economic':
+        return context.l10n.simQualityEconomy;
+      case 'standard':
+        return context.l10n.simQualityStandard;
+      case 'good':
+        return context.l10n.simQualityGood;
+      case 'premium':
+        return context.l10n.simQualityPremium;
+      case 'progressive':
+        return context.l10n.simLensProgressive;
+      case 'sin_lente':
+        return context.l10n.simLensNoLens;
       default:
         return lens.displayName;
     }

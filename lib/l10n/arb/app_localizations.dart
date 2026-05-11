@@ -757,7 +757,7 @@ abstract class AppLocalizations {
   /// No description provided for @simCatMultifocal.
   ///
   /// In en, this message translates to:
-  /// **'Multifocal'**
+  /// **'Progressive'**
   String get simCatMultifocal;
 
   /// No description provided for @simCatMultifocalDesc.
@@ -1243,13 +1243,13 @@ abstract class AppLocalizations {
   /// No description provided for @simCatBlueFilter.
   ///
   /// In en, this message translates to:
-  /// **'Blue Filter'**
+  /// **'Blue Light Filter'**
   String get simCatBlueFilter;
 
   /// No description provided for @simCatBlueFilterDesc.
   ///
   /// In en, this message translates to:
-  /// **'Protection against blue light'**
+  /// **'Protection against blue light from digital screens'**
   String get simCatBlueFilterDesc;
 
   /// No description provided for @simCatMonofocal.
@@ -1497,6 +1497,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to save image'**
   String get cosmeticLensSaveError;
+
+  /// No description provided for @simSceneSmartphone.
+  ///
+  /// In en, this message translates to:
+  /// **'Smartphone'**
+  String get simSceneSmartphone;
+
+  /// No description provided for @simSceneStore.
+  ///
+  /// In en, this message translates to:
+  /// **'Store'**
+  String get simSceneStore;
+
+  /// No description provided for @simLensProgressive.
+  ///
+  /// In en, this message translates to:
+  /// **'Progressive Lens'**
+  String get simLensProgressive;
+
+  /// No description provided for @simLensNoLens.
+  ///
+  /// In en, this message translates to:
+  /// **'No Lens'**
+  String get simLensNoLens;
 }
 
 class _AppLocalizationsDelegate

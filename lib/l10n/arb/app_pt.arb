@@ -195,7 +195,7 @@
   "simSceneClothingStore": "Loja de Roupas",
   "simLensMonofocalNear": "Monofocal Perto",
   "simLensMonofocalFar": "Monofocal Longe",
-  "simCatMultifocal": "Multifocal",
+  "simCatMultifocal": "Progressivos",
   "simCatMultifocalDesc": "Comparação de qualidade de lentes progressivas",
   "simSceneClothing": "Roupas",
   "simQualityEconomy": "Econômico",
@@ -283,8 +283,8 @@
   "lensType": "Tipo de Lente",
   "simCatAspheric": "Asférico",
   "simCatAsphericDesc": "Design de lente mais plano e estético",
-  "simCatBlueFilter": "Filtro Azul",
-  "simCatBlueFilterDesc": "Proteção contra luz azul",
+  "simCatBlueFilter": "Filtro Luz Azul",
+  "simCatBlueFilterDesc": "Proteção contra luz azul de telas digitais",
   "simCatMonofocal": "Monofocal",
   "simCatMonofocalDesc": "Correção visual com um único ponto focal",
   "menuPhotoSync": "Photo Sync",
@@ -339,5 +339,9 @@
   "galleryTitle": "Galeria",
   "vmInternalGallery": "Galeria Interna",
   "cosmeticLensSaved": "Imagem salva com sucesso!",
-  "cosmeticLensSaveError": "Falha ao salvar a imagem"
+  "cosmeticLensSaveError": "Falha ao salvar a imagem",
+  "simSceneSmartphone": "Celular",
+  "simSceneStore": "Loja",
+  "simLensProgressive": "Lente Progressiva",
+  "simLensNoLens": "Sem Lente"
 }

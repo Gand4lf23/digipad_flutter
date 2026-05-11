@@ -11,19 +11,22 @@ class SimulationData {
 
   /// All available simulation categories.
   static final List<SimulationCategory> categories = [
-    _myopiaCategory,
-    _monofocalCategory,
-    _multifocalCategory,
-    _presbyopiaCategory,
-    _bifocalCategory,
-    _polarizedCategory,
+    // Tratamientos de lentes
     _antiReflexCategory,
-    _driveCategory,
+    _blueFilterCategory,
     _photochromicCategory,
+    _polarizedCategory,
+    _asphericCategory,
+    _driveCategory,
     _solarCategory,
     _tintCategory,
-    _blueFilterCategory,
-    _asphericCategory,
+    // Tipos de lente
+    _monofocalCategory,
+    _bifocalCategory,
+    _multifocalCategory,
+    // Condiciones refractivas
+    _myopiaCategory,
+    _presbyopiaCategory,
   ];
 
   // ===================== MYOPIA (with Monofocal lenses) =====================
@@ -59,6 +62,29 @@ class SimulationData {
           ),
         ],
       ),
+      // Grocery scene (Supermarket) — shown before Market per feedback
+      SimulationScenario(
+        id: 'myopia_grocery',
+        sceneName: 'grocery',
+        displayName: 'Grocery',
+        problemImagePath: '$_basePath/myopia/myopia_grocery_noLens.webp',
+        correctionLenses: [
+          CorrectionLens(
+            id: 'myopia_grocery_near',
+            name: 'monofocal_near',
+            displayName: 'Monofocal Near',
+            correctedImagePath: '$_basePath/myopia/myopia_grocery_close.webp',
+            quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'myopia_grocery_far',
+            name: 'monofocal_far',
+            displayName: 'Monofocal Far',
+            correctedImagePath: '$_basePath/myopia/myopia_grocery_far.webp',
+            quality: LensQuality.good,
+          ),
+        ],
+      ),
       // Market scene (Store)
       SimulationScenario(
         id: 'myopia_market',
@@ -78,29 +104,6 @@ class SimulationData {
             name: 'monofocal_far',
             displayName: 'Monofocal Far',
             correctedImagePath: '$_basePath/myopia/myopia_market_far.webp',
-            quality: LensQuality.good,
-          ),
-        ],
-      ),
-      // Grocery scene (Supermarket)
-      SimulationScenario(
-        id: 'myopia_grocery',
-        sceneName: 'grocery',
-        displayName: 'Grocery',
-        problemImagePath: '$_basePath/myopia/myopia_grocery_noLens.webp',
-        correctionLenses: [
-          CorrectionLens(
-            id: 'myopia_grocery_near',
-            name: 'monofocal_near',
-            displayName: 'Monofocal Near',
-            correctedImagePath: '$_basePath/myopia/myopia_grocery_close.webp',
-            quality: LensQuality.standard,
-          ),
-          CorrectionLens(
-            id: 'myopia_grocery_far',
-            name: 'monofocal_far',
-            displayName: 'Monofocal Far',
-            correctedImagePath: '$_basePath/myopia/myopia_grocery_far.webp',
             quality: LensQuality.good,
           ),
         ],
@@ -293,45 +296,21 @@ class SimulationData {
         sceneName: 'kitchen',
         displayName: 'Kitchen',
         problemImagePath: '$_basePath/presbicia/PresbiciaCocina.webp',
-        correctionLenses: [
-          CorrectionLens(
-            id: 'presbyopia_kitchen_progressive',
-            name: 'progressive',
-            displayName: 'Progressive Lens',
-            correctedImagePath: '$_basePath/presbicia/presbicia_cocina.webp',
-            quality: LensQuality.premium,
-          ),
-        ],
+        correctionLenses: [],
       ),
       SimulationScenario(
         id: 'presbyopia_supermarket',
-        sceneName: 'supermarket',
+        sceneName: 'grocery',
         displayName: 'Supermarket',
         problemImagePath: '$_basePath/presbicia/PresbiciaSuper.webp',
-        correctionLenses: [
-          CorrectionLens(
-            id: 'presbyopia_super_progressive',
-            name: 'progressive',
-            displayName: 'Progressive Lens',
-            correctedImagePath: '$_basePath/presbicia/presbicia_almacen.webp',
-            quality: LensQuality.premium,
-          ),
-        ],
+        correctionLenses: [],
       ),
       SimulationScenario(
         id: 'presbyopia_store',
         sceneName: 'store',
         displayName: 'Store',
         problemImagePath: '$_basePath/presbicia/PresbiciaTienda.webp',
-        correctionLenses: [
-          CorrectionLens(
-            id: 'presbyopia_store_progressive',
-            name: 'progressive',
-            displayName: 'Progressive Lens',
-            correctedImagePath: '$_basePath/presbicia/presbicia_oficina.webp',
-            quality: LensQuality.premium,
-          ),
-        ],
+        correctionLenses: [],
       ),
     ],
   );
@@ -950,6 +929,14 @@ class SimulationData {
         problemImagePath: '$_basePath/photochromic/photochromic_optic_off.webp',
         correctionLenses: [
           CorrectionLens(
+            id: 'photo_optic_sin_lente',
+            name: 'sin_lente',
+            displayName: 'No Lens',
+            correctedImagePath:
+                '$_basePath/photochromic/photochromic_optic_off.webp',
+            quality: LensQuality.standard,
+          ),
+          CorrectionLens(
             id: 'photo_optic_gray',
             name: 'gray',
             displayName: 'Gray',
@@ -982,6 +969,14 @@ class SimulationData {
         displayName: 'Beach',
         problemImagePath: '$_basePath/photochromic/photochromic_beach_off.webp',
         correctionLenses: [
+          CorrectionLens(
+            id: 'photo_beach_sin_lente',
+            name: 'sin_lente',
+            displayName: 'No Lens',
+            correctedImagePath:
+                '$_basePath/photochromic/photochromic_beach_off.webp',
+            quality: LensQuality.standard,
+          ),
           CorrectionLens(
             id: 'photo_beach_gray',
             name: 'gray',
@@ -1016,6 +1011,14 @@ class SimulationData {
         problemImagePath:
             '$_basePath/photochromic/photochromic_driving_off.webp',
         correctionLenses: [
+          CorrectionLens(
+            id: 'photo_driving_sin_lente',
+            name: 'sin_lente',
+            displayName: 'No Lens',
+            correctedImagePath:
+                '$_basePath/photochromic/photochromic_driving_off.webp',
+            quality: LensQuality.standard,
+          ),
           CorrectionLens(
             id: 'photo_driving_gray',
             name: 'gray',
@@ -1197,10 +1200,10 @@ class SimulationData {
         id: 'tint_driving',
         sceneName: 'driving',
         displayName: 'Driving',
-        problemImagePath: '$_basePath/tint/tint_driving.webp',
+        problemImagePath: '$_basePath/solar/solar_driving_withAr.webp',
         correctionLenses: _getTintLenses(
           'tint_driving',
-          '$_basePath/tint/tint_driving.webp',
+          '$_basePath/solar/solar_driving_withAr.webp',
         ),
       ),
       SimulationScenario(

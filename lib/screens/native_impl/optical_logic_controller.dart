@@ -55,6 +55,8 @@ class OpticalController extends ChangeNotifier {
   double diametroLeft = 0;
   double calcRadiusPxRight = 0;
   double calcRadiusPxLeft = 0;
+  
+  double? pantoscopicAngle;
 
   DetectionPoint? selectedPoint;
 
@@ -321,6 +323,11 @@ class OpticalController extends ChangeNotifier {
     calculateFormulas();
     // Guardamos el nuevo valor en cuanto se cambia
     _saveCalibration('ajusteVertical', val);
+  }
+
+  void setPantoscopicAngle(double val) {
+    pantoscopicAngle = val;
+    notifyListeners();
   }
 
   void toggleCircles(bool val) {

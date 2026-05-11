@@ -366,7 +366,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get simLensMonofocalFar => 'Monofocal Longe';
 
   @override
-  String get simCatMultifocal => 'Multifocal';
+  String get simCatMultifocal => 'Progressivos';
 
   @override
   String get simCatMultifocalDesc =>
@@ -622,10 +622,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String get simCatAsphericDesc => 'Design de lente mais plano e estético';
 
   @override
-  String get simCatBlueFilter => 'Filtro Azul';
+  String get simCatBlueFilter => 'Filtro Luz Azul';
 
   @override
-  String get simCatBlueFilterDesc => 'Proteção contra luz azul';
+  String get simCatBlueFilterDesc =>
+      'Proteção contra luz azul de telas digitais';
 
   @override
   String get simCatMonofocal => 'Monofocal';
@@ -758,4 +759,16 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get cosmeticLensSaveError => 'Falha ao salvar a imagem';
+
+  @override
+  String get simSceneSmartphone => 'Celular';
+
+  @override
+  String get simSceneStore => 'Loja';
+
+  @override
+  String get simLensProgressive => 'Lente Progressiva';
+
+  @override
+  String get simLensNoLens => 'Sem Lente';
 }
