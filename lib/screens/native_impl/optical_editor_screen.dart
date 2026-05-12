@@ -227,12 +227,12 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
         .map((p) => p.position)
         .toList();
 
-    if (points.length < 2) return;
-
-    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
-    if (renderBox == null || _imageSize == null) return;
-
-    final Size viewportSize = renderBox.size;
+    if (_viewportSize == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _applyAutoZoom());
+      return;
+    }
+    
+    final Size viewportSize = _viewportSize!;
 
     double minX = points.map((p) => p.dx).reduce(math.min);
     double maxX = points.map((p) => p.dx).reduce(math.max);
