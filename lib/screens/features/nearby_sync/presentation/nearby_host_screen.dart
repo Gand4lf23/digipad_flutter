@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:digipad_flutter/features/nearby_sync/cubit/nearby_host_cubit.dart';
-import 'package:digipad_flutter/features/nearby_sync/cubit/nearby_host_state.dart';
-import 'package:digipad_flutter/features/nearby_sync/presentation/widgets/host_gallery.dart';
+import 'package:digipad_flutter/screens/features/nearby_sync/cubit/nearby_host_cubit.dart';
+import 'package:digipad_flutter/screens/features/nearby_sync/cubit/nearby_host_state.dart';
+import 'package:digipad_flutter/screens/features/nearby_sync/presentation/widgets/host_gallery.dart';
 import 'package:digipad_flutter/data/local/gallery_storage.dart';
 
 /// TÓTEM screen — advertises via Nearby and shows received photos.

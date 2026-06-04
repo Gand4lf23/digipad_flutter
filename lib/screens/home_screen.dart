@@ -3,13 +3,13 @@ import 'package:digipad_flutter/common/components/d_image.dart';
 import 'package:digipad_flutter/data/local/gallery_storage.dart';
 import 'package:digipad_flutter/screens/features/lenses_3d/cubit/lenses_3d_cubit.dart';
 import 'package:digipad_flutter/screens/features/lenses_3d/presentation/lenses_3d_screen.dart';
-import 'package:digipad_flutter/features/nearby_sync/cubit/nearby_host_cubit.dart';
-import 'package:digipad_flutter/features/nearby_sync/cubit/nearby_host_state.dart';
-import 'package:digipad_flutter/features/nearby_sync/presentation/nearby_sync_role_screen.dart';
+import 'package:digipad_flutter/screens/features/nearby_sync/cubit/nearby_host_cubit.dart';
+import 'package:digipad_flutter/screens/features/nearby_sync/cubit/nearby_host_state.dart';
+import 'package:digipad_flutter/screens/features/nearby_sync/presentation/nearby_sync_role_screen.dart';
 import 'package:digipad_flutter/screens/features/simulations/presentation/main_simulations_grid_screen.dart';
 import 'package:digipad_flutter/screens/features/virtual_mirror/cubit/virtual_mirror_cubit.dart';
 import 'package:digipad_flutter/screens/features/virtual_mirror/presentation/virtual_mirror_screen.dart';
-import 'package:digipad_flutter/screens/native_impl/native_split_screen.dart';
+import 'package:digipad_flutter/screens/features/measurements/measurement_capture_screen.dart';
 import 'package:digipad_flutter/screens/features/visual_health/cubit/visual_health_cubit.dart';
 import 'package:digipad_flutter/screens/features/visual_health/presentation/visual_health_screen.dart';
 import 'package:digipad_flutter/screens/features/cosmetic_lenses/cubit/cosmetic_lenses_cubit.dart';
@@ -209,9 +209,7 @@ class _HomeScreenState extends State<HomeScreen>
                       if (state is! NearbyHostAdvertising) {
                         return const SizedBox.shrink();
                       }
-                      return _TotemActiveBadge(
-                        imageCount: state.photoCount,
-                      );
+                      return _TotemActiveBadge(imageCount: state.photoCount);
                     },
                   ),
                 ),
@@ -321,7 +319,7 @@ class _HomeScreenState extends State<HomeScreen>
     } else if (moduleId == 'measurements') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const NativeSplitScreen()),
+        MaterialPageRoute(builder: (context) => const MeasurementCaptureScreen()),
       );
     } else if (moduleId == 'lenses_3d') {
       Navigator.push(
