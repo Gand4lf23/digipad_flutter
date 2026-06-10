@@ -2,6 +2,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="ar.com.digipad">
 
+    <uses-sdk
+        android:minSdkVersion="23"
+        tools:replace="android:minSdkVersion"
+        tools:overrideLibrary="com.baseflow.geolocator,com.baseflow.geolocator.android" />
+
     <!-- Core permissions -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
@@ -24,30 +29,31 @@
     
     <!-- Foreground Service -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <!-- FOREGROUND_SERVICE_CONNECTED_DEVICE requires API 34+ -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE"
+        tools:node="replace" />
 
     <!-- Bluetooth (Required for Nearby) -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <!-- Location (Required for discovery/advertising on most versions) -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" tools:node="replace" />
     <!-- Bluetooth (required on API 31+) -->
-    <uses-permission android:minSdkVersion="31" android:name="android.permission.BLUETOOTH_ADVERTISE" />
-    <uses-permission android:minSdkVersion="31" android:name="android.permission.BLUETOOTH_CONNECT" />
-    <uses-permission android:minSdkVersion="31" android:name="android.permission.BLUETOOTH_SCAN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" tools:node="replace" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" tools:node="replace" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" tools:node="replace" />
     <!-- WiFi (required on API 33+) -->
-    <uses-permission android:minSdkVersion="32" android:name="android.permission.NEARBY_WIFI_DEVICES"
-        android:usesPermissionFlags="neverForLocation"
-        tools:replace="android:minSdkVersion"
+    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES"
+        tools:node="replace"
         tools:targetApi="tiramisu" />
 
     <uses-feature android:name="android.hardware.camera" />
     <uses-feature android:name="android.hardware.camera.autofocus" />
     <uses-feature android:name="android.hardware.camera.flash" android:required="false" />
-    <uses-feature android:name="android.hardware.camera.ar" android:required="true" />
-    <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="true" />
-    <uses-feature android:name="android.hardware.sensor.gyroscope" android:required="true" />
+    <uses-feature android:name="android.hardware.camera.ar" android:required="false" />
+    <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="false" />
+    <uses-feature android:name="android.hardware.sensor.gyroscope" android:required="false" />
 
     <application
         android:name="${applicationName}"
@@ -88,10 +94,16 @@
             android:name="flutterEmbedding"
             android:value="2" />
             
-        <service 
+        <service
             android:name=".NearbyForegroundService"
-            android:foregroundServiceType="connectedDevice"
             android:exported="false" />
+
+        <!-- Override geolocator's service to remove foregroundServiceType (API 29+ attribute) -->
+        <service
+            android:name="com.baseflow.geolocator.GeolocatorLocationService"
+            android:enabled="true"
+            android:exported="false"
+            tools:node="replace" />
     </application>
 
     <queries>

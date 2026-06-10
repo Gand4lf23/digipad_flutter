@@ -51,18 +51,27 @@ class OpticalPainter extends CustomPainter {
 
     // --- 1. CIRCLES ---
     if (showCircles && pixelFactorX > 0) {
-      Paint circlePaint = Paint()
-        ..color = Colors.blueAccent.withValues(alpha: 0.6)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0 / scale;
-
       if (p1 != null) {
         double refRadiusPxR = (refDiameterMmRight / pixelFactorX) / 2;
-        canvas.drawCircle(p1, refRadiusPxR, circlePaint);
+        canvas.drawCircle(
+          p1,
+          refRadiusPxR,
+          Paint()
+            ..color = Colors.cyanAccent.withValues(alpha: 0.7)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.2 / scale,
+        );
       }
       if (p2 != null) {
         double refRadiusPxL = (refDiameterMmLeft / pixelFactorX) / 2;
-        canvas.drawCircle(p2, refRadiusPxL, circlePaint);
+        canvas.drawCircle(
+          p2,
+          refRadiusPxL,
+          Paint()
+            ..color = Colors.greenAccent.withValues(alpha: 0.7)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.2 / scale,
+        );
       }
     }
 
@@ -73,11 +82,18 @@ class OpticalPainter extends CustomPainter {
       bool isPupil =
           p.type == DetectionType.pupilLeft ||
           p.type == DetectionType.pupilRight;
+      bool isRef =
+          p.type == DetectionType.refTL ||
+          p.type == DetectionType.refTR ||
+          p.type == DetectionType.refBL ||
+          p.type == DetectionType.refBR;
 
       Color color = isPupil
-          ? Colors.redAccent
+          ? Colors.cyanAccent
+          : isRef
+          ? Colors.orangeAccent
           : (isCorner ? Colors.white : Colors.redAccent);
-      if (isSelected) color = Colors.green;
+      if (isSelected) color = Colors.greenAccent;
 
       // START UN-ROTATION BLOCK FOR MARKERS
       canvas.save();
@@ -113,15 +129,26 @@ class OpticalPainter extends CustomPainter {
         // CROSSES (Stay as "+" regardless of head tilt)
         Paint crossPaint = Paint()
           ..color = color
-          ..strokeWidth = (isSelected ? 0.7 : 0.5) / scale
+          ..strokeWidth = (isSelected ? 0.8 : isPupil ? 0.7 : 0.5) / scale
           ..strokeCap = StrokeCap.round;
 
-        double r = isPupil ? 10.0 / scale : 8.0 / scale;
+        double r = isPupil ? 14.0 / scale : 8.0 / scale;
         canvas.drawLine(Offset(-r, 0), Offset(r, 0), crossPaint);
         canvas.drawLine(Offset(0, -r), Offset(0, r), crossPaint);
+        if (isPupil) {
+          // Ring around pupil marker to make it unmistakable
+          canvas.drawCircle(
+            Offset.zero,
+            r * 0.6,
+            Paint()
+              ..color = color.withValues(alpha: 0.35)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 0.6 / scale,
+          );
+        }
         canvas.drawCircle(
           Offset.zero,
-          isPupil ? 1.5 / scale : 1.0 / scale,
+          isPupil ? 2.0 / scale : 1.0 / scale,
           Paint()..color = color,
         );
       }

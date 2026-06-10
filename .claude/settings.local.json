@@ -5,7 +5,34 @@
       "Bash(Remove-Item \"q:\\\\REPO\\\\digipad\\\\lib\\\\screens\\\\features\\\\measurements\\\\native_split_screen.dart\")",
       "Bash(Remove-Item \"q:\\\\REPO\\\\digipad\\\\lib\\\\measurements\\\\measurements_screen.dart\")",
       "Bash(Remove-Item \"q:\\\\REPO\\\\digipad\\\\lib\\\\screens\\\\features\\\\measurements\\\\optical_models.dart\")",
-      "Bash(Write-Host \"Done\")"
+      "Bash(Write-Host \"Done\")",
+      "Bash(flutter build *)",
+      "Bash(Start-Sleep -Seconds 60)",
+      "Bash(Get-ChildItem \"q:\\\\REPO\\\\digipad\\\\android\\\\app\\\\build\\\\intermediates\\\\merged_manifests\" -Recurse -ErrorAction SilentlyContinue)",
+      "Bash(find \"Q:/flutter_pub_cache/hosted/pub.dev\" -path \"*/geolocator_android*/AndroidManifest.xml\" 2>/dev/null | head -5)",
+      "Read(//q/flutter_pub_cache/hosted/pub.dev/**)",
+      "Read(//c/Users/ivand/.gradle/caches/**)",
+      "Bash(xargs grep -l 'minSdkVersion=\"2[4-9]\\\\|minSdkVersion=\"3')",
+      "Bash(rm -rf \"/c/Users/ivand/.gradle/caches/8.12/transforms/d1b5d8c012ad4aa78c55e1e444174b3a\" \"/c/Users/ivand/.gradle/caches/8.12/transforms/426d9e97f4ce8c5f49d1f200b12d795f\" && echo \"Deleted stale transform caches\")",
+      "Bash(grep -r \"minSdkVersion\\\\|MIN_SDK\\\\|minSdk\" \"Q:/Flutter SDK/flutter/packages/flutter_tools/gradle/src/main/kotlin/FlutterPlugin.kt\" 2>/dev/null | grep -i \"24\\\\|version\\\\|default\" | head -20)",
+      "Read(//q/Flutter SDK/flutter/packages/flutter_tools/gradle/src/main/kotlin/**)",
+      "Read(//q/Flutter SDK/flutter/packages/flutter_tools/gradle/**)",
+      "Bash(xargs grep -l \"minSdk\\\\|MIN_SDK\")",
+      "Bash(aapt dump *)",
+      "Bash(ls \"/c/Users/ivand/AppData/Local/Android/sdk/build-tools/\" 2>/dev/null | tail -3)",
+      "Read(//c/Users/ivand/AppData/Local/Android/sdk/build-tools//**)",
+      "Bash(\"/c/Users/ivand/AppData/Local/Android/sdk/build-tools/36.0.0/aapt\" dump *)",
+      "Bash(grep -r \"too old\\\\|API 24\\\\|Android version.*too\" \"Q:/Flutter SDK/flutter/packages/flutter_tools/lib\" 2>/dev/null | head -10)",
+      "Read(//q/Flutter SDK/flutter/packages/flutter_tools/lib/**)",
+      "Bash(Remove-Item \"Q:/Flutter SDK/flutter/bin/cache/flutter_tools.snapshot\" -ErrorAction SilentlyContinue)",
+      "Bash(Remove-Item \"Q:/Flutter SDK/flutter/bin/cache/flutter_tools.stamp\" -ErrorAction SilentlyContinue)",
+      "Bash(rm -f \"Q:/Flutter SDK/flutter/bin/cache/flutter_tools.snapshot\" \"Q:/Flutter SDK/flutter/bin/cache/flutter_tools.stamp\" && echo \"Snapshot cache cleared\")",
+      "Bash(adb logcat *)",
+      "Bash(flutter --version)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\ivand\\.gradle\\caches\\8.12\\transforms\\d1b5d8c012ad4aa78c55e1e444174b3a",
+      "Q:\\Flutter SDK\\flutter\\bin\\cache"
     ]
   }
 }

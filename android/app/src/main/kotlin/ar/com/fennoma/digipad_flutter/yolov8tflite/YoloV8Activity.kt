@@ -234,26 +234,37 @@ class YoloV8View @JvmOverloads constructor(
             Log.d("YoloV8View", "Already disposed, skipping.")
             return
         }
-        
+
         Log.d("YoloV8View", "Starting disposal...")
-        
+
         try {
-            // Remove lifecycle observer first
+            // 1. Remove lifecycle observer to stop any re-bind attempts.
             lifecycleOwner?.lifecycle?.removeObserver(lifecycleObserver)
             lifecycleOwner = null
-            Log.d("YoloV8View", "Lifecycle observer removed.")
-            
-            // Unbind camera
-            unbindCamera()
-            
-            // Clear analyzer reference
+
+            // 2. Stop new frames being submitted to the executor.
+            imageAnalyzer?.clearAnalyzer()
             imageAnalyzer = null
             imageCapture = null
-            
-            // Shutdown executor and wait for tasks to complete
+
+            // 3. Unbind camera use cases.
+            cameraProvider?.unbindAll()
+            isCameraBound.set(false)
+            camera = null
+
+            // 4. Close the TFLite interpreter BEFORE shutting down the executor.
+            //    detector.clear() acquires the write lock and blocks until any
+            //    in-flight detect() call (holding the read lock) finishes.
+            //    This prevents the SIGSEGV caused by freeing native memory while
+            //    NativeInterpreterWrapper.run() is still executing on pool thread.
+            detector.clear()
+            Log.d("YoloV8View", "Detector cleared.")
+
+            // 5. Shut down executor. Remaining tasks will find interpreter == null
+            //    and exit immediately.
             cameraExecutor.shutdown()
             try {
-                if (!cameraExecutor.awaitTermination(1000, TimeUnit.MILLISECONDS)) {
+                if (!cameraExecutor.awaitTermination(2000, TimeUnit.MILLISECONDS)) {
                     cameraExecutor.shutdownNow()
                     Log.w("YoloV8View", "Executor did not terminate in time, forcing shutdown.")
                 }
@@ -262,16 +273,10 @@ class YoloV8View @JvmOverloads constructor(
                 Thread.currentThread().interrupt()
             }
             Log.d("YoloV8View", "Camera executor shut down.")
-            
-            // Clear detector resources
-            detector.clear()
-            Log.d("YoloV8View", "Detector cleared.")
-            
-            // Clear provider reference
+
             cameraProvider = null
-            
             Log.d("YoloV8View", "Disposal completed successfully.")
-            
+
         } catch (e: Exception) {
             Log.e("YoloV8View", "Error during disposal", e)
         }

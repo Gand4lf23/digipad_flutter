@@ -34,7 +34,7 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
   late OpticalController _controller;
   late File _imageFile;
   Size? _imageSize;
-  Size? _viewportSize;
+  int _activePointers = 0;
   final TransformationController _transformationController =
       TransformationController();
   final WidgetsToImageController _screenshotController =
@@ -52,6 +52,8 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
   Timer? _holdTimer;
 
   double _imageRotation = 0.0;
+  double _currentScale = 1.0;
+  bool _isPointSelected = false;
 
   @override
   void initState() {
@@ -72,13 +74,31 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
     _calibrationVerticalFocusNode = FocusNode();
     _calibrationAngleFocusNode = FocusNode();
     _controller.addListener(_syncCalibrationTextFromController);
+    _controller.addListener(_onControllerChanged);
+    _transformationController.addListener(_onTransformChanged);
     _loadImageAndInit();
+  }
+
+  void _onTransformChanged() {
+    final s = _transformationController.value.getMaxScaleOnAxis();
+    if ((s - _currentScale).abs() > 0.01) {
+      setState(() => _currentScale = s);
+    }
+  }
+
+  void _onControllerChanged() {
+    final selected = _controller.selectedPoint != null;
+    if (selected != _isPointSelected) {
+      setState(() => _isPointSelected = selected);
+    }
   }
 
   @override
   void dispose() {
     _holdTimer?.cancel();
+    _transformationController.removeListener(_onTransformChanged);
     _transformationController.dispose();
+    _controller.removeListener(_onControllerChanged);
     _controller.removeListener(_syncCalibrationTextFromController);
     _calibrationHorizontalController.dispose();
     _calibrationVerticalController.dispose();
@@ -170,7 +190,7 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
 
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _applyAutoRotation();
-          _applyAutoZoom();
+          _transformationController.value = Matrix4.identity();
         });
       }
     } catch (e) {
@@ -210,69 +230,6 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
     } else {
       setState(() => _imageRotation = 0.0);
     }
-  }
-
-  void _applyAutoZoom() {
-    final targetTypes = [
-      DetectionType.lensRightTop,
-      DetectionType.lensLeftTop,
-      DetectionType.lensRightBottom,
-      DetectionType.lensLeftBottom,
-      DetectionType.pupilRight,
-      DetectionType.pupilLeft,
-    ];
-
-    final points = _controller.points
-        .where((p) => targetTypes.contains(p.type))
-        .map((p) => p.position)
-        .toList();
-
-    if (_viewportSize == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _applyAutoZoom());
-      return;
-    }
-    
-    final Size viewportSize = _viewportSize!;
-
-    double minX = points.map((p) => p.dx).reduce(math.min);
-    double maxX = points.map((p) => p.dx).reduce(math.max);
-    double minY = points.map((p) => p.dy).reduce(math.min);
-    double maxY = points.map((p) => p.dy).reduce(math.max);
-
-    final double rawCenterX = (minX + maxX) / 2;
-    final double rawCenterY = (minY + maxY) / 2;
-    final double rawWidth = maxX - minX;
-
-    final double scaleX = viewportSize.width / _imageSize!.width;
-    final double scaleY = viewportSize.height / _imageSize!.height;
-    final double fitScale = math.min(scaleX, scaleY);
-
-    final double offsetX =
-        (viewportSize.width - (_imageSize!.width * fitScale)) / 2;
-    final double offsetY =
-        (viewportSize.height - (_imageSize!.height * fitScale)) / 2;
-
-    final double currentVisualX = (rawCenterX * fitScale) + offsetX;
-    final double currentVisualY = (rawCenterY * fitScale) + offsetY;
-
-    final double calculatedZoom =
-        (viewportSize.width * 0.85) / (rawWidth * fitScale);
-    final double targetZoom = calculatedZoom.clamp(1.5, 4.0);
-    final isTablet = MediaQuery.of(context).size.shortestSide >= 600;
-
-    final double screenTargetX = viewportSize.width * 0.5;
-    final double screenTargetY = viewportSize.height * (isTablet ? 0.7 : 0.7);
-
-    final double translationX = screenTargetX - (currentVisualX * targetZoom);
-    final double translationY = screenTargetY - (currentVisualY * targetZoom);
-
-    final Matrix4 matrix = Matrix4.identity();
-    matrix[0] = targetZoom;
-    matrix[5] = targetZoom;
-    matrix[12] = translationX;
-    matrix[13] = translationY;
-
-    _transformationController.value = matrix;
   }
 
   void _resetZoom() {
@@ -365,8 +322,7 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
                             _isMoveMode = false;
                             _showAjustePanel = false;
                           });
-                          _controller.selectedPoint = null;
-                          _controller.notifyListeners();
+                          _controller.deselect();
                         },
                       );
                     }
@@ -395,35 +351,28 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
   }
 
   Widget _buildImageViewer() {
-    return Consumer<OpticalController>(
-      builder: (context, controller, _) {
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (_viewportSize !=
-                  Size(constraints.maxWidth, constraints.maxHeight)) {
-                setState(() {
-                  _viewportSize = Size(
-                    constraints.maxWidth,
-                    constraints.maxHeight,
-                  );
-                });
-              }
-            });
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double scaleX = constraints.maxWidth / _imageSize!.width;
+        final double scaleY = constraints.maxHeight / _imageSize!.height;
+        final double scale = scaleX < scaleY ? scaleX : scaleY;
+        final double offsetX = (constraints.maxWidth - _imageSize!.width * scale) / 2;
+        final double offsetY = (constraints.maxHeight - _imageSize!.height * scale) / 2;
 
-            return InteractiveViewer(
-              transformationController: _transformationController,
-              maxScale: 5.0,
-              minScale: 1.0,
-              panEnabled: _isMoveMode,
-              scaleEnabled: _isMoveMode,
-              child: Transform.rotate(
-                angle: _imageRotation,
-                alignment: Alignment.center,
-                child: _buildImageContent(constraints, controller),
-              ),
-            );
-          },
+        // Allow pan when in move mode OR when zoomed in without a point selected.
+        final bool canPan = _isMoveMode || (_currentScale > 1.01 && !_isPointSelected);
+
+        return InteractiveViewer(
+          transformationController: _transformationController,
+          maxScale: 5.0,
+          minScale: 1.0,
+          panEnabled: canPan,
+          scaleEnabled: true,
+          child: Transform.rotate(
+            angle: _imageRotation,
+            alignment: Alignment.center,
+            child: _buildImageContent(constraints, scale, offsetX, offsetY),
+          ),
         );
       },
     );
@@ -431,56 +380,65 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
 
   Widget _buildImageContent(
     BoxConstraints constraints,
-    OpticalController controller,
+    double scale,
+    double offsetX,
+    double offsetY,
   ) {
-    final double scaleX = constraints.maxWidth / _imageSize!.width;
-    final double scaleY = constraints.maxHeight / _imageSize!.height;
-    final double scale = scaleX < scaleY ? scaleX : scaleY;
-    final double displayW = _imageSize!.width * scale;
-    final double displayH = _imageSize!.height * scale;
-    final double offsetX = (constraints.maxWidth - displayW) / 2;
-    final double offsetY = (constraints.maxHeight - displayH) / 2;
-
-    return GestureDetector(
-      onPanDown: _isMoveMode
-          ? null
-          : (details) {
-              final unrotated = _unrotatePosition(
-                details.localPosition,
-                constraints,
-              );
-              controller.handleTap(unrotated, scale, Offset(offsetX, offsetY));
-            },
-      onPanUpdate: _isMoveMode
-          ? null
-          : (details) {
-              final unrotatedDelta = _unrotateDelta(details.delta);
-              controller.handleDrag(unrotatedDelta, scale);
-            },
+    return Listener(
+      onPointerDown: (e) {
+        _activePointers++;
+        if (!_isMoveMode && _activePointers == 1) {
+          final unrotated = _unrotatePosition(e.localPosition, constraints);
+          _controller.handleTap(unrotated, scale, Offset(offsetX, offsetY));
+        }
+      },
+      onPointerMove: (e) {
+        // Only drag a point when exactly 1 finger AND a point is selected.
+        // 2-finger gestures go to InteractiveViewer for pinch/pan.
+        if (!_isMoveMode && _activePointers == 1 && _controller.selectedPoint != null) {
+          final unrotatedDelta = _unrotateDelta(e.delta);
+          _controller.handleDrag(unrotatedDelta, scale);
+        }
+      },
+      onPointerUp: (_) { if (_activePointers > 0) _activePointers--; },
+      onPointerCancel: (_) { if (_activePointers > 0) _activePointers--; },
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Transform.flip(
-            flipX: widget.isFrontCamera,
-            child: Image.file(_imageFile),
+          SizedBox(
+            width: constraints.maxWidth,
+            height: constraints.maxHeight,
+            child: Transform.flip(
+              flipX: widget.isFrontCamera,
+              child: Image.file(
+                _imageFile,
+                fit: BoxFit.contain,
+                width: constraints.maxWidth,
+                height: constraints.maxHeight,
+              ),
+            ),
           ),
-          CustomPaint(
-            size: Size(constraints.maxWidth, constraints.maxHeight),
-            painter: OpticalPainter(
-              rotation: _imageRotation,
-              points: controller.points,
-              selectedPoint: controller.selectedPoint,
-              scale: scale,
-              offset: Offset(offsetX, offsetY),
-              showCircles: controller.showCircles,
-              refDiameterMmRight: controller.referenceCircleDiameterRight,
-              refDiameterMmLeft: controller.referenceCircleDiameterLeft,
-              calcRadiusPxR: controller.calcRadiusPxRight,
-              calcRadiusPxL: controller.calcRadiusPxLeft,
-              pixelFactorX: controller.pixelFactorX,
-              pixelFactorY: controller.pixelFactorY,
-              isBifocal: controller.isBifocal,
-              bifocalOffset: controller.bifocalLineOffset,
+          // Only this painter rebuilds when controller notifies (points move, etc.)
+          ListenableBuilder(
+            listenable: _controller,
+            builder: (_, _) => CustomPaint(
+              size: Size(constraints.maxWidth, constraints.maxHeight),
+              painter: OpticalPainter(
+                rotation: _imageRotation,
+                points: _controller.points,
+                selectedPoint: _controller.selectedPoint,
+                scale: scale,
+                offset: Offset(offsetX, offsetY),
+                showCircles: _controller.showCircles,
+                refDiameterMmRight: _controller.referenceCircleDiameterRight,
+                refDiameterMmLeft: _controller.referenceCircleDiameterLeft,
+                calcRadiusPxR: _controller.calcRadiusPxRight,
+                calcRadiusPxL: _controller.calcRadiusPxLeft,
+                pixelFactorX: _controller.pixelFactorX,
+                pixelFactorY: _controller.pixelFactorY,
+                isBifocal: _controller.isBifocal,
+                bifocalOffset: _controller.bifocalLineOffset,
+              ),
             ),
           ),
         ],
@@ -545,9 +503,9 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
                           Expanded(
                             child: Slider(
                               value: ctrl.referenceCircleDiameterRight,
-                              min: 40,
+                              min: 20,
                               max: 90,
-                              divisions: 50,
+                              divisions: 70,
                               activeColor: Colors.cyanAccent,
                               onChanged: (v) =>
                                   ctrl.setReferenceDiameterRight(v),
@@ -576,9 +534,9 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
                           Expanded(
                             child: Slider(
                               value: ctrl.referenceCircleDiameterLeft,
-                              min: 40,
+                              min: 20,
                               max: 90,
-                              divisions: 50,
+                              divisions: 70,
                               activeColor: Colors.greenAccent,
                               onChanged: (v) =>
                                   ctrl.setReferenceDiameterLeft(v),

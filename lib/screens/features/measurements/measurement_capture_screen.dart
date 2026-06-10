@@ -41,7 +41,8 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
   bool _isCapturing = false;
 
   StreamSubscription<AccelerometerEvent>? _accelerometerSubscription;
-  double _pantoscopicAngle = 0.0;
+  final ValueNotifier<double> _pantoscopicAngleNotifier = ValueNotifier(0.0);
+  int _lastAccelMs = 0;
 
   static const Color _backgroundColor = Color(0xFF121212);
   static const Color _accentColor = Colors.deepPurpleAccent;
@@ -54,16 +55,13 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
     _galleryModeNotifier = ValueNotifier<bool>(true);
     _galleryModeNotifier.addListener(_onGalleryModeChanged);
 
-    // Ángulo pantoscópico: inclinación adelante/atrás del dispositivo.
-    // atan2(z, y): cuando está perfecto vertical → z≈0, y≈9.8 → 0°.
-    // Al inclinar el techo del teléfono hacia adelante → z aumenta → ángulo positivo.
     _accelerometerSubscription = accelerometerEventStream().listen((
       AccelerometerEvent event,
     ) {
-      if (!mounted) return;
-      setState(() {
-        _pantoscopicAngle = atan2(event.z, event.y) * (180 / pi);
-      });
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      if (nowMs - _lastAccelMs < 100) return; // ~10 fps is enough for display
+      _lastAccelMs = nowMs;
+      _pantoscopicAngleNotifier.value = atan2(event.z, event.y) * (180 / pi);
     });
 
     _checkCameraPermission();
@@ -73,6 +71,7 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _accelerometerSubscription?.cancel();
+    _pantoscopicAngleNotifier.dispose();
     _galleryModeNotifier.removeListener(_onGalleryModeChanged);
     _galleryModeNotifier.dispose();
     super.dispose();
@@ -271,7 +270,19 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
                 if (_isCapturing)
                   Container(
                     color: Colors.black54,
-                    child: const Center(child: CircularProgressIndicator()),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const CircularProgressIndicator(color: Colors.white),
+                          const SizedBox(height: 14),
+                          const Text(
+                            'Analizando...',
+                            style: TextStyle(color: Colors.white70, fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
               ],
             );
@@ -330,39 +341,43 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
   }
 
   Widget _buildInclinometerOverlay() {
-    final angle = _pantoscopicAngle;
-    final isGoodAngle = angle >= 0 && angle <= 15;
     return Positioned(
       top: 80.0,
       right: 16.0,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isGoodAngle ? Colors.greenAccent : Colors.redAccent,
-            width: 2,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              Icons.screen_rotation,
-              color: isGoodAngle ? Colors.greenAccent : Colors.redAccent,
-              size: 24,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '${angle.toStringAsFixed(1)}°',
-              style: TextStyle(
+      child: ValueListenableBuilder<double>(
+        valueListenable: _pantoscopicAngleNotifier,
+        builder: (context, angle, _) {
+          final isGoodAngle = angle >= 0 && angle <= 15;
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
                 color: isGoodAngle ? Colors.greenAccent : Colors.redAccent,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
+                width: 2,
               ),
             ),
-          ],
-        ),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.screen_rotation,
+                  color: isGoodAngle ? Colors.greenAccent : Colors.redAccent,
+                  size: 24,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${angle.toStringAsFixed(1)}°',
+                  style: TextStyle(
+                    color: isGoodAngle ? Colors.greenAccent : Colors.redAccent,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -452,13 +467,8 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
     _channel = MethodChannel('native-left-view/$id');
 
     _channel!.setMethodCallHandler((call) async {
-      if (call.method == 'onDetections') {
-        try {
-          setState(() {});
-        } catch (e) {
-          debugPrint("Error parsing detection data: $e");
-        }
-      }
+      if (!mounted) return;
+      // onDetections: native sends detection overlay data; handled natively
     });
 
     final isGalleryOnly = _galleryModeNotifier.value;
@@ -711,6 +721,9 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
 
   Future<void> _processImagePath(String path, {double? angle}) async {
     setState(() => _isCapturing = true);
+    // Let the loading overlay render for at least one frame before blocking
+    // on the native channel (especially fast on emulator).
+    await Future.delayed(const Duration(milliseconds: 80));
 
     try {
       final result = await _channel?.invokeMethod('detectFromImage', {
@@ -771,11 +784,17 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
   Future<void> _pickImage(ImageSource source) async {
     if (_isCapturing) return;
     try {
-      final XFile? image = await _picker.pickImage(source: source);
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        maxWidth: 1920,
+        maxHeight: 1920,
+      );
       if (image == null) return;
+      // Show loading overlay immediately before detection starts
+      if (mounted) setState(() => _isCapturing = true);
       await _processImagePath(
         image.path,
-        angle: source == ImageSource.camera ? _pantoscopicAngle : null,
+        angle: source == ImageSource.camera ? _pantoscopicAngleNotifier.value : null,
       );
     } catch (e) {
       debugPrint("Error capturing using image picker: $e");
@@ -967,7 +986,7 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
                   imagePath: nativePath,
                   detections: detectionsSnapshot,
                   isFrontCamera: wasFront,
-                  pantoscopicAngle: _pantoscopicAngle,
+                  pantoscopicAngle: _pantoscopicAngleNotifier.value,
                 ),
               ),
             );

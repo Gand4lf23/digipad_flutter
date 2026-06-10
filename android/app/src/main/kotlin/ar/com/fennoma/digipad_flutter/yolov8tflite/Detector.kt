@@ -15,6 +15,8 @@ import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.math.max
 import kotlin.math.min
 
@@ -24,6 +26,10 @@ class Detector(
     private val labelPath: String,
     private val detectorListener: DetectorListener
 ) {
+
+    // Guards the interpreter so clear() waits for any in-flight inference to finish
+    // before freeing native memory (prevents SIGSEGV on shutdown).
+    private val interpreterLock = ReentrantReadWriteLock()
 
     private var interpreter: Interpreter? = null
     private var labels = mutableListOf<String>()
@@ -98,49 +104,61 @@ class Detector(
     }
 
     fun clear() {
-        interpreter?.close()
-        interpreter = null
+        // Write lock: blocks until all ongoing detect()/detectSync() calls complete,
+        // so the native interpreter is never freed while TFLite JNI is still running.
+        val wl = interpreterLock.writeLock()
+        wl.lock()
+        try {
+            interpreter?.close()
+            interpreter = null
+        } finally {
+            wl.unlock()
+        }
     }
 
     fun detect(frame: Bitmap) {
-        if (interpreter == null) return
-
-        var inferenceTime = SystemClock.uptimeMillis()
-        val boxes = detectSync(frame)
-        inferenceTime = SystemClock.uptimeMillis() - inferenceTime
-
-        if (boxes.isEmpty()) {
-            detectorListener.onEmptyDetect()
-            return
+        val rl = interpreterLock.readLock()
+        // Non-blocking: skip this camera frame if clear() is in progress.
+        if (!rl.tryLock()) return
+        try {
+            if (interpreter == null) return
+            var inferenceTime = SystemClock.uptimeMillis()
+            val boxes = detectSyncInternal(frame)
+            inferenceTime = SystemClock.uptimeMillis() - inferenceTime
+            if (boxes.isEmpty()) {
+                detectorListener.onEmptyDetect()
+                return
+            }
+            detectorListener.onDetect(boxes, inferenceTime)
+        } finally {
+            rl.unlock()
         }
-
-        detectorListener.onDetect(boxes, inferenceTime)
     }
 
     fun detectSync(frame: Bitmap): List<BoundingBox> {
+        val rl = interpreterLock.readLock()
+        // Wait up to 500 ms; if still locked (clear() running), return empty safely.
+        if (!rl.tryLock(500, TimeUnit.MILLISECONDS)) return emptyList()
+        try {
+            return detectSyncInternal(frame)
+        } finally {
+            rl.unlock()
+        }
+    }
+
+    private fun detectSyncInternal(frame: Bitmap): List<BoundingBox> {
         interpreter ?: return emptyList()
         if (tensorWidth == 0 || tensorHeight == 0) return emptyList()
 
         val resizedBitmap = Bitmap.createScaledBitmap(frame, tensorWidth, tensorHeight, false)
-        
-        // Load image into the correct Tensor Type (auto-detected)
         val tensorImage = TensorImage(inputDataType)
         tensorImage.load(resizedBitmap)
-        
         val processedImage = imageProcessor?.process(tensorImage) ?: return emptyList()
         val imageBuffer = processedImage.buffer
-
-        // Prepare output buffer
         val outputBuffer = TensorBuffer.createFixedSize(intArrayOf(1, numChannel, numElements), outputDataType)
-        
         interpreter?.run(imageBuffer, outputBuffer.buffer)
-
-        // Decode results (Handle INT8 output if necessary)
-        val floats = outputBuffer.floatArray // TensorBuffer handles conversion automatically
-        
+        val floats = outputBuffer.floatArray
         val allBoxes = bestBox(floats) ?: return emptyList()
-
-        // 3. APPLY "4 CIRCLES, 2 EYES" RULE
         return filterStructuredScene(allBoxes)
     }
 
