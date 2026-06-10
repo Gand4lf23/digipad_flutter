@@ -34,8 +34,8 @@ class OpticalController extends ChangeNotifier {
 
   double ajusteHorizontal = 1.0;
   double ajusteVertical = 1.0;
-  double referenceCircleDiameterRight = 60.0;
-  double referenceCircleDiameterLeft = 60.0;
+  double referenceCircleDiameterRight = 40.0;
+  double referenceCircleDiameterLeft = 40.0;
 
   bool showCircles = true;
   bool isBifocal = false;
@@ -166,22 +166,42 @@ class OpticalController extends ChangeNotifier {
     _ensureCalibrationPointsExist(imageSize);
 
     List<dynamic> rawEyes = detections['eyes'] ?? [];
+    bool eyesAdded = false;
     if (rawEyes.length >= 2) {
       List<Offset> eyes = rawEyes.map((e) => toPixel(e)).toList()
         ..sort((a, b) => a.dx.compareTo(b.dx));
-      _addPoint(eyes[0], DetectionType.pupilRight, "P_1");
-      _addPoint(eyes[1], DetectionType.pupilLeft, "P_2");
-    } else {
-      _addPoint(
-        Offset(imageSize.width * 0.4, imageSize.height * 0.45),
-        DetectionType.pupilRight,
-        "P_1",
-      );
-      _addPoint(
-        Offset(imageSize.width * 0.6, imageSize.height * 0.45),
-        DetectionType.pupilLeft,
-        "P_2",
-      );
+
+      // Reject positions that are stuck at (≈0,≈0) — TFLite undetected default
+      final minDim = math.min(imageSize.width, imageSize.height);
+      final bool valid = eyes.every((e) =>
+          e.dx > minDim * 0.05 &&
+          e.dy > minDim * 0.05 &&
+          e.dx < imageSize.width - minDim * 0.05 &&
+          e.dy < imageSize.height - minDim * 0.05);
+
+      if (valid) {
+        _addPoint(eyes[0], DetectionType.pupilRight, "P_1");
+        _addPoint(eyes[1], DetectionType.pupilLeft, "P_2");
+        eyesAdded = true;
+      }
+    }
+
+    if (!eyesAdded) {
+      // Derive fallback positions from the detected ref corners (A1/A2/B1/B2)
+      // so the initial markers land roughly in the center of each lens opening.
+      final a1 = getPoint(DetectionType.refTL);
+      final a2 = getPoint(DetectionType.refTR);
+      final b1 = getPoint(DetectionType.refBL);
+      final b2 = getPoint(DetectionType.refBR);
+      final double midX = (a1.dx + a2.dx + b1.dx + b2.dx) / 4.0;
+      // Place pupils below the bottom ref markers (B1/B2), ~30% of bar height below them
+      final double barH = ((b1.dy - a1.dy) + (b2.dy - a2.dy)) / 2.0;
+      final double rY = b1.dy + barH * 0.30;
+      final double lY = b2.dy + barH * 0.30;
+      final double rX = (a1.dx + b1.dx) / 2.0 + (midX - (a1.dx + b1.dx) / 2.0) * 0.4;
+      final double lX = (a2.dx + b2.dx) / 2.0 - ((a2.dx + b2.dx) / 2.0 - midX) * 0.4;
+      _addPoint(Offset(rX, rY), DetectionType.pupilRight, "P_1");
+      _addPoint(Offset(lX, lY), DetectionType.pupilLeft, "P_2");
     }
 
     _initializeLensCorners(imageSize);
@@ -233,23 +253,26 @@ class OpticalController extends ChangeNotifier {
   }
 
   void _initializeLensCorners(Size size) {
-    final Offset p1 = getPoint(DetectionType.pupilRight);
-    final Offset p2 = getPoint(DetectionType.pupilLeft);
+    final Offset a1 = getPoint(DetectionType.refTL);
+    final Offset a2 = getPoint(DetectionType.refTR);
+    final Offset b1 = getPoint(DetectionType.refBL);
+    final Offset b2 = getPoint(DetectionType.refBR);
 
-    final Offset B1 = getPoint(DetectionType.refBL);
-    final Offset B2 = getPoint(DetectionType.refBR);
-    final double barPx = (B2 - B1).distance;
-    final double pxPerMm = barPx > 1
-        ? (130.0 / barPx)
-        : (130.0 / (size.width * 0.6));
+    final double barPx = (b2 - b1).distance;
+    final double pxPerMm = barPx > 1 ? (130.0 / barPx) : (130.0 / (size.width * 0.6));
+    // Small gap at bridge center (~4 mm each side)
+    final double bridgeHalf = 4.0 / pxPerMm;
 
-    final double halfW = 25.0 / pxPerMm;
-    final double halfH = 19.0 / pxPerMm;
+    final double topMidX = (a1.dx + a2.dx) / 2.0;
+    final double botMidX = (b1.dx + b2.dx) / 2.0;
 
-    _addPoint(p1 + Offset(-halfW, -halfH), DetectionType.lensRightTop, "R_TL");
-    _addPoint(p1 + Offset(halfW, halfH), DetectionType.lensRightBottom, "R_BR");
-    _addPoint(p2 + Offset(-halfW, -halfH), DetectionType.lensLeftTop, "L_TL");
-    _addPoint(p2 + Offset(halfW, halfH), DetectionType.lensLeftBottom, "L_BR");
+    // Right lens = patient's right eye = left side of image (a1 / b1 corners)
+    _addPoint(a1, DetectionType.lensRightTop, "R_TL");
+    _addPoint(Offset(botMidX - bridgeHalf, b1.dy), DetectionType.lensRightBottom, "R_BR");
+
+    // Left lens = patient's left eye = right side of image (a2 / b2 corners)
+    _addPoint(Offset(topMidX + bridgeHalf, a2.dy), DetectionType.lensLeftTop, "L_TL");
+    _addPoint(b2, DetectionType.lensLeftBottom, "L_BR");
   }
 
   void handleTap(Offset localPosition, double scale, Offset translation) {
@@ -323,6 +346,11 @@ class OpticalController extends ChangeNotifier {
     calculateFormulas();
     // Guardamos el nuevo valor en cuanto se cambia
     _saveCalibration('ajusteVertical', val);
+  }
+
+  void deselect() {
+    selectedPoint = null;
+    notifyListeners();
   }
 
   void setPantoscopicAngle(double val) {
@@ -432,8 +460,4 @@ class OpticalController extends ChangeNotifier {
     notifyListeners();
   }
 
-  String _fmt(Offset o) =>
-      "(${o.dx.toStringAsFixed(1)},${o.dy.toStringAsFixed(1)})";
-  String _fmtUnit(Offset o) =>
-      "(${o.dx.toStringAsFixed(3)},${o.dy.toStringAsFixed(3)})";
 }

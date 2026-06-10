@@ -38,7 +38,7 @@ android {
         applicationId = "ar.com.digipad"
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
-        minSdk = flutter.minSdkVersion
+        minSdk = flutter.minSdkVersion // flutter.minSdkVersion = 24; overridden to 23 in afterEvaluate below
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -61,6 +61,16 @@ android {
 
 flutter {
     source = "../.."
+}
+
+// flutter.minSdkVersion = 24 (hardcoded in FlutterExtension.kt).
+// AGP injects defaultConfig.minSdk into the merged manifest, overriding the manifest value.
+// finalizeDsl fires JUST before AGP locks the DSL — this is the last safe moment to override.
+// Required for Lenovo YT3 X50F (Android 6.0.1, API 23).
+androidComponents {
+    finalizeDsl { ext ->
+        ext.defaultConfig.minSdk = 23
+    }
 }
 
 dependencies {

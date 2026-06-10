@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:ui';
 import 'dart:async';
 import 'dart:math';
-import 'package:digipad_flutter/screens/native_impl/optical_editor_screen.dart';
+import 'package:digipad_flutter/screens/features/measurements/optical_editor_screen.dart';
 import 'package:digipad_flutter/data/local/gallery_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,19 +11,19 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:digipad_flutter/l10n/l10n.dart';
 
-class NativeSplitScreen extends StatefulWidget {
-  const NativeSplitScreen({super.key});
+class MeasurementCaptureScreen extends StatefulWidget {
+  const MeasurementCaptureScreen({super.key});
 
   @override
-  State<NativeSplitScreen> createState() => _NativeSplitScreenState();
+  State<MeasurementCaptureScreen> createState() =>
+      _MeasurementCaptureScreenState();
 }
 
-class _NativeSplitScreenState extends State<NativeSplitScreen>
+class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
     with WidgetsBindingObserver {
   MethodChannel? _channel;
   final ImagePicker _picker = ImagePicker();
 
-  // ValueNotifier inicializado en true para el Modo Galería / Estático
   late final ValueNotifier<bool> _galleryModeNotifier;
 
   bool _detectionEnabled = true;
@@ -41,8 +41,8 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
   bool _isCapturing = false;
 
   StreamSubscription<AccelerometerEvent>? _accelerometerSubscription;
-  double _pantoscopicAngle = 0.0;
-  double _rollAngle = 0.0;
+  final ValueNotifier<double> _pantoscopicAngleNotifier = ValueNotifier(0.0);
+  int _lastAccelMs = 0;
 
   static const Color _backgroundColor = Color(0xFF121212);
   static const Color _accentColor = Colors.deepPurpleAccent;
@@ -52,23 +52,16 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    // Inicializamos el Notifier y le agregamos un listener
     _galleryModeNotifier = ValueNotifier<bool>(true);
     _galleryModeNotifier.addListener(_onGalleryModeChanged);
 
-    _accelerometerSubscription = accelerometerEvents.listen((AccelerometerEvent event) {
-      if (!mounted) return;
-      final x = event.x;
-      final y = event.y;
-      final z = event.z;
-
-      final newPitch = atan2(-x, sqrt(y * y + z * z)) * (180 / pi);
-      final newRoll = atan2(y, z) * (180 / pi);
-
-      setState(() {
-        _pantoscopicAngle = newPitch;
-        _rollAngle = newRoll;
-      });
+    _accelerometerSubscription = accelerometerEventStream().listen((
+      AccelerometerEvent event,
+    ) {
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      if (nowMs - _lastAccelMs < 100) return; // ~10 fps is enough for display
+      _lastAccelMs = nowMs;
+      _pantoscopicAngleNotifier.value = atan2(event.z, event.y) * (180 / pi);
     });
 
     _checkCameraPermission();
@@ -78,6 +71,7 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _accelerometerSubscription?.cancel();
+    _pantoscopicAngleNotifier.dispose();
     _galleryModeNotifier.removeListener(_onGalleryModeChanged);
     _galleryModeNotifier.dispose();
     super.dispose();
@@ -90,11 +84,9 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
     }
   }
 
-  // Se ejecuta cada vez que el usuario toca el toggle
   void _onGalleryModeChanged() {
     final isGalleryOnly = _galleryModeNotifier.value;
     if (_channel != null) {
-      // Apagamos o prendemos el flujo nativo dependiendo del modo
       _channel!.invokeMethod('setDetectionEnabled', {
         'enabled': isGalleryOnly ? false : _detectionEnabled,
       });
@@ -238,7 +230,6 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
                                 ),
                               ),
 
-                            // AQUÍ ESTÁ EL TEXTO CAMBIADO
                             if (isGalleryOnly)
                               Container(
                                 color: _backgroundColor,
@@ -274,12 +265,24 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
                   ],
                 ),
                 _buildBackButton(context),
-                _buildGalleryToggle(), // Toggle arriba a la derecha
+                _buildGalleryToggle(),
                 if (!isGalleryOnly) _buildInclinometerOverlay(),
                 if (_isCapturing)
                   Container(
                     color: Colors.black54,
-                    child: const Center(child: CircularProgressIndicator()),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const CircularProgressIndicator(color: Colors.white),
+                          const SizedBox(height: 14),
+                          const Text(
+                            'Analizando...',
+                            style: TextStyle(color: Colors.white70, fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
               ],
             );
@@ -289,7 +292,6 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
     );
   }
 
-  // Toggle UI arriba a la derecha
   Widget _buildGalleryToggle() {
     return Positioned(
       top: 16.0,
@@ -339,38 +341,43 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
   }
 
   Widget _buildInclinometerOverlay() {
-    final isGoodAngle = _pantoscopicAngle >= 0 && _pantoscopicAngle <= 15;
     return Positioned(
       top: 80.0,
       right: 16.0,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isGoodAngle ? Colors.greenAccent : Colors.redAccent,
-            width: 2,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              Icons.screen_rotation, 
-              color: isGoodAngle ? Colors.greenAccent : Colors.redAccent, 
-              size: 24,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '${_pantoscopicAngle.toStringAsFixed(1)}°',
-              style: TextStyle(
+      child: ValueListenableBuilder<double>(
+        valueListenable: _pantoscopicAngleNotifier,
+        builder: (context, angle, _) {
+          final isGoodAngle = angle >= 0 && angle <= 15;
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
                 color: isGoodAngle ? Colors.greenAccent : Colors.redAccent,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
+                width: 2,
               ),
             ),
-          ],
-        ),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.screen_rotation,
+                  color: isGoodAngle ? Colors.greenAccent : Colors.redAccent,
+                  size: 24,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${angle.toStringAsFixed(1)}°',
+                  style: TextStyle(
+                    color: isGoodAngle ? Colors.greenAccent : Colors.redAccent,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -460,13 +467,8 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
     _channel = MethodChannel('native-left-view/$id');
 
     _channel!.setMethodCallHandler((call) async {
-      if (call.method == 'onDetections') {
-        try {
-          setState(() {});
-        } catch (e) {
-          debugPrint("Error parsing detection data: $e");
-        }
-      }
+      if (!mounted) return;
+      // onDetections: native sends detection overlay data; handled natively
     });
 
     final isGalleryOnly = _galleryModeNotifier.value;
@@ -719,6 +721,9 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
 
   Future<void> _processImagePath(String path, {double? angle}) async {
     setState(() => _isCapturing = true);
+    // Let the loading overlay render for at least one frame before blocking
+    // on the native channel (especially fast on emulator).
+    await Future.delayed(const Duration(milliseconds: 80));
 
     try {
       final result = await _channel?.invokeMethod('detectFromImage', {
@@ -735,6 +740,7 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
 
         if (mounted) {
           final List circles = detections['circles'] as List;
+          final int found = circles.length;
 
           setState(() {
             _lastPhotoPath = path;
@@ -743,26 +749,28 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
             _isCapturing = false;
           });
 
-          if (circles.length == 4) {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => OpticalEditorScreen(
-                  imagePath: path,
-                  detections: detections,
-                  isFrontCamera: false,
-                  pantoscopicAngle: angle,
-                ),
-              ),
-            );
-          } else {
+          // Avisar si la detección fue parcial, pero siempre abrir el editor.
+          // El controlador coloca puntos genéricos (tipo anteojos) para los no detectados.
+          if (found < 4) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(context.l10n.detectionIncomplete(circles.length)),
+                content: Text(context.l10n.detectionIncomplete(found)),
                 backgroundColor: Colors.orange,
-                duration: const Duration(seconds: 4),
+                duration: const Duration(seconds: 2),
               ),
             );
           }
+
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => OpticalEditorScreen(
+                imagePath: path,
+                detections: detections,
+                isFrontCamera: false,
+                pantoscopicAngle: angle,
+              ),
+            ),
+          );
         }
       } else {
         if (mounted) setState(() => _isCapturing = false);
@@ -776,9 +784,18 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
   Future<void> _pickImage(ImageSource source) async {
     if (_isCapturing) return;
     try {
-      final XFile? image = await _picker.pickImage(source: source);
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        maxWidth: 1920,
+        maxHeight: 1920,
+      );
       if (image == null) return;
-      await _processImagePath(image.path, angle: source == ImageSource.camera ? _pantoscopicAngle : null);
+      // Show loading overlay immediately before detection starts
+      if (mounted) setState(() => _isCapturing = true);
+      await _processImagePath(
+        image.path,
+        angle: source == ImageSource.camera ? _pantoscopicAngleNotifier.value : null,
+      );
     } catch (e) {
       debugPrint("Error capturing using image picker: $e");
       if (mounted) setState(() => _isCapturing = false);
@@ -942,6 +959,8 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
           };
 
           final bool wasFront = _frontCamera;
+          final List circles = detectionsSnapshot['circles'] as List;
+          final int found = circles.length;
 
           if (mounted) {
             setState(() {
@@ -950,27 +969,27 @@ class _NativeSplitScreenState extends State<NativeSplitScreen>
               _lastPhotoDetections = detectionsSnapshot;
             });
 
-            final List circles = detectionsSnapshot['circles'] as List;
-            if (circles.length == 4) {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => OpticalEditorScreen(
-                    imagePath: nativePath,
-                    detections: detectionsSnapshot,
-                    isFrontCamera: wasFront,
-                    pantoscopicAngle: _pantoscopicAngle,
-                  ),
-                ),
-              );
-            } else {
+            // Avisar si la detección fue parcial, pero siempre abrir el editor.
+            if (found < 4) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(context.l10n.captureFailed(circles.length)),
-                  backgroundColor: Colors.redAccent,
-                  duration: const Duration(seconds: 3),
+                  content: Text(context.l10n.captureFailed(found)),
+                  backgroundColor: Colors.orange,
+                  duration: const Duration(seconds: 2),
                 ),
               );
             }
+
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => OpticalEditorScreen(
+                  imagePath: nativePath,
+                  detections: detectionsSnapshot,
+                  isFrontCamera: wasFront,
+                  pantoscopicAngle: _pantoscopicAngleNotifier.value,
+                ),
+              ),
+            );
           }
         }
       }

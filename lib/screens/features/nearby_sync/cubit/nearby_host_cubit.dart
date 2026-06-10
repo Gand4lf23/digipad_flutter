@@ -8,8 +8,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import 'package:digipad_flutter/data/local/gallery_storage.dart';
-import 'package:digipad_flutter/features/nearby_sync/nearby_service.dart';
-import 'package:digipad_flutter/features/nearby_sync/fallback_server.dart';
+import 'package:digipad_flutter/screens/features/nearby_sync/nearby_service.dart';
+import 'package:digipad_flutter/screens/features/nearby_sync/fallback_server.dart';
 import 'nearby_host_state.dart';
 
 /// Manages the TÓTEM role.

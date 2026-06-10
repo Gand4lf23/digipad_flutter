@@ -9,8 +9,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import 'package:digipad_flutter/data/local/gallery_storage.dart';
-import 'package:digipad_flutter/features/nearby_sync/nearby_preferences.dart';
-import 'package:digipad_flutter/features/nearby_sync/nearby_service.dart';
+import 'package:digipad_flutter/screens/features/nearby_sync/nearby_preferences.dart';
+import 'package:digipad_flutter/screens/features/nearby_sync/nearby_service.dart';
 import 'nearby_client_state.dart';
 
 /// Manages the CLIENTE role.

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:digipad_flutter/features/nearby_sync/cubit/nearby_client_cubit.dart';
-import 'package:digipad_flutter/features/nearby_sync/cubit/nearby_client_state.dart';
+import 'package:digipad_flutter/screens/features/nearby_sync/cubit/nearby_client_cubit.dart';
+import 'package:digipad_flutter/screens/features/nearby_sync/cubit/nearby_client_state.dart';
 
 /// CLIENT screen — discovers Totem devices and sends photos via Nearby.
 class NearbyClientScreen extends StatefulWidget {

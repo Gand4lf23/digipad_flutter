@@ -27,7 +27,7 @@ subprojects {
 
 subprojects {
     project.evaluationDependsOn(":app")
-    
+
     configurations.all {
         resolutionStrategy {
             force("androidx.concurrent:concurrent-futures:1.1.0")
@@ -35,27 +35,33 @@ subprojects {
     }
 
     plugins.withId("com.android.library") {
-        val android = extensions.findByName("android")
-        if (android != null) {
-            val getNamespace = android.javaClass.methods.find { it.name == "getNamespace" }
-            val setNamespace = android.javaClass.methods.find { it.name == "setNamespace" && it.parameterCount == 1 }
-            
-            if (getNamespace != null && setNamespace != null) {
-                if (getNamespace.invoke(android) == null) {
-                    setNamespace.invoke(android, "ar.com.digipad.${project.name.replace("-", "_")}")
-                }
-            }
-        }
-        
         dependencies {
             add("implementation", "androidx.concurrent:concurrent-futures:1.1.0")
         }
     }
-    
+
     plugins.withId("com.android.application") {
         dependencies {
             add("implementation", "androidx.concurrent:concurrent-futures:1.1.0")
         }
+    }
+
+}
+
+// gradle.afterProject fires for each project AFTER it's fully evaluated (including libraries).
+// This ensures minSdk=23 wins over "minSdkVersion flutter.minSdkVersion" (= 24 hardcoded in
+// FlutterExtension.kt). Required for Lenovo YT3 X50F (Android 6.0.1, API 23).
+gradle.afterProject {
+    if (this == rootProject) return@afterProject
+    val android = extensions.findByName("android") ?: return@afterProject
+    try {
+        val defaultConfig = android.javaClass.getMethod("getDefaultConfig").invoke(android)
+        val methods = defaultConfig.javaClass.methods
+        val setMinSdk = methods.find { it.name == "setMinSdk" && it.parameterCount == 1 }
+            ?: methods.find { it.name == "setMinSdkVersion" && it.parameterCount == 1 }
+        setMinSdk?.invoke(defaultConfig, 23)
+    } catch (e: Exception) {
+        // Non-fatal
     }
 }
 

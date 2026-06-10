@@ -4,7 +4,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:nearby_connections/nearby_connections.dart';
-import 'package:digipad_flutter/features/nearby_sync/device_capabilities.dart';
+import 'package:digipad_flutter/screens/features/nearby_sync/device_capabilities.dart';
 
 /// Identifies this app's Nearby service across all devices.
 const _kServiceId = 'ar.com.digipad.photosync';

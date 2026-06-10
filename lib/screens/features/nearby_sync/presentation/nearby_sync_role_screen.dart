@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:digipad_flutter/data/local/gallery_storage.dart';
-import 'package:digipad_flutter/features/nearby_sync/cubit/nearby_client_cubit.dart';
-import 'package:digipad_flutter/features/nearby_sync/cubit/nearby_host_cubit.dart';
-import 'package:digipad_flutter/features/nearby_sync/cubit/nearby_host_state.dart';
-import 'package:digipad_flutter/features/nearby_sync/nearby_preferences.dart';
-import 'package:digipad_flutter/features/nearby_sync/presentation/nearby_host_screen.dart';
-import 'package:digipad_flutter/features/nearby_sync/presentation/nearby_client_screen.dart';
+import 'package:digipad_flutter/screens/features/nearby_sync/cubit/nearby_client_cubit.dart';
+import 'package:digipad_flutter/screens/features/nearby_sync/cubit/nearby_host_cubit.dart';
+import 'package:digipad_flutter/screens/features/nearby_sync/cubit/nearby_host_state.dart';
+import 'package:digipad_flutter/screens/features/nearby_sync/nearby_preferences.dart';
+import 'package:digipad_flutter/screens/features/nearby_sync/presentation/nearby_host_screen.dart';
+import 'package:digipad_flutter/screens/features/nearby_sync/presentation/nearby_client_screen.dart';
 
 /// Entry screen: choose TÓTEM (host) or CLIENTE mode.
 /// The NearbyHostCubit is provided from HomeScreen (session-scoped).
@@ -22,8 +22,7 @@ class NearbySyncRoleScreen extends StatelessWidget {
         child: BlocBuilder<NearbyHostCubit, NearbyHostState>(
           builder: (context, hostState) {
             final isActive = hostState is NearbyHostAdvertising;
-            final advertisingState =
-                isActive ? hostState : null;
+            final advertisingState = isActive ? hostState : null;
 
             return Column(
               children: [
@@ -31,7 +30,9 @@ class NearbySyncRoleScreen extends StatelessWidget {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 28, vertical: 8),
+                      horizontal: 28,
+                      vertical: 8,
+                    ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -70,7 +71,7 @@ class NearbySyncRoleScreen extends StatelessWidget {
                           isActive: false,
                           gradient: const [
                             Color(0xFFE91E8C),
-                            Color(0xFF9C1360)
+                            Color(0xFF9C1360),
                           ],
                           iconColor: const Color(0xFFFF8CE8),
                           onTap: () => _navigateToClient(context),
@@ -93,8 +94,11 @@ class NearbySyncRoleScreen extends StatelessWidget {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back_ios_rounded,
-                color: Colors.white60, size: 20),
+            icon: const Icon(
+              Icons.arrow_back_ios_rounded,
+              color: Colors.white60,
+              size: 20,
+            ),
             onPressed: () => Navigator.of(context).pop(),
           ),
           const SizedBox(width: 4),
@@ -111,10 +115,7 @@ class NearbySyncRoleScreen extends StatelessWidget {
               ),
               const Text(
                 'Vía Nearby Connections · 100% offline',
-                style: TextStyle(
-                  color: Colors.white38,
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: Colors.white38, fontSize: 12),
               ),
             ],
           ),
@@ -143,10 +144,8 @@ class NearbySyncRoleScreen extends StatelessWidget {
       context,
       MaterialPageRoute(
         builder: (_) => BlocProvider(
-          create: (_) => NearbyClientCubit(
-            storage: storage,
-            prefs: NearbyPreferences(),
-          ),
+          create: (_) =>
+              NearbyClientCubit(storage: storage, prefs: NearbyPreferences()),
           child: const NearbyClientScreen(),
         ),
       ),
@@ -202,7 +201,7 @@ class _RoleCard extends StatelessWidget {
                     color: gradient.first.withValues(alpha: 0.3),
                     blurRadius: 24,
                     spreadRadius: 2,
-                  )
+                  ),
                 ]
               : [],
         ),
@@ -237,13 +236,14 @@ class _RoleCard extends StatelessWidget {
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: gradient.first.withValues(alpha: 0.25),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color:
-                                  gradient.first.withValues(alpha: 0.5),
+                              color: gradient.first.withValues(alpha: 0.5),
                             ),
                           ),
                           child: Text(
