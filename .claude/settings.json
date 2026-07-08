@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter *)",
+      "Bash(cp *)",
+      "Bash(cp -r *)",
+      "Bash(mkdir -p *)",
+      "Bash(rm *)",
+      "Bash(rm -rf *)",
+      "Bash(mv *)",
+      "Bash(sed -i *)",
+      "Bash(adb *)",
+      "Bash(git *)",
+      "PowerShell(Set-Location *)",
+      "PowerShell(Remove-Item *)",
+      "PowerShell(flutter *)",
+      "PowerShell(Get-Content *)",
+      "PowerShell(Set-Content *)"
+    ]
+  }
+}

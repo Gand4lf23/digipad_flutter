@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:bloc/bloc.dart';
@@ -11,14 +12,16 @@ import 'package:path/path.dart' as p;
 class VirtualMirrorCubit extends Cubit<VirtualMirrorState> {
   final ImagePicker _picker = ImagePicker();
   final GalleryStorage storage;
+  StreamSubscription<List<File>>? _gallerySub;
 
-  VirtualMirrorCubit(this.storage) : super(VirtualMirrorState());
-
-  Future<void> initGallery() async {
-    await storage.init();
-    final files = await storage.loadImages();
-    emit(state.copyWith(galleryImages: files));
+  VirtualMirrorCubit(this.storage) : super(VirtualMirrorState()) {
+    _gallerySub = storage.watchImages().listen((images) {
+      emit(state.copyWith(galleryImages: images));
+    });
   }
+
+  /// Still callable from initState — the stream handles the first load.
+  Future<void> initGallery() => storage.init();
 
   Future<void> capturePhoto() async {
     final photo = await _picker.pickImage(source: ImageSource.camera);
@@ -26,7 +29,7 @@ class VirtualMirrorCubit extends Cubit<VirtualMirrorState> {
       File file = File(photo.path);
       file = await _persistFile(file, 'image');
       await storage.saveImage(file);
-      emit(state.copyWith(galleryImages: [file, ...state.galleryImages]));
+      // stream fires → galleryImages auto-updates
     }
   }
 
@@ -36,7 +39,6 @@ class VirtualMirrorCubit extends Cubit<VirtualMirrorState> {
       File file = File(video.path);
       file = await _persistFile(file, 'video');
       await storage.saveVideo(file);
-      emit(state.copyWith(galleryImages: [file, ...state.galleryImages]));
     }
   }
 
@@ -55,23 +57,21 @@ class VirtualMirrorCubit extends Cubit<VirtualMirrorState> {
   Future<void> pickFromGallery() async {
     final files = await _picker.pickMultipleMedia();
     if (files.isNotEmpty) {
-      final List<File> persistentMedia = [];
       for (final xfile in files) {
         final file = await _persistFile(File(xfile.path), 'gallery');
         await storage.saveImage(file);
-        persistentMedia.add(file);
       }
-      emit(state.copyWith(galleryImages: [...persistentMedia, ...state.galleryImages]));
+      // stream fires → galleryImages auto-updates
     }
   }
 
   Future<File> _persistFile(File file, String prefix) async {
     final docsDir = await getApplicationDocumentsDirectory();
     if (file.path.startsWith(docsDir.path)) return file;
-    
+
     final galleryDir = Directory(p.join(docsDir.path, 'gallery'));
     if (!await galleryDir.exists()) await galleryDir.create(recursive: true);
-    
+
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final ext = p.extension(file.path);
     final newPath = p.join(galleryDir.path, '${prefix}_$timestamp$ext');
@@ -80,12 +80,43 @@ class VirtualMirrorCubit extends Cubit<VirtualMirrorState> {
 
   Future<void> deleteImage(File file) async {
     await storage.deleteImage(file);
-    emit(
-      state.copyWith(
-        galleryImages: state.galleryImages
-            .where((f) => f.path != file.path)
-            .toList(),
-      ),
-    );
+    // stream fires → galleryImages auto-updates
+    // also clear drop zones if the deleted file was displayed
+    final current = state;
+    if (current.leftImage?.path == file.path ||
+        current.rightImage?.path == file.path) {
+      emit(current.copyWith(
+        leftImage: current.leftImage?.path == file.path
+            ? null
+            : current.leftImage,
+        rightImage: current.rightImage?.path == file.path
+            ? null
+            : current.rightImage,
+      ));
+    }
+  }
+
+  Future<void> deleteMultiple(List<File> files) async {
+    for (final f in files) {
+      await storage.deleteImage(f);
+    }
+    final paths = files.map((f) => f.path).toSet();
+    final current = state;
+    if (paths.contains(current.leftImage?.path) ||
+        paths.contains(current.rightImage?.path)) {
+      emit(current.copyWith(
+        leftImage:
+            paths.contains(current.leftImage?.path) ? null : current.leftImage,
+        rightImage: paths.contains(current.rightImage?.path)
+            ? null
+            : current.rightImage,
+      ));
+    }
+  }
+
+  @override
+  Future<void> close() async {
+    await _gallerySub?.cancel();
+    return super.close();
   }
 }

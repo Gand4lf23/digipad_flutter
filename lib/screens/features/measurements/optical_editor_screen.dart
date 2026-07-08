@@ -265,14 +265,52 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
       );
     }
 
-    return ChangeNotifierProvider.value(
-      value: _controller,
-      child: WidgetsToImage(
-        controller: _screenshotController,
-        child: GestureDetector(
-          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-          behavior: HitTestBehavior.translucent,
-          child: Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final shouldPop = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: const Color(0xFF1C1C1E),
+            title: const Text(
+              'Salir de la edición',
+              style: TextStyle(color: Colors.white),
+            ),
+            content: const Text(
+              '¿Querés salir sin guardar las mediciones?',
+              style: TextStyle(color: Colors.white70),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text(
+                  'Cancelar',
+                  style: TextStyle(color: Colors.white54),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text(
+                  'Salir',
+                  style: TextStyle(color: Colors.redAccent),
+                ),
+              ),
+            ],
+          ),
+        );
+        if ((shouldPop ?? false) && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: ChangeNotifierProvider.value(
+        value: _controller,
+        child: WidgetsToImage(
+          controller: _screenshotController,
+          child: GestureDetector(
+            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+            behavior: HitTestBehavior.translucent,
+            child: Scaffold(
             backgroundColor: Colors.black,
             appBar: AppBar(
               title: Text(context.l10n.measureAdjustments),
@@ -344,10 +382,11 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen> {
                 Expanded(flex: 2, child: _buildInfoPanel()),
               ],
             ),
-          ),
-        ),
-      ),
-    );
+          ),        // Scaffold
+        ),          // GestureDetector
+      ),            // WidgetsToImage
+    ),              // ChangeNotifierProvider
+    );              // PopScope
   }
 
   Widget _buildImageViewer() {

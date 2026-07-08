@@ -3,9 +3,9 @@ import 'package:digipad_flutter/common/components/d_image.dart';
 import 'package:digipad_flutter/data/local/gallery_storage.dart';
 import 'package:digipad_flutter/screens/features/lenses_3d/cubit/lenses_3d_cubit.dart';
 import 'package:digipad_flutter/screens/features/lenses_3d/presentation/lenses_3d_screen.dart';
-import 'package:digipad_flutter/screens/features/nearby_sync/cubit/nearby_host_cubit.dart';
-import 'package:digipad_flutter/screens/features/nearby_sync/cubit/nearby_host_state.dart';
-import 'package:digipad_flutter/screens/features/nearby_sync/presentation/nearby_sync_role_screen.dart';
+import 'package:digipad_flutter/features/photo_sync/cubit/totem_cubit.dart';
+import 'package:digipad_flutter/features/photo_sync/cubit/totem_state.dart';
+import 'package:digipad_flutter/features/photo_sync/presentation/photo_sync_role_screen.dart';
 import 'package:digipad_flutter/screens/features/simulations/presentation/main_simulations_grid_screen.dart';
 import 'package:digipad_flutter/screens/features/virtual_mirror/cubit/virtual_mirror_cubit.dart';
 import 'package:digipad_flutter/screens/features/virtual_mirror/presentation/virtual_mirror_screen.dart';
@@ -30,7 +30,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   // ── Session-scoped TOTEM cubit ──────────────────────────────────────────────
-  late final NearbyHostCubit _hostCubit;
+  late final TotemCubit _hostCubit;
   late final GalleryStorage _galleryStorage;
 
   // ── Entrance animation ──────────────────────────────────────────────────────
@@ -42,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen>
     super.initState();
 
     _galleryStorage = GalleryStorage();
-    _hostCubit = NearbyHostCubit(storage: _galleryStorage);
+    _hostCubit = TotemCubit(storage: _galleryStorage);
 
     _entranceController = AnimationController(
       vsync: this,
@@ -203,13 +203,16 @@ class _HomeScreenState extends State<HomeScreen>
                 Positioned(
                   top: 8,
                   left: 12,
-                  child: BlocBuilder<NearbyHostCubit, NearbyHostState>(
+                  child: BlocBuilder<TotemCubit, TotemState>(
                     bloc: _hostCubit,
                     builder: (context, state) {
-                      if (state is! NearbyHostAdvertising) {
+                      if (state is! TotemActive) {
                         return const SizedBox.shrink();
                       }
-                      return _TotemActiveBadge(imageCount: state.photoCount);
+                      return GestureDetector(
+                        onTap: () => _navigateToModule(context, 'photo_sync'),
+                        child: _TotemActiveBadge(imageCount: state.photoCount),
+                      );
                     },
                   ),
                 ),
@@ -357,7 +360,7 @@ class _HomeScreenState extends State<HomeScreen>
         MaterialPageRoute(
           builder: (context) => BlocProvider.value(
             value: _hostCubit,
-            child: const NearbySyncRoleScreen(),
+            child: const PhotoSyncRoleScreen(),
           ),
         ),
       );

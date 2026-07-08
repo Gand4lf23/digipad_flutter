@@ -44,6 +44,11 @@
 	<string>This app needs photo library access to save measurement images</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>This app needs local network access to transfer photos between devices</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
