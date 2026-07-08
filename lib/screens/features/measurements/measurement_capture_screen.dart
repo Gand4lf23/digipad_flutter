@@ -61,7 +61,20 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
       final nowMs = DateTime.now().millisecondsSinceEpoch;
       if (nowMs - _lastAccelMs < 100) return; // ~10 fps is enough for display
       _lastAccelMs = nowMs;
+      // Pantoscopic angle = deviation from vertical.
+      // 0° when phone is upright (screen facing user); ~15° when tilted naturally
+      // during measurement. atan2(|xz|, -y) gives 0° at rest and grows as the
+      // device tilts away from vertical regardless of which lateral axis tilts.
+      final tilt = sqrt(event.x * event.x + event.z * event.z);
       _pantoscopicAngleNotifier.value = atan2(event.z, event.y) * (180 / pi);
+      debugPrint(
+        '[PantoAngle] '
+        'x=${event.x.toStringAsFixed(2)} '
+        'y=${event.y.toStringAsFixed(2)} '
+        'z=${event.z.toStringAsFixed(2)} | '
+        'tilt=${tilt.toStringAsFixed(2)} | '
+        'θ=${_pantoscopicAngleNotifier.value.toStringAsFixed(1)}°',
+      );
     });
 
     _checkCameraPermission();
@@ -783,6 +796,11 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
 
   Future<void> _pickImage(ImageSource source) async {
     if (_isCapturing) return;
+    // Snapshot the angle before opening the picker: for a camera shot the phone
+    // is still in measurement position right now; after the system camera opens
+    // orientation may change completely.
+    final double? angleSnapshot =
+        source == ImageSource.camera ? _pantoscopicAngleNotifier.value : null;
     try {
       final XFile? image = await _picker.pickImage(
         source: source,
@@ -794,7 +812,7 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
       if (mounted) setState(() => _isCapturing = true);
       await _processImagePath(
         image.path,
-        angle: source == ImageSource.camera ? _pantoscopicAngleNotifier.value : null,
+        angle: angleSnapshot,
       );
     } catch (e) {
       debugPrint("Error capturing using image picker: $e");
@@ -802,101 +820,15 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
     }
   }
 
-  Future<void> _showInternalGallery() async {
-    final storage = GalleryStorage();
-    await storage.init();
-    final images = await storage.loadImages();
-    if (!mounted) return;
-
+  void _showInternalGallery() {
     showDialog(
       context: context,
-      builder: (context) {
-        return Dialog(
-          backgroundColor: Colors.grey.shade900,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-            side: BorderSide(color: Colors.grey.shade700),
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            width: MediaQuery.of(context).size.width * 0.8,
-            height: MediaQuery.of(context).size.height * 0.7,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      context.l10n.vmInternalGallery,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white70),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Expanded(
-                  child: images.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.no_photography,
-                                size: 64,
-                                color: Colors.white24,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                context.l10n.vmNoImages,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Colors.white38,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : GridView.builder(
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                crossAxisSpacing: 12,
-                                mainAxisSpacing: 12,
-                                childAspectRatio: 1,
-                              ),
-                          itemCount: images.length,
-                          itemBuilder: (context, index) {
-                            final imagePath = images[index].path;
-                            return GestureDetector(
-                              onTap: () async {
-                                Navigator.of(context).pop();
-                                await _processImagePath(imagePath);
-                              },
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Image.file(
-                                  File(imagePath),
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+      builder: (ctx) => _InternalGalleryDialog(
+        onProcessImage: (path) {
+          Navigator.of(ctx).pop();
+          _processImagePath(path);
+        },
+      ),
     );
   }
 
@@ -942,6 +874,10 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
   Future<void> _capturePhoto() async {
     if (_isCapturing) return;
     setState(() => _isCapturing = true);
+    // Capture angle NOW — before the native call plays the shutter sound and
+    // runs TFLite detection (which can take several hundred ms). By the time
+    // the native call returns the user may have already moved the device.
+    final double angleAtCapture = _pantoscopicAngleNotifier.value;
 
     try {
       final result = await _channel?.invokeMethod('capturePhoto');
@@ -986,7 +922,7 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
                   imagePath: nativePath,
                   detections: detectionsSnapshot,
                   isFrontCamera: wasFront,
-                  pantoscopicAngle: _pantoscopicAngleNotifier.value,
+                  pantoscopicAngle: angleAtCapture,
                 ),
               ),
             );
@@ -998,5 +934,291 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
     } finally {
       if (mounted) setState(() => _isCapturing = false);
     }
+  }
+}
+
+// ── Internal gallery dialog with real-time updates, X delete, multi-select ───
+
+class _InternalGalleryDialog extends StatefulWidget {
+  final void Function(String path) onProcessImage;
+  const _InternalGalleryDialog({required this.onProcessImage});
+
+  @override
+  State<_InternalGalleryDialog> createState() => _InternalGalleryDialogState();
+}
+
+class _InternalGalleryDialogState extends State<_InternalGalleryDialog> {
+  bool _selecting = false;
+  final Set<String> _selected = {};
+
+  void _enterSelect(File file) {
+    setState(() {
+      _selecting = true;
+      _selected.add(file.path);
+    });
+  }
+
+  void _toggleSelect(File file) {
+    setState(() {
+      if (_selected.contains(file.path)) {
+        _selected.remove(file.path);
+        if (_selected.isEmpty) _selecting = false;
+      } else {
+        _selected.add(file.path);
+      }
+    });
+  }
+
+  void _exitSelect() {
+    setState(() {
+      _selecting = false;
+      _selected.clear();
+    });
+  }
+
+  Future<bool> _confirmDelete(int count) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: Colors.grey.shade800,
+            title: Text(
+              count == 1 ? '¿Eliminar foto?' : 'Eliminar $count fotos',
+              style: const TextStyle(color: Colors.white),
+            ),
+            content: Text(
+              count == 1
+                  ? '¿Estás seguro de que querés eliminar esta foto?'
+                  : '¿Eliminar las $count fotos seleccionadas?',
+              style: const TextStyle(color: Colors.white70),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Cancelar',
+                    style: TextStyle(color: Colors.white)),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Eliminar',
+                    style: TextStyle(color: Colors.redAccent)),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  Future<void> _deleteSingle(File file) async {
+    final ok = await _confirmDelete(1);
+    if (!ok || !mounted) return;
+    await GalleryStorage.instance.deleteImage(file);
+  }
+
+  Future<void> _deleteSelected(List<File> allImages) async {
+    final files =
+        allImages.where((f) => _selected.contains(f.path)).toList();
+    if (files.isEmpty) return;
+    final ok = await _confirmDelete(files.length);
+    if (!ok || !mounted) return;
+    for (final f in files) {
+      await GalleryStorage.instance.deleteImage(f);
+    }
+    _exitSelect();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.grey.shade900,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: Colors.grey.shade700),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        width: MediaQuery.of(context).size.width * 0.8,
+        height: MediaQuery.of(context).size.height * 0.7,
+        child: StreamBuilder<List<File>>(
+          stream: GalleryStorage.instance.watchImages(),
+          builder: (ctx, snap) {
+            final images = snap.data ?? [];
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      context.l10n.vmInternalGallery,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white70),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+                if (_selecting) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Text(
+                        '${_selected.length} seleccionada${_selected.length == 1 ? '' : 's'}',
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 13),
+                      ),
+                      const Spacer(),
+                      TextButton.icon(
+                        onPressed: () => _deleteSelected(images),
+                        icon: const Icon(Icons.delete_rounded,
+                            size: 16, color: Colors.redAccent),
+                        label: const Text('Eliminar',
+                            style: TextStyle(color: Colors.redAccent)),
+                        style: TextButton.styleFrom(
+                            visualDensity: VisualDensity.compact),
+                      ),
+                      TextButton(
+                        onPressed: _exitSelect,
+                        style: TextButton.styleFrom(
+                            visualDensity: VisualDensity.compact),
+                        child: const Text('Cancelar',
+                            style: TextStyle(color: Colors.white38)),
+                      ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Expanded(
+                  child: snap.connectionState == ConnectionState.waiting &&
+                          images.isEmpty
+                      ? const Center(child: CircularProgressIndicator())
+                      : images.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.no_photography,
+                                      size: 64, color: Colors.white24),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    context.l10n.vmNoImages,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                        color: Colors.white38, fontSize: 16),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : GridView.builder(
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                crossAxisSpacing: 12,
+                                mainAxisSpacing: 12,
+                                childAspectRatio: 1,
+                              ),
+                              itemCount: images.length,
+                              itemBuilder: (context, index) {
+                                final file = images[index];
+                                final isSelected =
+                                    _selected.contains(file.path);
+                                return GestureDetector(
+                                  onTap: _selecting
+                                      ? () => _toggleSelect(file)
+                                      : () =>
+                                          widget.onProcessImage(file.path),
+                                  onLongPress: _selecting
+                                      ? null
+                                      : () => _enterSelect(file),
+                                  child: AnimatedContainer(
+                                    duration:
+                                        const Duration(milliseconds: 150),
+                                    decoration: BoxDecoration(
+                                      borderRadius:
+                                          BorderRadius.circular(12),
+                                      border: isSelected
+                                          ? Border.all(
+                                              color:
+                                                  const Color(0xFF6C63FF),
+                                              width: 3)
+                                          : Border.all(
+                                              color: Colors.transparent,
+                                              width: 3),
+                                    ),
+                                    child: Stack(
+                                      fit: StackFit.expand,
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(9),
+                                          child: Image.file(file,
+                                              fit: BoxFit.cover),
+                                        ),
+                                        if (_selecting)
+                                          Positioned(
+                                            top: 6,
+                                            left: 6,
+                                            child: AnimatedContainer(
+                                              duration: const Duration(
+                                                  milliseconds: 150),
+                                              width: 24,
+                                              height: 24,
+                                              decoration: BoxDecoration(
+                                                color: isSelected
+                                                    ? const Color(
+                                                        0xFF6C63FF)
+                                                    : Colors.black54,
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                    color: Colors.white60,
+                                                    width: 1.5),
+                                              ),
+                                              child: isSelected
+                                                  ? const Icon(
+                                                      Icons.check_rounded,
+                                                      color: Colors.white,
+                                                      size: 15)
+                                                  : null,
+                                            ),
+                                          ),
+                                        if (!_selecting)
+                                          Positioned(
+                                            top: 4,
+                                            right: 4,
+                                            child: GestureDetector(
+                                              onTap: () =>
+                                                  _deleteSingle(file),
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey.shade900
+                                                      .withValues(alpha: 0.85),
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                padding:
+                                                    const EdgeInsets.all(4),
+                                                child: const Icon(
+                                                    Icons.close,
+                                                    color: Colors.white,
+                                                    size: 18),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
   }
 }

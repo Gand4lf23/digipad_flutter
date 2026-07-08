@@ -112,6 +112,15 @@ class OpticalController extends ChangeNotifier {
     List<dynamic> rawCircles = detections['circles'] ?? [];
     List<Offset> circleOffsets = rawCircles.map((c) => toPixel(c)).toList();
 
+    // Reject circles stuck at image corners — TFLite returns (0,0) or (1,1)
+    // normalised when it fails to detect. Same 5% border margin used for eyes.
+    final double minDim = math.min(imageSize.width, imageSize.height);
+    circleOffsets = circleOffsets.where((e) =>
+        e.dx > minDim * 0.05 &&
+        e.dy > minDim * 0.05 &&
+        e.dx < imageSize.width - minDim * 0.05 &&
+        e.dy < imageSize.height - minDim * 0.05).toList();
+
     if (circleOffsets.isNotEmpty) {
       if (circleOffsets.length >= 4) {
         final pts = circleOffsets.take(4).toList();
@@ -194,10 +203,10 @@ class OpticalController extends ChangeNotifier {
       final b1 = getPoint(DetectionType.refBL);
       final b2 = getPoint(DetectionType.refBR);
       final double midX = (a1.dx + a2.dx + b1.dx + b2.dx) / 4.0;
-      // Place pupils below the bottom ref markers (B1/B2), ~30% of bar height below them
       final double barH = ((b1.dy - a1.dy) + (b2.dy - a2.dy)) / 2.0;
-      final double rY = b1.dy + barH * 0.30;
-      final double lY = b2.dy + barH * 0.30;
+      // Place pupils at the vertical midpoint of each lens column (inside frame).
+      final double rY = a1.dy + barH * 0.50;
+      final double lY = a2.dy + barH * 0.50;
       final double rX = (a1.dx + b1.dx) / 2.0 + (midX - (a1.dx + b1.dx) / 2.0) * 0.4;
       final double lX = (a2.dx + b2.dx) / 2.0 - ((a2.dx + b2.dx) / 2.0 - midX) * 0.4;
       _addPoint(Offset(rX, rY), DetectionType.pupilRight, "P_1");

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
@@ -12,8 +13,13 @@ import 'package:path_provider/path_provider.dart';
 class CosmeticLensesCubit extends Cubit<CosmeticLensesState> {
   final ImagePicker _picker = ImagePicker();
   final GalleryStorage _galleryStorage;
+  StreamSubscription<List<File>>? _gallerySub;
 
-  CosmeticLensesCubit(this._galleryStorage) : super(CosmeticLensesState());
+  CosmeticLensesCubit(this._galleryStorage) : super(CosmeticLensesState()) {
+    _gallerySub = _galleryStorage.watchImages().listen((files) {
+      emit(state.copyWith(galleryImages: files.map((f) => f.path).toList()));
+    });
+  }
 
   void initIrisImages() {
     final irisMap = <String, List<String>>{
@@ -267,5 +273,22 @@ class CosmeticLensesCubit extends Cubit<CosmeticLensesState> {
 
   void clearPhoto() {
     emit(state.copyWith(cameraPhoto: null));
+  }
+
+  Future<void> deleteImage(File file) async {
+    await _galleryStorage.deleteImage(file);
+    // stream fires → galleryImages auto-updates
+  }
+
+  Future<void> deleteMultiple(List<File> files) async {
+    for (final f in files) {
+      await _galleryStorage.deleteImage(f);
+    }
+  }
+
+  @override
+  Future<void> close() async {
+    await _gallerySub?.cancel();
+    return super.close();
   }
 }

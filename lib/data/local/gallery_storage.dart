@@ -1,15 +1,20 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sembast/sembast_io.dart';
 
 class GalleryStorage {
+  // Singleton: all GalleryStorage() calls return the same instance and DB.
+  static final GalleryStorage instance = GalleryStorage._();
+  GalleryStorage._();
+  factory GalleryStorage() => instance;
+
   static const _storeName = 'gallery';
   static final StoreRef<String, Map<String, dynamic>> _store =
       stringMapStoreFactory.store(_storeName);
 
   late Database _db;
-
   Future<void>? _initFuture;
 
   Future<void> init() {
@@ -42,17 +47,34 @@ class GalleryStorage {
   }
 
   Future<List<File>> loadImages() async {
+    await init();
     final records = await _store.find(_db);
     records.sort((a, b) {
       final tA = DateTime.tryParse(a.value['timestamp'] ?? '') ?? DateTime(0);
       final tB = DateTime.tryParse(b.value['timestamp'] ?? '') ?? DateTime(0);
       return tB.compareTo(tA);
     });
-
     return records
         .map((r) => File(r.value['path'] as String))
         .where((f) => f.existsSync())
         .toList();
+  }
+
+  /// Reactive stream — emits immediately and again on every save/delete.
+  Stream<List<File>> watchImages() async* {
+    await init();
+    yield* _store.query().onSnapshots(_db).map((records) {
+      final sorted = [...records];
+      sorted.sort((a, b) {
+        final tA = DateTime.tryParse(a.value['timestamp'] ?? '') ?? DateTime(0);
+        final tB = DateTime.tryParse(b.value['timestamp'] ?? '') ?? DateTime(0);
+        return tB.compareTo(tA);
+      });
+      return sorted
+          .map((r) => File(r.value['path'] as String))
+          .where((f) => f.existsSync())
+          .toList();
+    });
   }
 
   Future<bool> deleteImage(File file) async {

@@ -43,6 +43,7 @@ dependencies:
   image: 4.7.2
 
   # File handling and storage
+  path: ^1.9.1
   path_provider: 2.1.5
   sembast: 3.8.5+1
 
