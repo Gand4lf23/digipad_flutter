@@ -616,6 +616,36 @@ abstract class AppLocalizations {
   /// **'Measurements'**
   String get measurementsShareSubject;
 
+  /// No description provided for @exitEditionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit Edition'**
+  String get exitEditionTitle;
+
+  /// No description provided for @exitEditionContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit without saving measurements?'**
+  String get exitEditionContent;
+
+  /// No description provided for @exitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit'**
+  String get exitLabel;
+
+  /// No description provided for @pantoscopicAngle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pantoscopic Angle'**
+  String get pantoscopicAngle;
+
+  /// No description provided for @pantoscopicAngleShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Pant. Angle'**
+  String get pantoscopicAngleShort;
+
   /// No description provided for @leftEye.
   ///
   /// In en, this message translates to:
@@ -1521,6 +1551,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No Lens'**
   String get simLensNoLens;
+
+  /// No description provided for @saveMeasurement.
+  ///
+  /// In en, this message translates to:
+  /// **'SAVE MEASUREMENT'**
+  String get saveMeasurement;
+
+  /// No description provided for @saveMeasurementDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Measurement'**
+  String get saveMeasurementDialogTitle;
+
+  /// No description provided for @saveToGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal Gallery'**
+  String get saveToGallery;
+
+  /// No description provided for @saveToGalleryDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Saves photo and pantoscopic angle'**
+  String get saveToGalleryDesc;
+
+  /// No description provided for @saveToMeasurements.
+  ///
+  /// In en, this message translates to:
+  /// **'Measurements'**
+  String get saveToMeasurements;
+
+  /// No description provided for @saveToMeasurementsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Saves full state to re-edit later'**
+  String get saveToMeasurementsDesc;
+
+  /// No description provided for @patientData.
+  ///
+  /// In en, this message translates to:
+  /// **'Patient Data'**
+  String get patientData;
+
+  /// No description provided for @patientFirstName.
+  ///
+  /// In en, this message translates to:
+  /// **'First Name'**
+  String get patientFirstName;
+
+  /// No description provided for @patientLastName.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Name'**
+  String get patientLastName;
+
+  /// No description provided for @optionalHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get optionalHint;
+
+  /// No description provided for @measurementSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Measurement saved'**
+  String get measurementSaved;
+
+  /// No description provided for @photoSavedToGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo saved to gallery'**
+  String get photoSavedToGallery;
+
+  /// No description provided for @myMeasurements.
+  ///
+  /// In en, this message translates to:
+  /// **'My Measurements'**
+  String get myMeasurements;
+
+  /// No description provided for @noSavedMeasurements.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved measurements yet'**
+  String get noSavedMeasurements;
+
+  /// No description provided for @sortByDate.
+  ///
+  /// In en, this message translates to:
+  /// **'By date'**
+  String get sortByDate;
+
+  /// No description provided for @sortByName.
+  ///
+  /// In en, this message translates to:
+  /// **'By name'**
+  String get sortByName;
+
+  /// No description provided for @deleteMeasurementTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Measurement?'**
+  String get deleteMeasurementTitle;
+
+  /// No description provided for @deleteMeasurementContent.
+  ///
+  /// In en, this message translates to:
+  /// **'This measurement will be permanently deleted.'**
+  String get deleteMeasurementContent;
+
+  /// No description provided for @unknownPatient.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown patient'**
+  String get unknownPatient;
+
+  /// No description provided for @updateMeasurement.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Measurement'**
+  String get updateMeasurement;
+
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// No description provided for @hubNewMeasurement.
+  ///
+  /// In en, this message translates to:
+  /// **'New Measurement'**
+  String get hubNewMeasurement;
+
+  /// No description provided for @hubDetectorNotReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Detector not ready yet. Try again.'**
+  String get hubDetectorNotReady;
+
+  /// No description provided for @hubAnalyzing.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyzing...'**
+  String get hubAnalyzing;
 }
 
 class _AppLocalizationsDelegate

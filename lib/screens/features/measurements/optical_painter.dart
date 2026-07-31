@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'optical_logic_controller.dart';
 
+const bool kDebugHitboxes = false;
+
 class OpticalPainter extends CustomPainter {
   final List<DetectionPoint> points;
   final DetectionPoint? selectedPoint;
@@ -22,6 +24,7 @@ class OpticalPainter extends CustomPainter {
   final Offset offset;
 
   final double rotation; // Radians from parent
+  final bool isDragging;
 
   OpticalPainter({
     required this.points,
@@ -38,6 +41,7 @@ class OpticalPainter extends CustomPainter {
     required this.isBifocal,
     required this.bifocalOffset,
     required this.rotation,
+    this.isDragging = false,
   });
 
   @override
@@ -101,11 +105,32 @@ class OpticalPainter extends CustomPainter {
       canvas.rotate(-rotation); // Counter-rotate relative to center of point
 
       if (isCorner) {
-        double armLen = 60.0 / scale;
+        double armLen = 40.0 / scale;
+        final double lStroke = isDragging
+            ? (isSelected ? 0.5 : 0.4) / scale
+            : (isSelected ? 0.8 : 0.6) / scale;
         Paint lPaint = Paint()
-          ..color = color
-          ..strokeWidth = (isSelected ? 0.7 : 0.5) / scale
-          ..style = PaintingStyle.stroke;
+          ..color = Colors.white.withValues(alpha: isSelected ? 0.95 : 0.72)
+          ..strokeWidth = lStroke
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.square;
+        if (isSelected) lPaint.color = Colors.greenAccent.withValues(alpha: 0.95);
+
+        // --- DEBUG: arm hit bands only (no center circle) ---
+        if (kDebugHitboxes) {
+          final bandPaint = Paint()
+            ..color = Colors.orange.withValues(alpha: 0.28)
+            ..strokeWidth = 20.0 / scale
+            ..strokeCap = StrokeCap.butt;
+          if (p.type == DetectionType.lensRightTop ||
+              p.type == DetectionType.lensLeftTop) {
+            canvas.drawLine(Offset.zero, Offset(armLen, 0), bandPaint);
+            canvas.drawLine(Offset.zero, Offset(0, armLen), bandPaint);
+          } else {
+            canvas.drawLine(Offset.zero, Offset(-armLen, 0), bandPaint);
+            canvas.drawLine(Offset.zero, Offset(0, -armLen), bandPaint);
+          }
+        }
 
         if (p.type == DetectionType.lensRightTop ||
             p.type == DetectionType.lensLeftTop) {
@@ -124,7 +149,7 @@ class OpticalPainter extends CustomPainter {
           path.lineTo(0, -armLen);
           canvas.drawPath(path, lPaint);
         }
-        canvas.drawCircle(Offset.zero, 1.5 / scale, Paint()..color = color);
+        canvas.drawCircle(Offset.zero, 2.0 / scale, Paint()..color = lPaint.color);
       } else {
         // CROSSES (Stay as "+" regardless of head tilt)
         Paint crossPaint = Paint()
@@ -212,79 +237,69 @@ class OpticalPainter extends CustomPainter {
 
     if (rTL == null || rBR == null || lTL == null || lBR == null) return;
 
-    Paint framePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.15)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.3 / scale;
+    final bool rightActive =
+        selectedPoint?.type == DetectionType.lensRightTop ||
+        selectedPoint?.type == DetectionType.lensRightBottom;
+    final bool leftActive =
+        selectedPoint?.type == DetectionType.lensLeftTop ||
+        selectedPoint?.type == DetectionType.lensLeftBottom;
+    final bool eitherActive = rightActive || leftActive;
 
-    // Dibujar rectángulos que respeten perfectamente la rotación de la cara
-    void drawLeveledRect(Offset p1, Offset p2) {
-      Offset center = Offset((p1.dx + p2.dx) / 2, (p1.dy + p2.dy) / 2);
+    // Screen-axis unit vectors in image-space.
+    // After the outer Transform.rotate(rotation) widget:
+    //   eh appears as screen-horizontal (+x)
+    //   ev appears as screen-vertical  (+y)
+    final double cr = math.cos(rotation), sr = math.sin(rotation);
+    final Offset eh = Offset(cr, -sr);
+    final Offset ev = Offset(sr, cr);
 
-      // Recuperar el ancho y alto real desenrotando el vector de distancia
-      double dx = p2.dx - p1.dx;
-      double dy = p2.dy - p1.dy;
-
-      double cosR = math.cos(-rotation);
-      double sinR = math.sin(-rotation);
-
-      // Proyección sobre los ejes de la pantalla (cara)
-      double screenDx = dx * cosR - dy * sinR;
-      double screenDy = dx * sinR + dy * cosR;
-
-      double width = screenDx.abs();
-      double height = screenDy.abs();
-
-      canvas.save();
-      canvas.translate(center.dx, center.dy);
-      canvas.rotate(-rotation);
-      canvas.drawRect(
-        Rect.fromCenter(center: Offset.zero, width: width, height: height),
-        framePaint,
-      );
-      canvas.restore();
-    }
-
-    drawLeveledRect(rTL, rBR);
-    drawLeveledRect(lTL, lBR);
-
-    // Dibujar la línea del puente visualmente correcta
-    Offset rightLensCenter = Offset(
-      (rTL.dx + rBR.dx) / 2,
-      (rTL.dy + rBR.dy) / 2,
-    );
-    Offset leftLensCenter = Offset(
-      (lTL.dx + lBR.dx) / 2,
-      (lTL.dy + lBR.dy) / 2,
-    );
-
-    canvas.save();
-    Offset bridgeCenter = Offset(
-      (rightLensCenter.dx + leftLensCenter.dx) / 2,
-      (rightLensCenter.dy + leftLensCenter.dy) / 2,
-    );
-    canvas.translate(bridgeCenter.dx, bridgeCenter.dy);
-    canvas.rotate(-rotation);
-
-    double dxCenters = leftLensCenter.dx - rightLensCenter.dx;
-    double dyCenters = leftLensCenter.dy - rightLensCenter.dy;
-    double cosR = math.cos(-rotation);
-    double sinR = math.sin(-rotation);
-
-    double centerDistX = (dxCenters * cosR - dyCenters * sinR).abs();
-    double rWidth = ((rBR.dx - rTL.dx) * cosR - (rBR.dy - rTL.dy) * sinR).abs();
-    double lWidth = ((lBR.dx - lTL.dx) * cosR - (lBR.dy - lTL.dy) * sinR).abs();
-
-    double bridgeWidth = centerDistX - (rWidth / 2) - (lWidth / 2);
-
-    if (bridgeWidth > 0) {
-      canvas.drawLine(
-        Offset(-bridgeWidth / 2, 0),
-        Offset(bridgeWidth / 2, 0),
-        framePaint,
+    // Given diagonal corners (origin, opposite), draw a screen-axis-aligned
+    // parallelogram in image-space whose corners land exactly on those positions.
+    // W = projection of (opposite-origin) onto eh (screen-horizontal span)
+    // H = projection of (opposite-origin) onto ev (screen-vertical span)
+    void drawLensRect(Offset origin, Offset opposite, bool isActive) {
+      final Offset d = opposite - origin;
+      final double W = cr * d.dx - sr * d.dy;
+      final double H = sr * d.dx + cr * d.dy;
+      final Offset p1 = origin + Offset(eh.dx * W, eh.dy * W);
+      final Offset p3 = origin + Offset(ev.dx * H, ev.dy * H);
+      canvas.drawPath(
+        Path()
+          ..moveTo(origin.dx, origin.dy)
+          ..lineTo(p1.dx, p1.dy)
+          ..lineTo(opposite.dx, opposite.dy)
+          ..lineTo(p3.dx, p3.dy)
+          ..close(),
+        Paint()
+          ..color = Colors.white.withValues(alpha: isActive ? 0.65 : 0.22)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = (isActive ? 0.8 : 0.5) / scale,
       );
     }
-    canvas.restore();
+
+    drawLensRect(rTL, rBR, rightActive);
+    drawLensRect(lTL, lBR, leftActive);
+
+    // Bridge: connects the inner side of each frame at mid-height.
+    // Right frame inner-top = rTL + W_R * eh; mid = inner-top + H_R/2 * ev
+    final Offset dR = rBR - rTL;
+    final double wr = cr * dR.dx - sr * dR.dy;
+    final double hr = sr * dR.dx + cr * dR.dy;
+    final Offset bridgeRight =
+        rTL + Offset(eh.dx * wr + ev.dx * (hr / 2), eh.dy * wr + ev.dy * (hr / 2));
+
+    // Left frame inner side is at lTL; mid = lTL + H_L/2 * ev
+    final Offset dL = lBR - lTL;
+    final double hl = sr * dL.dx + cr * dL.dy;
+    final Offset bridgeLeft = lTL + Offset(ev.dx * (hl / 2), ev.dy * (hl / 2));
+
+    canvas.drawLine(
+      bridgeRight,
+      bridgeLeft,
+      Paint()
+        ..color = Colors.white.withValues(alpha: eitherActive ? 0.45 : 0.22)
+        ..strokeWidth = (eitherActive ? 0.8 : 0.5) / scale,
+    );
   }
 
   Offset? _getPos(DetectionType type) {

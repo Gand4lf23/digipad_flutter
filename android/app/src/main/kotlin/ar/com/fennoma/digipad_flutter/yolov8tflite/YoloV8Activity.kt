@@ -1,7 +1,5 @@
 package ar.com.digipad
 
-import android.graphics.BitmapFactory
-import androidx.exifinterface.media.ExifInterface
 import android.Manifest
 import android.app.Activity
 import android.content.Context
@@ -9,16 +7,17 @@ import android.content.ContextWrapper
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.ImageDecoder
 import android.graphics.Matrix
+import android.net.Uri
 import android.util.AttributeSet
 import android.util.Log
-import android.view.Gravity
 import android.os.Environment
+import android.view.ScaleGestureDetector
+import android.widget.FrameLayout
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
-import android.widget.FrameLayout
-import android.widget.TextView
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -26,11 +25,11 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import ar.com.digipad.yolov8tflite.BoundingBox
 import ar.com.digipad.yolov8tflite.Constants
 import ar.com.digipad.yolov8tflite.Detector
-import ar.com.digipad.yolov8tflite.OverlayView
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -41,27 +40,29 @@ class YoloV8View @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
-) : FrameLayout(context, attrs, defStyleAttr), Detector.DetectorListener {
+) : FrameLayout(context, attrs, defStyleAttr) {
 
-    // UI and Core Components
     private val previewView: PreviewView
-    private val overlayView: OverlayView
-    private val inferenceTimeTextView: TextView
     private val detector: Detector
     private val cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private var cameraProvider: ProcessCameraProvider? = null
-    private var imageAnalyzer: ImageAnalysis? = null
     private var imageCapture: ImageCapture? = null
     private var camera: Camera? = null
     private var cameraSelector: CameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
     private var isFrontCamera: Boolean = false
-    var onDetections: ((List<BoundingBox>, Long) -> Unit)? = null
     private var lifecycleOwner: LifecycleOwner? = null
     private val isDisposed = AtomicBoolean(false)
     private val isCameraBound = AtomicBoolean(false)
     private val isBinding = AtomicBoolean(false)
 
     private val lifecycleObserver = object : DefaultLifecycleObserver {
+        override fun onStart(owner: LifecycleOwner) {
+            super.onStart(owner)
+            if (!isDisposed.get()) {
+                Log.d("YoloV8View", "Lifecycle: ON_START. Reloading detector.")
+                detector.setup()
+            }
+        }
         override fun onResume(owner: LifecycleOwner) {
             super.onResume(owner)
             if (!isDisposed.get()) {
@@ -69,7 +70,6 @@ class YoloV8View @JvmOverloads constructor(
                 bindCameraUseCases()
             }
         }
-
         override fun onPause(owner: LifecycleOwner) {
             super.onPause(owner)
             if (!isDisposed.get()) {
@@ -77,16 +77,21 @@ class YoloV8View @JvmOverloads constructor(
                 unbindCamera()
             }
         }
+        override fun onStop(owner: LifecycleOwner) {
+            super.onStop(owner)
+            if (!isDisposed.get()) {
+                Log.d("YoloV8View", "Lifecycle: ON_STOP. Clearing detector to free memory.")
+                detector.clear()
+            }
+        }
     }
 
-    fun detectImageSync(bitmap: Bitmap): List<BoundingBox> {
-        return detector.detectSync(bitmap)
-    }
+    fun detectImageSync(bitmap: Bitmap): List<BoundingBox> = detector.detectSync(bitmap)
 
     init {
         Log.d("YoloV8View", "Initializing new YoloV8View instance. Hash: ${this.hashCode()}")
         setBackgroundColor(Color.BLACK)
-        
+
         previewView = PreviewView(context).apply {
             layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
             implementationMode = PreviewView.ImplementationMode.COMPATIBLE
@@ -94,35 +99,35 @@ class YoloV8View @JvmOverloads constructor(
         }
         addView(previewView)
 
-        overlayView = OverlayView(context, null).apply {
-            layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
-        }
-        addView(overlayView)
+        // Pinch-to-zoom via CameraX linear zoom.
+        val scaleDetector = ScaleGestureDetector(context,
+            object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+                override fun onScale(d: ScaleGestureDetector): Boolean {
+                    val current = camera?.cameraInfo?.zoomState?.value?.linearZoom ?: 0.5f
+                    val next = (current + (d.scaleFactor - 1f) * 0.5f).coerceIn(0f, 1f)
+                    camera?.cameraControl?.setLinearZoom(next)
+                    return true
+                }
+            })
+        previewView.setOnTouchListener { _, event -> scaleDetector.onTouchEvent(event); true }
 
-        inferenceTimeTextView = TextView(context).apply {
-            layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
-                gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-                bottomMargin = 48
-            }
-            setTextColor(Color.WHITE)
-            textSize = 18f
-        }
-        addView(inferenceTimeTextView)
-
-        detector = Detector(context, Constants.MODEL_PATH, Constants.LABELS_PATH, this)
+        // Detection happens post-capture only (detectFromFile). No live overlay needed.
+        detector = Detector(context, Constants.MODEL_PATH, Constants.LABELS_PATH,
+            object : Detector.DetectorListener {
+                override fun onEmptyDetect() {}
+                override fun onDetect(boundingBoxes: List<BoundingBox>, inferenceTime: Long) {}
+            })
         detector.setup()
     }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         Log.d("YoloV8View", "onAttachedToWindow")
-        
         ProcessCameraProvider.getInstance(context).addListener({
             if (isDisposed.get()) {
                 Log.d("YoloV8View", "View disposed during camera initialization, skipping.")
                 return@addListener
             }
-            
             try {
                 cameraProvider = ProcessCameraProvider.getInstance(context).get()
                 findActivity()?.let { activity ->
@@ -132,6 +137,12 @@ class YoloV8View @JvmOverloads constructor(
                         Log.d("YoloV8View", "Lifecycle observer attached.")
                     }
                 }
+                // Explicit bind if onResume already fired before this async callback completed.
+                val owner = lifecycleOwner
+                if (!isDisposed.get() && !isCameraBound.get() &&
+                    owner != null && owner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+                    bindCameraUseCases()
+                }
             } catch (e: Exception) {
                 Log.e("YoloV8View", "Error initializing camera provider", e)
             }
@@ -139,73 +150,53 @@ class YoloV8View @JvmOverloads constructor(
     }
 
     private fun bindCameraUseCases() {
-        // Prevent concurrent binding attempts
         if (!isBinding.compareAndSet(false, true)) {
             Log.d("YoloV8View", "Binding already in progress, skipping.")
             return
         }
-
         try {
             if (isCameraBound.get() || isDisposed.get()) {
                 Log.d("YoloV8View", "bindCameraUseCases skipped: already bound or disposed.")
                 return
             }
-
             val provider = cameraProvider ?: run {
                 Log.e("YoloV8View", "CameraProvider is null, cannot bind.")
                 return
             }
-            
             val activity = findActivity() as? LifecycleOwner ?: run {
-                Log.e("YoloV8View", "LifecycleOwner (Activity) not found, cannot bind.")
+                Log.e("YoloV8View", "LifecycleOwner not found, cannot bind.")
                 return
             }
-            
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
+                    != PackageManager.PERMISSION_GRANTED) {
                 Log.e("YoloV8View", "Camera permission not granted, cannot bind.")
                 return
             }
 
-            val preview = Preview.Builder().build().apply {
+            // Fall back to front camera on devices with no rear camera (e.g. front-only tablets).
+            val selector = if (!provider.hasCamera(cameraSelector)) {
+                Log.w("YoloV8View", "Requested camera unavailable, falling back to front camera.")
+                isFrontCamera = true
+                cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
+                cameraSelector
+            } else {
+                cameraSelector
+            }
+
+            val preview = Preview.Builder()
+                .setTargetRotation(display.rotation)
+                .build().apply {
                 setSurfaceProvider(previewView.surfaceProvider)
             }
-            
-            
-            imageAnalyzer = ImageAnalysis.Builder()
-                .setTargetAspectRatio(AspectRatio.RATIO_4_3)
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .setTargetRotation(display.rotation)
-                .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
-                .build()
-
-            imageAnalyzer?.setAnalyzer(cameraExecutor) { imageProxy ->
-                if (isDisposed.get()) {
-                    imageProxy.close()
-                    return@setAnalyzer
-                }
-                try {
-                    val bitmapBuffer = Bitmap.createBitmap(imageProxy.width, imageProxy.height, Bitmap.Config.ARGB_8888)
-                    imageProxy.planes[0].buffer.rewind()
-                    bitmapBuffer.copyPixelsFromBuffer(imageProxy.planes[0].buffer)
-                    val matrix = Matrix().apply { postRotate(imageProxy.imageInfo.rotationDegrees.toFloat()) }
-                    val rotatedBitmap = Bitmap.createBitmap(bitmapBuffer, 0, 0, bitmapBuffer.width, bitmapBuffer.height, matrix, true)
-                    detector.detect(rotatedBitmap)
-                } finally {
-                    imageProxy.close()
-                }
-            }
-
-            // Unbind all before rebinding
             imageCapture = ImageCapture.Builder()
                 .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                 .setTargetRotation(display.rotation)
                 .build()
 
             provider.unbindAll()
-            camera = provider.bindToLifecycle(activity, cameraSelector, preview, imageAnalyzer, imageCapture)
+            camera = provider.bindToLifecycle(activity, selector, preview, imageCapture)
             isCameraBound.set(true)
             Log.d("YoloV8View", "Camera use cases bound successfully.")
-            
         } catch (e: Exception) {
             Log.e("YoloV8View", "Failed to bind camera use cases", e)
         } finally {
@@ -215,14 +206,9 @@ class YoloV8View @JvmOverloads constructor(
 
     private fun unbindCamera() {
         try {
-            // Clear the analyzer first to stop processing
-            imageAnalyzer?.clearAnalyzer()
-            
-            // Unbind all use cases
             cameraProvider?.unbindAll()
             isCameraBound.set(false)
             camera = null
-            
             Log.d("YoloV8View", "Camera unbound successfully.")
         } catch (e: Exception) {
             Log.e("YoloV8View", "Error unbinding camera", e)
@@ -234,34 +220,16 @@ class YoloV8View @JvmOverloads constructor(
             Log.d("YoloV8View", "Already disposed, skipping.")
             return
         }
-
         Log.d("YoloV8View", "Starting disposal...")
-
         try {
-            // 1. Remove lifecycle observer to stop any re-bind attempts.
             lifecycleOwner?.lifecycle?.removeObserver(lifecycleObserver)
             lifecycleOwner = null
-
-            // 2. Stop new frames being submitted to the executor.
-            imageAnalyzer?.clearAnalyzer()
-            imageAnalyzer = null
             imageCapture = null
-
-            // 3. Unbind camera use cases.
             cameraProvider?.unbindAll()
             isCameraBound.set(false)
             camera = null
-
-            // 4. Close the TFLite interpreter BEFORE shutting down the executor.
-            //    detector.clear() acquires the write lock and blocks until any
-            //    in-flight detect() call (holding the read lock) finishes.
-            //    This prevents the SIGSEGV caused by freeing native memory while
-            //    NativeInterpreterWrapper.run() is still executing on pool thread.
             detector.clear()
             Log.d("YoloV8View", "Detector cleared.")
-
-            // 5. Shut down executor. Remaining tasks will find interpreter == null
-            //    and exit immediately.
             cameraExecutor.shutdown()
             try {
                 if (!cameraExecutor.awaitTermination(2000, TimeUnit.MILLISECONDS)) {
@@ -273,10 +241,8 @@ class YoloV8View @JvmOverloads constructor(
                 Thread.currentThread().interrupt()
             }
             Log.d("YoloV8View", "Camera executor shut down.")
-
             cameraProvider = null
             Log.d("YoloV8View", "Disposal completed successfully.")
-
         } catch (e: Exception) {
             Log.e("YoloV8View", "Error during disposal", e)
         }
@@ -286,46 +252,6 @@ class YoloV8View @JvmOverloads constructor(
         super.onDetachedFromWindow()
         Log.d("YoloV8View", "onDetachedFromWindow called.")
         dispose()
-    }
-
-    override fun onEmptyDetect() {
-        if (isDisposed.get()) return
-        post { 
-            if (!isDisposed.get()) {
-                overlayView.invalidate()
-            }
-        }
-    }
-
-    override fun onDetect(boundingBoxes: List<BoundingBox>, inferenceTime: Long) {
-        if (isDisposed.get()) return
-        post {
-            if (!isDisposed.get()) {
-                // Mirror boxes horizontally when using the front camera so overlay aligns with preview
-                val adjustedBoxes = if (isFrontCamera) {
-                    boundingBoxes.map { b ->
-                        BoundingBox(
-                            x1 = 1f - b.x2,
-                            y1 = b.y1,
-                            x2 = 1f - b.x1,
-                            y2 = b.y2,
-                            cx = 1f - b.cx,
-                            cy = b.cy,
-                            w = b.w,
-                            h = b.h,
-                            cnf = b.cnf,
-                            cls = b.cls,
-                            clsName = b.clsName
-                        )
-                    }
-                } else boundingBoxes
-
-                inferenceTimeTextView.text = "${inferenceTime}ms"
-                overlayView.setResults(adjustedBoxes)
-                overlayView.invalidate()
-                onDetections?.invoke(adjustedBoxes, inferenceTime)
-            }
-        }
     }
 
     private fun findActivity(): Activity? {
@@ -338,10 +264,9 @@ class YoloV8View @JvmOverloads constructor(
     }
 
     // region: Flutter control API
+
     fun setTorch(enabled: Boolean) {
-        try {
-            camera?.cameraControl?.enableTorch(enabled)
-        } catch (_: Exception) {}
+        try { camera?.cameraControl?.enableTorch(enabled) } catch (_: Exception) {}
     }
 
     fun switchCamera(front: Boolean) {
@@ -349,28 +274,6 @@ class YoloV8View @JvmOverloads constructor(
         cameraSelector = if (front) CameraSelector.DEFAULT_FRONT_CAMERA else CameraSelector.DEFAULT_BACK_CAMERA
         unbindCamera()
         bindCameraUseCases()
-    }
-
-    fun setDetectionEnabled(enabled: Boolean) {
-        if (enabled) {
-            imageAnalyzer?.setAnalyzer(cameraExecutor) { imageProxy ->
-                if (isDisposed.get()) { imageProxy.close(); return@setAnalyzer }
-                try {
-                    val bitmapBuffer = Bitmap.createBitmap(imageProxy.width, imageProxy.height, Bitmap.Config.ARGB_8888)
-                    imageProxy.planes[0].buffer.rewind()
-                    bitmapBuffer.copyPixelsFromBuffer(imageProxy.planes[0].buffer)
-                    val matrix = Matrix().apply { postRotate(imageProxy.imageInfo.rotationDegrees.toFloat()) }
-                    val rotatedBitmap = Bitmap.createBitmap(bitmapBuffer, 0, 0, bitmapBuffer.width, bitmapBuffer.height, matrix, true)
-                    detector.detect(rotatedBitmap)
-                } finally { imageProxy.close() }
-            }
-        } else {
-            imageAnalyzer?.clearAnalyzer()
-        }
-    }
-
-    fun setOverlayVisible(visible: Boolean) {
-        overlayView.visibility = if (visible) VISIBLE else GONE
     }
 
     fun capturePhoto(callback: (path: String?, error: String?) -> Unit) {
@@ -394,98 +297,55 @@ class YoloV8View @JvmOverloads constructor(
     }
 
     fun detectFromFile(path: String): Map<String, Any> {
-        val file = File(path)
-        if (!file.exists()) return emptyMap()
-
         var originalBitmap: Bitmap? = null
         var rotatedBitmap: Bitmap? = null
-
         try {
-            // 1. Calculate optimal sample size
-            // We target ~2560px for better detection quality (1024 was too small)
-            val options = BitmapFactory.Options()
-            options.inJustDecodeBounds = true
-            BitmapFactory.decodeFile(path, options)
-
-            val reqSize = 2560
-            var inSampleSize = 1
-            if (options.outHeight > reqSize || options.outWidth > reqSize) {
-                val halfHeight = options.outHeight / 2
-                val halfWidth = options.outWidth / 2
-                while ((halfHeight / inSampleSize) >= reqSize && (halfWidth / inSampleSize) >= reqSize) {
-                    inSampleSize *= 2
+            val reqSize = 1600
+            val source = if (path.startsWith("content://")) {
+                ImageDecoder.createSource(context.contentResolver, Uri.parse(path))
+            } else {
+                val file = File(path)
+                if (!file.exists()) return emptyMap()
+                ImageDecoder.createSource(file)
+            }
+            originalBitmap = ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
+                val w = info.size.width
+                val h = info.size.height
+                if (w > reqSize || h > reqSize) {
+                    val scale = reqSize.toFloat() / maxOf(w, h)
+                    decoder.setTargetSize(
+                        (w * scale).toInt().coerceAtLeast(1),
+                        (h * scale).toInt().coerceAtLeast(1)
+                    )
                 }
+                decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
             }
-
-            // 2. Decode with sample size
-            options.inJustDecodeBounds = false
-            options.inSampleSize = inSampleSize
-            options.inPreferredConfig = Bitmap.Config.ARGB_8888
-            
-            originalBitmap = BitmapFactory.decodeFile(path, options) ?: return emptyMap()
-
-            // 3. Handle Rotation (Exif)
-            val exif = ExifInterface(path)
-            val orientation = exif.getAttributeInt(
-                ExifInterface.TAG_ORIENTATION,
-                ExifInterface.ORIENTATION_NORMAL
-            )
-
-            val matrix = Matrix()
-            when (orientation) {
-                ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
-                ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
-                ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+            if (originalBitmap.config != Bitmap.Config.ARGB_8888) {
+                val converted = originalBitmap.copy(Bitmap.Config.ARGB_8888, false)
+                if (converted != null) { originalBitmap.recycle(); originalBitmap = converted }
             }
-
-            rotatedBitmap = Bitmap.createBitmap(
-                originalBitmap, 0, 0, originalBitmap.width, originalBitmap.height, matrix, true
-            )
-
-            // 4. Run Detection
+            rotatedBitmap = originalBitmap
             val boxes = detector.detectSync(rotatedBitmap)
-
-            // 5. Format for Flutter (Always 4 Circles, Always 2 Eyes)
-            
-            // --- CIRCLES (Target: 4 items / 8 coordinates) ---
             val circlesList = boxes.filter { it.clsName.contains("circle", ignoreCase = true) }
-                .sortedByDescending { it.cnf } // Select highest match
-                .take(4)                       // Limit to top 4
+                .sortedByDescending { it.cnf }.take(4)
                 .flatMap { listOf(it.cx.toDouble(), it.cy.toDouble()) }
                 .toMutableList()
-
-            // Pad with 0.0 if we found fewer than 4 circles
-            while (circlesList.size < 8) {
-                circlesList.add(0.0)
-            }
-
-            // --- EYES (Target: 2 items / 4 coordinates) ---
+            while (circlesList.size < 8) circlesList.add(0.0)
             val eyesList = boxes.filter { it.clsName.contains("eye", ignoreCase = true) }
-                .sortedByDescending { it.cnf } // Select highest match
-                .take(2)                       // Limit to top 2
+                .sortedByDescending { it.cnf }.take(2)
                 .flatMap { listOf(it.cx.toDouble(), it.cy.toDouble()) }
                 .toMutableList()
-
-            // Pad with 0.0 if we found fewer than 2 eyes
-            while (eyesList.size < 4) {
-                eyesList.add(0.0)
-            }
-
-            return mapOf(
-                "circles" to circlesList,
-                "eyes" to eyesList
-            )
-
-        } catch (e: Exception) {
-            Log.e("YoloV8View", "Error in detectFromFile", e)
+            while (eyesList.size < 4) eyesList.add(0.0)
+            return mapOf("circles" to circlesList, "eyes" to eyesList)
+        } catch (e: Throwable) {
+            Log.e("YoloV8View", "detectFromFile error", e)
             return emptyMap()
         } finally {
-            // Safe cleanup
             try {
                 if (originalBitmap != rotatedBitmap) originalBitmap?.recycle()
                 rotatedBitmap?.recycle()
-            } catch (e: Exception) {
-                Log.e("YoloV8View", "Error cleaning up bitmaps", e)
+            } catch (e: Throwable) {
+                Log.e("YoloV8View", "Bitmap cleanup error", e)
             }
         }
     }

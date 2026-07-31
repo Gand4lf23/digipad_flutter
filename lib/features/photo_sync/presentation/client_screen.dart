@@ -8,6 +8,7 @@ import 'package:digipad_flutter/common/components/gallery_photo_strip.dart';
 import 'package:digipad_flutter/data/local/gallery_storage.dart';
 import 'package:digipad_flutter/features/photo_sync/cubit/client_cubit.dart';
 import 'package:digipad_flutter/features/photo_sync/cubit/client_state.dart';
+import 'package:digipad_flutter/screens/features/measurements/measurement_capture_screen.dart';
 
 class ClientScreen extends StatelessWidget {
   const ClientScreen({super.key});
@@ -262,7 +263,16 @@ class ClientScreen extends StatelessWidget {
               subtitle: 'Abre la cámara y envía al Tótem automáticamente',
               color: const Color(0xFF6C63FF),
               loading: state.isSending,
-              onTap: () => context.read<ClientCubit>().sendFromCamera(),
+              onTap: () {
+                final cubit = context.read<ClientCubit>();
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => MeasurementCaptureScreen(
+                    onPhotoCaptured: (path) {
+                      if (!cubit.isClosed) cubit.sendFile(File(path));
+                    },
+                  ),
+                ));
+              },
             ),
           ),
         ),

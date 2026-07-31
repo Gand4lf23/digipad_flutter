@@ -116,18 +116,6 @@ class ClientCubit extends Cubit<ClientState> {
 
   // ── Send photo ─────────────────────────────────────────────────────────────
 
-  Future<void> sendFromCamera() async {
-    if (state is! ClientConnected || _connectedEndpointId == null) return;
-    final photo = await _picker.pickImage(
-      source: ImageSource.camera,
-      imageQuality: 85,
-      maxWidth: 2048,
-      maxHeight: 2048,
-    );
-    if (photo == null || state is! ClientConnected) return;
-    await _sendFile(photo.path);
-  }
-
   Future<void> sendFromGallery() async {
     if (state is! ClientConnected || _connectedEndpointId == null) return;
     final photo = await _picker.pickImage(source: ImageSource.gallery);

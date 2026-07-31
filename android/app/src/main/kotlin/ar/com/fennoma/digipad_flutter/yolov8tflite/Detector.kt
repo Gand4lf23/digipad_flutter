@@ -3,6 +3,7 @@ package ar.com.digipad.yolov8tflite
 import android.content.Context
 import android.graphics.Bitmap
 import android.os.SystemClock
+import android.util.Log
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.common.FileUtil
@@ -16,7 +17,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.ReentrantReadWriteLock
+import java.util.concurrent.locks.ReentrantLock
 import kotlin.math.max
 import kotlin.math.min
 
@@ -27,9 +28,10 @@ class Detector(
     private val detectorListener: DetectorListener
 ) {
 
-    // Guards the interpreter so clear() waits for any in-flight inference to finish
-    // before freeing native memory (prevents SIGSEGV on shutdown).
-    private val interpreterLock = ReentrantReadWriteLock()
+    // Exclusive lock: detect(), detectSync(), and clear() are mutually exclusive.
+    // ReentrantReadWriteLock was wrong here — read locks allow concurrency, but
+    // TFLite's Interpreter.run() is NOT thread-safe → SIGSEGV under concurrent calls.
+    private val interpreterLock = ReentrantLock()
 
     private var interpreter: Interpreter? = null
     private var labels = mutableListOf<String>()
@@ -46,9 +48,10 @@ class Detector(
     private var imageProcessor: ImageProcessor? = null
 
     fun setup() {
+        if (interpreter != null) return // Already initialized — skip reload.
         try {
             // Carga directa desde la raíz de assets de Android
-            val model = FileUtil.loadMappedFile(context, "model3.tflite") 
+            val model = FileUtil.loadMappedFile(context, "model3.tflite")
             val options = Interpreter.Options()
             options.numThreads = 4
             interpreter = Interpreter(model, options)
@@ -104,22 +107,18 @@ class Detector(
     }
 
     fun clear() {
-        // Write lock: blocks until all ongoing detect()/detectSync() calls complete,
-        // so the native interpreter is never freed while TFLite JNI is still running.
-        val wl = interpreterLock.writeLock()
-        wl.lock()
+        interpreterLock.lock()
         try {
             interpreter?.close()
             interpreter = null
         } finally {
-            wl.unlock()
+            interpreterLock.unlock()
         }
     }
 
     fun detect(frame: Bitmap) {
-        val rl = interpreterLock.readLock()
-        // Non-blocking: skip this camera frame if clear() is in progress.
-        if (!rl.tryLock()) return
+        // Non-blocking: skip this camera frame if inference or clear() is in progress.
+        if (!interpreterLock.tryLock()) return
         try {
             if (interpreter == null) return
             var inferenceTime = SystemClock.uptimeMillis()
@@ -130,19 +129,23 @@ class Detector(
                 return
             }
             detectorListener.onDetect(boxes, inferenceTime)
+        } catch (e: Throwable) {
+            Log.e("Detector", "Inference error (OOM or JNI crash) — frame skipped", e)
         } finally {
-            rl.unlock()
+            interpreterLock.unlock()
         }
     }
 
     fun detectSync(frame: Bitmap): List<BoundingBox> {
-        val rl = interpreterLock.readLock()
-        // Wait up to 500 ms; if still locked (clear() running), return empty safely.
-        if (!rl.tryLock(500, TimeUnit.MILLISECONDS)) return emptyList()
+        // Wait up to 10 s for the camera to release the lock between frames.
+        if (!interpreterLock.tryLock(10_000, TimeUnit.MILLISECONDS)) return emptyList()
         try {
             return detectSyncInternal(frame)
+        } catch (e: Throwable) {
+            Log.e("Detector", "Sync inference error (OOM or JNI crash)", e)
+            return emptyList()
         } finally {
-            rl.unlock()
+            interpreterLock.unlock()
         }
     }
 
@@ -154,6 +157,7 @@ class Detector(
         val tensorImage = TensorImage(inputDataType)
         tensorImage.load(resizedBitmap)
         val processedImage = imageProcessor?.process(tensorImage) ?: return emptyList()
+        if (resizedBitmap != frame) resizedBitmap.recycle()
         val imageBuffer = processedImage.buffer
         val outputBuffer = TensorBuffer.createFixedSize(intArrayOf(1, numChannel, numElements), outputDataType)
         interpreter?.run(imageBuffer, outputBuffer.buffer)

@@ -9,7 +9,7 @@ import 'package:digipad_flutter/features/photo_sync/presentation/photo_sync_role
 import 'package:digipad_flutter/screens/features/simulations/presentation/main_simulations_grid_screen.dart';
 import 'package:digipad_flutter/screens/features/virtual_mirror/cubit/virtual_mirror_cubit.dart';
 import 'package:digipad_flutter/screens/features/virtual_mirror/presentation/virtual_mirror_screen.dart';
-import 'package:digipad_flutter/screens/features/measurements/measurement_capture_screen.dart';
+import 'package:digipad_flutter/screens/features/measurements/measurement_hub_screen.dart';
 import 'package:digipad_flutter/screens/features/visual_health/cubit/visual_health_cubit.dart';
 import 'package:digipad_flutter/screens/features/visual_health/presentation/visual_health_screen.dart';
 import 'package:digipad_flutter/screens/features/cosmetic_lenses/cubit/cosmetic_lenses_cubit.dart';
@@ -322,7 +322,7 @@ class _HomeScreenState extends State<HomeScreen>
     } else if (moduleId == 'measurements') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const MeasurementCaptureScreen()),
+        MaterialPageRoute(builder: (context) => const MeasurementHubScreen()),
       );
     } else if (moduleId == 'lenses_3d') {
       Navigator.push(

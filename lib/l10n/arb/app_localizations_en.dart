@@ -295,6 +295,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get measurementsShareSubject => 'Measurements';
 
   @override
+  String get exitEditionTitle => 'Exit Edition';
+
+  @override
+  String get exitEditionContent => 'Exit without saving measurements?';
+
+  @override
+  String get exitLabel => 'Exit';
+
+  @override
+  String get pantoscopicAngle => 'Pantoscopic Angle';
+
+  @override
+  String get pantoscopicAngleShort => 'Pant. Angle';
+
+  @override
   String get leftEye => 'Left Eye';
 
   @override
@@ -770,4 +785,77 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get simLensNoLens => 'No Lens';
+
+  @override
+  String get saveMeasurement => 'SAVE MEASUREMENT';
+
+  @override
+  String get saveMeasurementDialogTitle => 'Save Measurement';
+
+  @override
+  String get saveToGallery => 'Internal Gallery';
+
+  @override
+  String get saveToGalleryDesc => 'Saves photo and pantoscopic angle';
+
+  @override
+  String get saveToMeasurements => 'Measurements';
+
+  @override
+  String get saveToMeasurementsDesc => 'Saves full state to re-edit later';
+
+  @override
+  String get patientData => 'Patient Data';
+
+  @override
+  String get patientFirstName => 'First Name';
+
+  @override
+  String get patientLastName => 'Last Name';
+
+  @override
+  String get optionalHint => 'Optional';
+
+  @override
+  String get measurementSaved => 'Measurement saved';
+
+  @override
+  String get photoSavedToGallery => 'Photo saved to gallery';
+
+  @override
+  String get myMeasurements => 'My Measurements';
+
+  @override
+  String get noSavedMeasurements => 'No saved measurements yet';
+
+  @override
+  String get sortByDate => 'By date';
+
+  @override
+  String get sortByName => 'By name';
+
+  @override
+  String get deleteMeasurementTitle => 'Delete Measurement?';
+
+  @override
+  String get deleteMeasurementContent =>
+      'This measurement will be permanently deleted.';
+
+  @override
+  String get unknownPatient => 'Unknown patient';
+
+  @override
+  String get updateMeasurement => 'Update Measurement';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get hubNewMeasurement => 'New Measurement';
+
+  @override
+  String get hubDetectorNotReady => 'Detector not ready yet. Try again.';
+
+  @override
+  String get hubAnalyzing => 'Analyzing...';
 }

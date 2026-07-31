@@ -108,7 +108,13 @@ class TotemCubit extends Cubit<TotemState> {
       await Nearby().copyFileAndDeleteOriginal(file.tempPath, destPath);
 
       final dest = File(destPath);
-      await _storage.saveImage(dest);
+      await _storage.saveImageWithAngle(
+        dest,
+        file.angle,
+        patientFirstName: file.patientFirstName,
+        patientLastName: file.patientLastName,
+        captureDate: file.captureDate,
+      );
       // GalleryStorage stream fires → TotemScreen's StreamBuilder auto-updates
 
       final current = state;

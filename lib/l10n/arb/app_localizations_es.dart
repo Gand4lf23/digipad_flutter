@@ -295,6 +295,21 @@ class AppLocalizationsEs extends AppLocalizations {
   String get measurementsShareSubject => 'Mediciones';
 
   @override
+  String get exitEditionTitle => 'Salir de la edición';
+
+  @override
+  String get exitEditionContent => '¿Querés salir sin guardar las mediciones?';
+
+  @override
+  String get exitLabel => 'Salir';
+
+  @override
+  String get pantoscopicAngle => 'Ángulo Pantoscópico';
+
+  @override
+  String get pantoscopicAngleShort => 'Ángulo Pant.';
+
+  @override
   String get leftEye => 'Ojo Izquierdo';
 
   @override
@@ -775,4 +790,79 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get simLensNoLens => 'Sin Lente';
+
+  @override
+  String get saveMeasurement => 'GUARDAR MEDICIÓN';
+
+  @override
+  String get saveMeasurementDialogTitle => 'Guardar medición';
+
+  @override
+  String get saveToGallery => 'Galería interna';
+
+  @override
+  String get saveToGalleryDesc => 'Guarda la foto y el ángulo pantoscópico';
+
+  @override
+  String get saveToMeasurements => 'Mediciones';
+
+  @override
+  String get saveToMeasurementsDesc =>
+      'Guarda el estado completo para reeditar';
+
+  @override
+  String get patientData => 'Datos del paciente';
+
+  @override
+  String get patientFirstName => 'Nombre';
+
+  @override
+  String get patientLastName => 'Apellido';
+
+  @override
+  String get optionalHint => 'Opcional';
+
+  @override
+  String get measurementSaved => 'Medición guardada';
+
+  @override
+  String get photoSavedToGallery => 'Foto guardada en galería';
+
+  @override
+  String get myMeasurements => 'Mis mediciones';
+
+  @override
+  String get noSavedMeasurements => 'No hay mediciones guardadas';
+
+  @override
+  String get sortByDate => 'Por fecha';
+
+  @override
+  String get sortByName => 'Por nombre';
+
+  @override
+  String get deleteMeasurementTitle => '¿Eliminar medición?';
+
+  @override
+  String get deleteMeasurementContent =>
+      'Esta medición se eliminará permanentemente.';
+
+  @override
+  String get unknownPatient => 'Paciente desconocido';
+
+  @override
+  String get updateMeasurement => 'Actualizar medición';
+
+  @override
+  String get save => 'Guardar';
+
+  @override
+  String get hubNewMeasurement => 'Nueva Medición';
+
+  @override
+  String get hubDetectorNotReady =>
+      'El detector aún no está listo. Intenta de nuevo.';
+
+  @override
+  String get hubAnalyzing => 'Analizando...';
 }

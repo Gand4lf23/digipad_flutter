@@ -28,13 +28,40 @@ class GalleryStorage {
     _db = await databaseFactoryIo.openDatabase(dbPath);
   }
 
-  Future<void> saveImage(File file) async {
+  Future<void> saveImage(File file) => saveImageWithAngle(file, null);
+
+  Future<void> saveImageWithAngle(
+    File file,
+    double? angle, {
+    String? patientFirstName,
+    String? patientLastName,
+    String? captureDate,
+  }) async {
     await init();
-    await _store.record(file.path).put(_db, {
+    final record = <String, dynamic>{
       'path': file.path,
       'timestamp': DateTime.now().toIso8601String(),
       'type': 'image',
-    });
+    };
+    if (angle != null) record['pantoscopic_angle'] = angle;
+    if (patientFirstName != null) record['patient_first_name'] = patientFirstName;
+    if (patientLastName != null) record['patient_last_name'] = patientLastName;
+    if (captureDate != null) record['capture_date'] = captureDate;
+    await _store.record(file.path).put(_db, record);
+  }
+
+  Future<double?> getAngle(File file) async {
+    await init();
+    final record = await _store.record(file.path).get(_db);
+    if (record == null) return null;
+    final v = record['pantoscopic_angle'];
+    if (v == null) return null;
+    return (v as num).toDouble();
+  }
+
+  Future<Map<String, dynamic>?> getMetadata(File file) async {
+    await init();
+    return _store.record(file.path).get(_db);
   }
 
   Future<void> saveVideo(File file) async {

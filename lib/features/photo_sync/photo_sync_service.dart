@@ -11,7 +11,18 @@ const _kStrategy = Strategy.P2P_STAR;
 class PhotoSyncFile {
   final String tempPath;
   final String fileName;
-  const PhotoSyncFile({required this.tempPath, required this.fileName});
+  final double? angle;
+  final String? patientFirstName;
+  final String? patientLastName;
+  final String? captureDate;
+  const PhotoSyncFile({
+    required this.tempPath,
+    required this.fileName,
+    this.angle,
+    this.patientFirstName,
+    this.patientLastName,
+    this.captureDate,
+  });
 }
 
 class PhotoSyncConnectionEvent {
@@ -49,7 +60,11 @@ class PhotoSyncService {
 
   final _connectedEndpoints = <String, String>{}; // id → name
   final _pendingFiles = <int, PhotoSyncFile>{}; // payloadId → file info
-  String? _nextFileName; // set by preceding BYTES metadata payload
+  String? _nextFileName;
+  double? _nextAngle;
+  String? _nextPatientFirstName;
+  String? _nextPatientLastName;
+  String? _nextCaptureDate;
 
   bool _advertising = false;
   bool _discovering = false;
@@ -169,6 +184,10 @@ class PhotoSyncService {
     _connectedEndpoints.clear();
     _pendingFiles.clear();
     _nextFileName = null;
+    _nextAngle = null;
+    _nextPatientFirstName = null;
+    _nextPatientLastName = null;
+    _nextCaptureDate = null;
     try {
       await Nearby().stopAllEndpoints();
     } catch (_) {}
@@ -245,6 +264,11 @@ class PhotoSyncService {
       try {
         final meta = jsonDecode(utf8.decode(payload.bytes!)) as Map;
         _nextFileName = meta['name'] as String?;
+        final av = meta['pantoscopic_angle'];
+        _nextAngle = av != null ? (av as num).toDouble() : null;
+        _nextPatientFirstName = meta['patient_first_name'] as String?;
+        _nextPatientLastName = meta['patient_last_name'] as String?;
+        _nextCaptureDate = meta['capture_date'] as String?;
       } catch (_) {}
       return;
     }
@@ -252,13 +276,25 @@ class PhotoSyncService {
     if (payload.type == PayloadType.FILE && payload.uri != null) {
       final name = _nextFileName ??
           'photo_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final angle = _nextAngle;
+      final firstName = _nextPatientFirstName;
+      final lastName = _nextPatientLastName;
+      final captureDate = _nextCaptureDate;
       _nextFileName = null;
+      _nextAngle = null;
+      _nextPatientFirstName = null;
+      _nextPatientLastName = null;
+      _nextCaptureDate = null;
       // Store the raw URI string — on Android 10+ this is a content:// URI,
       // NOT a file path. Calling toFilePath() on it throws UnsupportedError.
       // The actual copy is deferred to _onFileReceived via copyFileAndDeleteOriginal().
       _pendingFiles[payload.id] = PhotoSyncFile(
         tempPath: payload.uri!,
         fileName: name,
+        angle: angle,
+        patientFirstName: firstName,
+        patientLastName: lastName,
+        captureDate: captureDate,
       );
       debugPrint('[PhotoSync] FILE started: id=${payload.id}, name=$name, uri=${payload.uri}');
     }

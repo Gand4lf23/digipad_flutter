@@ -1,7 +1,8 @@
 import 'dart:io';
+import 'dart:math' show atan2, pi, sqrt;
 import 'dart:ui';
 import 'dart:async';
-import 'dart:math';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:digipad_flutter/screens/features/measurements/optical_editor_screen.dart';
 import 'package:digipad_flutter/data/local/gallery_storage.dart';
 import 'package:flutter/material.dart';
@@ -11,8 +12,17 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:digipad_flutter/l10n/l10n.dart';
 
+enum CaptureInitialAction { none, openSystemGallery, openInternalGallery }
+
 class MeasurementCaptureScreen extends StatefulWidget {
-  const MeasurementCaptureScreen({super.key});
+  const MeasurementCaptureScreen({
+    super.key,
+    this.initialAction = CaptureInitialAction.none,
+    this.onPhotoCaptured,
+  });
+
+  final CaptureInitialAction initialAction;
+  final void Function(String path)? onPhotoCaptured;
 
   @override
   State<MeasurementCaptureScreen> createState() =>
@@ -26,11 +36,8 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
 
   late final ValueNotifier<bool> _galleryModeNotifier;
 
-  bool _detectionEnabled = true;
   final bool _torchEnabled = false;
   bool _frontCamera = false;
-  bool _overlayVisible = true;
-  final bool _streamDetections = false;
 
   String? _lastPhotoPath;
   bool _lastPhotoWasFront = false;
@@ -43,6 +50,9 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
   StreamSubscription<AccelerometerEvent>? _accelerometerSubscription;
   final ValueNotifier<double> _pantoscopicAngleNotifier = ValueNotifier(0.0);
   int _lastAccelMs = 0;
+  double _angleCalibrationOffset = 0.0;
+  double _smoothedAngle = 0.0;
+  static const double _kAngleAlpha = 0.15;
 
   static const Color _backgroundColor = Color(0xFF121212);
   static const Color _accentColor = Colors.deepPurpleAccent;
@@ -53,7 +63,14 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
     WidgetsBinding.instance.addObserver(this);
 
     _galleryModeNotifier = ValueNotifier<bool>(true);
-    _galleryModeNotifier.addListener(_onGalleryModeChanged);
+
+    SharedPreferences.getInstance().then((prefs) {
+      if (mounted) {
+        setState(() {
+          _angleCalibrationOffset = prefs.getDouble('angleCalibrationOffset') ?? 0.0;
+        });
+      }
+    });
 
     _accelerometerSubscription = accelerometerEventStream().listen((
       AccelerometerEvent event,
@@ -61,20 +78,10 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
       final nowMs = DateTime.now().millisecondsSinceEpoch;
       if (nowMs - _lastAccelMs < 100) return; // ~10 fps is enough for display
       _lastAccelMs = nowMs;
-      // Pantoscopic angle = deviation from vertical.
-      // 0° when phone is upright (screen facing user); ~15° when tilted naturally
-      // during measurement. atan2(|xz|, -y) gives 0° at rest and grows as the
-      // device tilts away from vertical regardless of which lateral axis tilts.
-      final tilt = sqrt(event.x * event.x + event.z * event.z);
-      _pantoscopicAngleNotifier.value = atan2(event.z, event.y) * (180 / pi);
-      debugPrint(
-        '[PantoAngle] '
-        'x=${event.x.toStringAsFixed(2)} '
-        'y=${event.y.toStringAsFixed(2)} '
-        'z=${event.z.toStringAsFixed(2)} | '
-        'tilt=${tilt.toStringAsFixed(2)} | '
-        'θ=${_pantoscopicAngleNotifier.value.toStringAsFixed(1)}°',
-      );
+      final xyMag = sqrt(event.x * event.x + event.y * event.y);
+      final raw = -atan2(event.z, xyMag) * (180 / pi);
+      _smoothedAngle = _kAngleAlpha * raw + (1 - _kAngleAlpha) * _smoothedAngle;
+      _pantoscopicAngleNotifier.value = _smoothedAngle - _angleCalibrationOffset;
     });
 
     _checkCameraPermission();
@@ -85,7 +92,6 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
     WidgetsBinding.instance.removeObserver(this);
     _accelerometerSubscription?.cancel();
     _pantoscopicAngleNotifier.dispose();
-    _galleryModeNotifier.removeListener(_onGalleryModeChanged);
     _galleryModeNotifier.dispose();
     super.dispose();
   }
@@ -94,22 +100,6 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _checkCameraPermission();
-    }
-  }
-
-  void _onGalleryModeChanged() {
-    final isGalleryOnly = _galleryModeNotifier.value;
-    if (_channel != null) {
-      _channel!.invokeMethod('setDetectionEnabled', {
-        'enabled': isGalleryOnly ? false : _detectionEnabled,
-      });
-      _channel!.invokeMethod('setOverlayVisible', {
-        'visible': isGalleryOnly ? false : _overlayVisible,
-      });
-      _channel!.invokeMethod('setStreamDetections', {
-        'enabled': isGalleryOnly ? false : _streamDetections,
-        'throttleMs': 50,
-      });
     }
   }
 
@@ -267,19 +257,16 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
                                     ],
                                   ),
                                 ),
-                              )
-                            else
-                              _buildGuideBox(),
+                              ),
                           ],
                         ),
                       ),
                     ),
-                    Expanded(flex: 3, child: _buildControlPanel(isGalleryOnly)),
+                    Expanded(flex: 2, child: _buildControlPanel(isGalleryOnly)),
                   ],
                 ),
                 _buildBackButton(context),
-                _buildGalleryToggle(),
-                if (!isGalleryOnly) _buildInclinometerOverlay(),
+                _buildInclinometerOverlay(),
                 if (_isCapturing)
                   Container(
                     color: Colors.black54,
@@ -291,7 +278,10 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
                           const SizedBox(height: 14),
                           const Text(
                             'Analizando...',
-                            style: TextStyle(color: Colors.white70, fontSize: 14),
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
                           ),
                         ],
                       ),
@@ -305,52 +295,21 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
     );
   }
 
-  Widget _buildGalleryToggle() {
-    return Positioned(
-      top: 16.0,
-      right: 16.0,
-      child: Container(
-        padding: const EdgeInsets.only(left: 12, right: 4, top: 4, bottom: 4),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.3),
-            width: 1.5,
-          ),
+  Future<void> _calibrateAngleZero() async {
+    final rawAngle = _pantoscopicAngleNotifier.value + _angleCalibrationOffset;
+    _angleCalibrationOffset = rawAngle;
+    _pantoscopicAngleNotifier.value = 0.0;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('angleCalibrationOffset', _angleCalibrationOffset);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ángulo calibrado a 0°'),
+          duration: Duration(seconds: 2),
+          backgroundColor: Colors.green,
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.image, color: Colors.white, size: 16),
-            const SizedBox(width: 6),
-            Text(
-              _galleryModeNotifier.value
-                  ? context.l10n.nativeSplitModeGallery
-                  : context.l10n.nativeSplitModeCamera,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(width: 4),
-            SizedBox(
-              height: 24,
-              child: Switch(
-                value: _galleryModeNotifier.value,
-                onChanged: (val) {
-                  _galleryModeNotifier.value = val;
-                },
-                activeThumbColor: _accentColor,
-                activeTrackColor: _accentColor.withValues(alpha: 0.5),
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+      );
+    }
   }
 
   Widget _buildInclinometerOverlay() {
@@ -361,84 +320,48 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
         valueListenable: _pantoscopicAngleNotifier,
         builder: (context, angle, _) {
           final isGoodAngle = angle >= 0 && angle <= 15;
-          return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isGoodAngle ? Colors.greenAccent : Colors.redAccent,
-                width: 2,
-              ),
-            ),
-            child: Column(
-              children: [
-                Icon(
-                  Icons.screen_rotation,
+          final hasCalibration = _angleCalibrationOffset != 0.0;
+          return GestureDetector(
+            onLongPress: _calibrateAngleZero,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
                   color: isGoodAngle ? Colors.greenAccent : Colors.redAccent,
-                  size: 24,
+                  width: 2,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  '${angle.toStringAsFixed(1)}°',
-                  style: TextStyle(
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.screen_rotation,
                     color: isGoodAngle ? Colors.greenAccent : Colors.redAccent,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    size: 24,
                   ),
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  Text(
+                    '${angle.toStringAsFixed(1)}°',
+                    style: TextStyle(
+                      color: isGoodAngle ? Colors.greenAccent : Colors.redAccent,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  if (hasCalibration)
+                    Text(
+                      'cal',
+                      style: TextStyle(
+                        color: Colors.yellowAccent,
+                        fontSize: 10,
+                      ),
+                    ),
+                ],
+              ),
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildGuideBox() {
-    final width = MediaQuery.of(context).size.width >= 768
-        ? 400.0
-        : (MediaQuery.of(context).size.width * 0.8);
-
-    return Positioned(
-      top: MediaQuery.of(context).size.width >= 768
-          ? (MediaQuery.of(context).size.height) * 0.15
-          : (MediaQuery.of(context).size.height) * 0.25,
-      left: 0,
-      right: 0,
-      child: IgnorePointer(
-        child: Center(
-          child: Container(
-            width: width,
-            height: 120,
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.5),
-                width: 2.0,
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.add,
-                  color: Colors.white.withValues(alpha: 0.3),
-                  size: 40,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  context.l10n.placeReferenceHere,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.5),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -478,43 +401,29 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
 
   void _onPlatformViewCreated(int id) async {
     _channel = MethodChannel('native-left-view/$id');
-
-    _channel!.setMethodCallHandler((call) async {
-      if (!mounted) return;
-      // onDetections: native sends detection overlay data; handled natively
-    });
-
-    final isGalleryOnly = _galleryModeNotifier.value;
+    if (mounted) _galleryModeNotifier.value = false;
 
     await Future.wait([
-      _channel!.invokeMethod('setDetectionEnabled', {
-        'enabled': isGalleryOnly ? false : _detectionEnabled,
-      }),
       _channel!.invokeMethod('setTorch', {'enabled': _torchEnabled}),
       _channel!.invokeMethod('setFrontCamera', {'front': _frontCamera}),
-      _channel!.invokeMethod('setOverlayVisible', {
-        'visible': isGalleryOnly ? false : _overlayVisible,
-      }),
-      _channel!.invokeMethod('setStreamDetections', {
-        'enabled': isGalleryOnly ? false : _streamDetections,
-        'throttleMs': 50,
-      }),
     ]);
   }
 
   List<Map<String, double>> _inflateDetections(dynamic rawList) {
     if (rawList == null) return [];
-    final List<double> list = (rawList is List)
-        ? rawList.map((e) => (e as num).toDouble()).toList()
-        : (rawList as List<double>);
-
-    List<Map<String, double>> result = [];
-    for (int i = 0; i < list.length; i += 2) {
-      if (i + 1 < list.length) {
+    try {
+      final List<double> list = (rawList as List)
+          .map((e) => (e as num).toDouble())
+          .toList();
+      final result = <Map<String, double>>[];
+      for (int i = 0; i + 1 < list.length; i += 2) {
         result.add({'x': list[i], 'y': list[i + 1]});
       }
+      return result;
+    } catch (e) {
+      debugPrint('[_inflateDetections] parse error: $e');
+      return [];
     }
-    return result;
   }
 
   Widget _buildPermissionRequestUI() {
@@ -562,118 +471,56 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
   Widget _buildControlPanel(bool isGalleryOnly) {
     return Container(
       color: _backgroundColor,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          if (!isGalleryOnly)
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildCompactSwitch(
-                  label: context.l10n.detectionLabel,
-                  value: _detectionEnabled,
-                  onChanged: (v) {
-                    setState(() => _detectionEnabled = v);
-                    _channel?.invokeMethod('setDetectionEnabled', {
-                      'enabled': v,
-                    });
+                _buildPhotoButton(isGalleryOnly),
+                const SizedBox(width: 32),
+                _buildIconButton(
+                  icon: Icons.flip_camera_ios_outlined,
+                  onPressed: () {
+                    setState(() => _frontCamera = !_frontCamera);
+                    _channel?.invokeMethod('setFrontCamera', {'front': _frontCamera});
                   },
-                ),
-                _buildCompactSwitch(
-                  label: context.l10n.overlayLabel,
-                  value: _overlayVisible,
-                  onChanged: (v) {
-                    setState(() => _overlayVisible = v);
-                    _channel?.invokeMethod('setOverlayVisible', {'visible': v});
-                  },
+                  size: 40,
                 ),
               ],
             ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildIconButton(
-                      icon: Icons.photo_library,
-                      onPressed: () => _showGalleryOptions(),
-                    ),
-                    const SizedBox(width: 24),
-                    _buildPhotoButton(isGalleryOnly),
-                    const SizedBox(width: 24),
-                    if (!isGalleryOnly)
-                      _buildIconButton(
-                        icon: Icons.flip_camera_ios_outlined,
-                        onPressed: () {
-                          setState(() => _frontCamera = !_frontCamera);
-                          _channel?.invokeMethod('setFrontCamera', {
-                            'front': _frontCamera,
-                          });
-                        },
-                      )
-                    else
-                      const SizedBox(width: 48),
-                  ],
-                ),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: _buildLastPhotoThumbnail(),
-                ),
-              ],
+            Align(
+              alignment: Alignment.centerLeft,
+              child: _buildLastPhotoThumbnail(),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    );
-  }
-
-  Widget _buildCompactSwitch({
-    required String label,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-  }) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(color: Colors.white70, fontSize: 14),
-        ),
-        const SizedBox(height: 4),
-        Switch(
-          value: value,
-          onChanged: onChanged,
-          activeThumbColor: _accentColor,
-          inactiveThumbColor: Colors.grey[400],
-          inactiveTrackColor: Colors.grey[800],
-        ),
-      ],
     );
   }
 
   Widget _buildIconButton({
     required IconData icon,
     required VoidCallback onPressed,
+    double size = 30,
   }) {
     return IconButton(
-      icon: Icon(icon, color: Colors.white, size: 30),
+      icon: Icon(icon, color: Colors.white, size: size),
+      iconSize: size + 14,
       onPressed: onPressed,
     );
   }
 
   Widget _buildPhotoButton(bool isGalleryOnly) {
     return SizedBox(
-      width: 70,
-      height: 70,
+      width: 90,
+      height: 90,
       child: ElevatedButton(
         onPressed: _isCapturing
             ? null
-            : (isGalleryOnly
-                  ? () => _pickImage(ImageSource.camera)
-                  : _capturePhoto),
+            : (isGalleryOnly ? () => _pickImage(ImageSource.camera) : _capturePhoto),
         style: ElevatedButton.styleFrom(
           shape: const CircleBorder(),
           backgroundColor: Colors.white,
@@ -682,16 +529,13 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
         ),
         child: _isCapturing
             ? const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: CircularProgressIndicator(
-                  strokeWidth: 3,
-                  color: _accentColor,
-                ),
+                padding: EdgeInsets.all(20.0),
+                child: CircularProgressIndicator(strokeWidth: 3, color: _accentColor),
               )
             : Icon(
                 isGalleryOnly ? Icons.camera_alt : Icons.camera,
                 color: _accentColor,
-                size: 35,
+                size: 45,
               ),
       ),
     );
@@ -733,13 +577,23 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
   }
 
   Future<void> _processImagePath(String path, {double? angle}) async {
+    if (_channel == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('El módulo de detección no está listo. Intenta de nuevo.'),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 3),
+        ));
+      }
+      return;
+    }
     setState(() => _isCapturing = true);
     // Let the loading overlay render for at least one frame before blocking
     // on the native channel (especially fast on emulator).
     await Future.delayed(const Duration(milliseconds: 80));
 
     try {
-      final result = await _channel?.invokeMethod('detectFromImage', {
+      final result = await _channel!.invokeMethod('detectFromImage', {
         'path': path,
       });
 
@@ -790,7 +644,14 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
       }
     } catch (e) {
       debugPrint("Error picking/processing image: $e");
-      if (mounted) setState(() => _isCapturing = false);
+      if (mounted) {
+        setState(() => _isCapturing = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error de detección: ${e.runtimeType}'),
+          backgroundColor: Colors.red.shade700,
+          duration: const Duration(seconds: 4),
+        ));
+      }
     }
   }
 
@@ -799,8 +660,9 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
     // Snapshot the angle before opening the picker: for a camera shot the phone
     // is still in measurement position right now; after the system camera opens
     // orientation may change completely.
-    final double? angleSnapshot =
-        source == ImageSource.camera ? _pantoscopicAngleNotifier.value : null;
+    final double? angleSnapshot = source == ImageSource.camera
+        ? _pantoscopicAngleNotifier.value
+        : null;
     try {
       final XFile? image = await _picker.pickImage(
         source: source,
@@ -810,65 +672,11 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
       if (image == null) return;
       // Show loading overlay immediately before detection starts
       if (mounted) setState(() => _isCapturing = true);
-      await _processImagePath(
-        image.path,
-        angle: angleSnapshot,
-      );
+      await _processImagePath(image.path, angle: angleSnapshot);
     } catch (e) {
       debugPrint("Error capturing using image picker: $e");
       if (mounted) setState(() => _isCapturing = false);
     }
-  }
-
-  void _showInternalGallery() {
-    showDialog(
-      context: context,
-      builder: (ctx) => _InternalGalleryDialog(
-        onProcessImage: (path) {
-          Navigator.of(ctx).pop();
-          _processImagePath(path);
-        },
-      ),
-    );
-  }
-
-  void _showGalleryOptions() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.grey[900],
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library, color: Colors.white),
-              title: Text(
-                context.l10n.galleryTitle,
-                style: const TextStyle(color: Colors.white),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                _pickImage(ImageSource.gallery);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.sd_storage, color: Colors.white),
-              title: Text(
-                context.l10n.vmInternalGallery,
-                style: const TextStyle(color: Colors.white),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                _showInternalGallery();
-              },
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Future<void> _capturePhoto() async {
@@ -884,53 +692,73 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
 
       if (result != null && result is Map) {
         final String? nativePath = result['path'] as String?;
-        final Map<String, dynamic> rawDetections = Map.from(
-          result['detections'],
-        );
 
         if (nativePath != null) {
-          final Map<String, dynamic> detectionsSnapshot = {
-            'circles': _inflateDetections(rawDetections['circles']),
-            'eyes': _inflateDetections(rawDetections['eyes']),
-          };
-
           final bool wasFront = _frontCamera;
-          final List circles = detectionsSnapshot['circles'] as List;
-          final int found = circles.length;
 
-          if (mounted) {
-            setState(() {
-              _lastPhotoPath = nativePath;
-              _lastPhotoWasFront = wasFront;
-              _lastPhotoDetections = detectionsSnapshot;
-            });
+          // Notify PhotoSync sender immediately (before detection)
+          widget.onPhotoCaptured?.call(nativePath);
 
-            // Avisar si la detección fue parcial, pero siempre abrir el editor.
-            if (found < 4) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(context.l10n.captureFailed(found)),
-                  backgroundColor: Colors.orange,
-                  duration: const Duration(seconds: 2),
-                ),
-              );
+          // Run post-capture detection
+          Map<String, dynamic> detectionsSnapshot = {
+            'circles': <Map<String, double>>[],
+            'eyes': <Map<String, double>>[],
+          };
+          try {
+            final detectResult = await _channel!
+                .invokeMethod('detectFromImage', {'path': nativePath});
+            if (detectResult != null) {
+              final rawMap = Map<String, dynamic>.from(detectResult as Map);
+              detectionsSnapshot = {
+                'circles': _inflateDetections(rawMap['circles']),
+                'eyes': _inflateDetections(rawMap['eyes']),
+              };
             }
+          } catch (e) {
+            debugPrint('Post-capture detection error: $e');
+          }
 
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => OpticalEditorScreen(
-                  imagePath: nativePath,
-                  detections: detectionsSnapshot,
-                  isFrontCamera: wasFront,
-                  pantoscopicAngle: angleAtCapture,
-                ),
+          if (!mounted) return;
+
+          final int found = (detectionsSnapshot['circles'] as List).length;
+
+          setState(() {
+            _lastPhotoPath = nativePath;
+            _lastPhotoWasFront = wasFront;
+            _lastPhotoDetections = detectionsSnapshot;
+          });
+
+          if (found < 4) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(context.l10n.captureFailed(found)),
+                backgroundColor: Colors.orange,
+                duration: const Duration(seconds: 2),
               ),
             );
           }
+
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => OpticalEditorScreen(
+                imagePath: nativePath,
+                detections: detectionsSnapshot,
+                isFrontCamera: wasFront,
+                pantoscopicAngle: angleAtCapture,
+              ),
+            ),
+          );
         }
       }
     } catch (e) {
       debugPrint("Error capturing photo: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error de captura: ${e.runtimeType}'),
+          backgroundColor: Colors.red.shade700,
+          duration: const Duration(seconds: 4),
+        ));
+      }
     } finally {
       if (mounted) setState(() => _isCapturing = false);
     }
@@ -939,17 +767,18 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
 
 // ── Internal gallery dialog with real-time updates, X delete, multi-select ───
 
-class _InternalGalleryDialog extends StatefulWidget {
-  final void Function(String path) onProcessImage;
-  const _InternalGalleryDialog({required this.onProcessImage});
+class InternalGalleryDialog extends StatefulWidget {
+  final Future<void> Function(File) onProcessImage;
+  const InternalGalleryDialog({super.key, required this.onProcessImage});
 
   @override
-  State<_InternalGalleryDialog> createState() => _InternalGalleryDialogState();
+  State<InternalGalleryDialog> createState() => InternalGalleryDialogState();
 }
 
-class _InternalGalleryDialogState extends State<_InternalGalleryDialog> {
+class InternalGalleryDialogState extends State<InternalGalleryDialog> {
   bool _selecting = false;
   final Set<String> _selected = {};
+  final Map<String, double?> _angleCache = {};
 
   void _enterSelect(File file) {
     setState(() {
@@ -994,13 +823,17 @@ class _InternalGalleryDialogState extends State<_InternalGalleryDialog> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Cancelar',
-                    style: TextStyle(color: Colors.white)),
+                child: const Text(
+                  'Cancelar',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text('Eliminar',
-                    style: TextStyle(color: Colors.redAccent)),
+                child: const Text(
+                  'Eliminar',
+                  style: TextStyle(color: Colors.redAccent),
+                ),
               ),
             ],
           ),
@@ -1015,8 +848,7 @@ class _InternalGalleryDialogState extends State<_InternalGalleryDialog> {
   }
 
   Future<void> _deleteSelected(List<File> allImages) async {
-    final files =
-        allImages.where((f) => _selected.contains(f.path)).toList();
+    final files = allImages.where((f) => _selected.contains(f.path)).toList();
     if (files.isEmpty) return;
     final ok = await _confirmDelete(files.length);
     if (!ok || !mounted) return;
@@ -1042,6 +874,14 @@ class _InternalGalleryDialogState extends State<_InternalGalleryDialog> {
           stream: GalleryStorage.instance.watchImages(),
           builder: (ctx, snap) {
             final images = snap.data ?? [];
+            for (final f in images) {
+              if (!_angleCache.containsKey(f.path)) {
+                _angleCache[f.path] = null;
+                GalleryStorage.instance.getAngle(f).then((a) {
+                  if (mounted && a != null) setState(() => _angleCache[f.path] = a);
+                });
+              }
+            }
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1069,150 +909,189 @@ class _InternalGalleryDialogState extends State<_InternalGalleryDialog> {
                       Text(
                         '${_selected.length} seleccionada${_selected.length == 1 ? '' : 's'}',
                         style: const TextStyle(
-                            color: Colors.white70, fontSize: 13),
+                          color: Colors.white70,
+                          fontSize: 13,
+                        ),
                       ),
                       const Spacer(),
                       TextButton.icon(
                         onPressed: () => _deleteSelected(images),
-                        icon: const Icon(Icons.delete_rounded,
-                            size: 16, color: Colors.redAccent),
-                        label: const Text('Eliminar',
-                            style: TextStyle(color: Colors.redAccent)),
+                        icon: const Icon(
+                          Icons.delete_rounded,
+                          size: 16,
+                          color: Colors.redAccent,
+                        ),
+                        label: const Text(
+                          'Eliminar',
+                          style: TextStyle(color: Colors.redAccent),
+                        ),
                         style: TextButton.styleFrom(
-                            visualDensity: VisualDensity.compact),
+                          visualDensity: VisualDensity.compact,
+                        ),
                       ),
                       TextButton(
                         onPressed: _exitSelect,
                         style: TextButton.styleFrom(
-                            visualDensity: VisualDensity.compact),
-                        child: const Text('Cancelar',
-                            style: TextStyle(color: Colors.white38)),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        child: const Text(
+                          'Cancelar',
+                          style: TextStyle(color: Colors.white38),
+                        ),
                       ),
                     ],
                   ),
                 ],
                 const SizedBox(height: 12),
                 Expanded(
-                  child: snap.connectionState == ConnectionState.waiting &&
+                  child:
+                      snap.connectionState == ConnectionState.waiting &&
                           images.isEmpty
                       ? const Center(child: CircularProgressIndicator())
                       : images.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.no_photography,
-                                      size: 64, color: Colors.white24),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    context.l10n.vmNoImages,
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                        color: Colors.white38, fontSize: 16),
-                                  ),
-                                ],
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.no_photography,
+                                size: 64,
+                                color: Colors.white24,
                               ),
-                            )
-                          : GridView.builder(
-                              gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                              const SizedBox(height: 16),
+                              Text(
+                                context.l10n.vmNoImages,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.white38,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : GridView.builder(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 3,
                                 crossAxisSpacing: 12,
                                 mainAxisSpacing: 12,
                                 childAspectRatio: 1,
                               ),
-                              itemCount: images.length,
-                              itemBuilder: (context, index) {
-                                final file = images[index];
-                                final isSelected =
-                                    _selected.contains(file.path);
-                                return GestureDetector(
-                                  onTap: _selecting
-                                      ? () => _toggleSelect(file)
-                                      : () =>
-                                          widget.onProcessImage(file.path),
-                                  onLongPress: _selecting
-                                      ? null
-                                      : () => _enterSelect(file),
-                                  child: AnimatedContainer(
-                                    duration:
-                                        const Duration(milliseconds: 150),
-                                    decoration: BoxDecoration(
-                                      borderRadius:
-                                          BorderRadius.circular(12),
-                                      border: isSelected
-                                          ? Border.all(
-                                              color:
-                                                  const Color(0xFF6C63FF),
-                                              width: 3)
-                                          : Border.all(
-                                              color: Colors.transparent,
-                                              width: 3),
-                                    ),
-                                    child: Stack(
-                                      fit: StackFit.expand,
-                                      children: [
-                                        ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(9),
-                                          child: Image.file(file,
-                                              fit: BoxFit.cover),
+                          itemCount: images.length,
+                          itemBuilder: (context, index) {
+                            final file = images[index];
+                            final isSelected = _selected.contains(file.path);
+                            return GestureDetector(
+                              onTap: _selecting
+                                  ? () => _toggleSelect(file)
+                                  : () => widget.onProcessImage(file),
+                              onLongPress: _selecting
+                                  ? null
+                                  : () => _enterSelect(file),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: isSelected
+                                      ? Border.all(
+                                          color: const Color(0xFF6C63FF),
+                                          width: 3,
+                                        )
+                                      : Border.all(
+                                          color: Colors.transparent,
+                                          width: 3,
                                         ),
-                                        if (_selecting)
-                                          Positioned(
-                                            top: 6,
-                                            left: 6,
-                                            child: AnimatedContainer(
-                                              duration: const Duration(
-                                                  milliseconds: 150),
-                                              width: 24,
-                                              height: 24,
-                                              decoration: BoxDecoration(
-                                                color: isSelected
-                                                    ? const Color(
-                                                        0xFF6C63FF)
-                                                    : Colors.black54,
-                                                shape: BoxShape.circle,
-                                                border: Border.all(
-                                                    color: Colors.white60,
-                                                    width: 1.5),
-                                              ),
-                                              child: isSelected
-                                                  ? const Icon(
-                                                      Icons.check_rounded,
-                                                      color: Colors.white,
-                                                      size: 15)
-                                                  : null,
-                                            ),
-                                          ),
-                                        if (!_selecting)
-                                          Positioned(
-                                            top: 4,
-                                            right: 4,
-                                            child: GestureDetector(
-                                              onTap: () =>
-                                                  _deleteSingle(file),
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                  color: Colors.grey.shade900
-                                                      .withValues(alpha: 0.85),
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                padding:
-                                                    const EdgeInsets.all(4),
-                                                child: const Icon(
-                                                    Icons.close,
-                                                    color: Colors.white,
-                                                    size: 18),
-                                              ),
-                                            ),
-                                          ),
-                                      ],
+                                ),
+                                child: Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(9),
+                                      child: Image.file(
+                                        file,
+                                        fit: BoxFit.cover,
+                                      ),
                                     ),
-                                  ),
-                                );
-                              },
-                            ),
+                                    if (_selecting)
+                                      Positioned(
+                                        top: 6,
+                                        left: 6,
+                                        child: AnimatedContainer(
+                                          duration: const Duration(
+                                            milliseconds: 150,
+                                          ),
+                                          width: 24,
+                                          height: 24,
+                                          decoration: BoxDecoration(
+                                            color: isSelected
+                                                ? const Color(0xFF6C63FF)
+                                                : Colors.black54,
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: Colors.white60,
+                                              width: 1.5,
+                                            ),
+                                          ),
+                                          child: isSelected
+                                              ? const Icon(
+                                                  Icons.check_rounded,
+                                                  color: Colors.white,
+                                                  size: 15,
+                                                )
+                                              : null,
+                                        ),
+                                      ),
+                                    if (!_selecting)
+                                      Positioned(
+                                        top: 4,
+                                        right: 4,
+                                        child: GestureDetector(
+                                          onTap: () => _deleteSingle(file),
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey.shade900
+                                                  .withValues(alpha: 0.85),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            padding: const EdgeInsets.all(4),
+                                            child: const Icon(
+                                              Icons.close,
+                                              color: Colors.white,
+                                              size: 18,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    if (!_selecting && _angleCache[file.path] != null)
+                                      Positioned(
+                                        bottom: 4,
+                                        left: 4,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 5, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: Colors.orangeAccent
+                                                .withValues(alpha: 0.9),
+                                            borderRadius:
+                                                BorderRadius.circular(6),
+                                          ),
+                                          child: Text(
+                                            '${_angleCache[file.path]!.toStringAsFixed(1)}°',
+                                            style: const TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                 ),
               ],
             );
