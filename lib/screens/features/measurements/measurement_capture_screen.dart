@@ -79,9 +79,18 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
       if (nowMs - _lastAccelMs < 100) return; // ~10 fps is enough for display
       _lastAccelMs = nowMs;
       final xyMag = sqrt(event.x * event.x + event.y * event.y);
+      final tilt = sqrt(event.x * event.x + event.z * event.z);
       final raw = -atan2(event.z, xyMag) * (180 / pi);
       _smoothedAngle = _kAngleAlpha * raw + (1 - _kAngleAlpha) * _smoothedAngle;
       _pantoscopicAngleNotifier.value = _smoothedAngle - _angleCalibrationOffset;
+      debugPrint(
+        '[PantoAngle] '
+        'x=${event.x.toStringAsFixed(2)} '
+        'y=${event.y.toStringAsFixed(2)} '
+        'z=${event.z.toStringAsFixed(2)} | '
+        'tilt=${tilt.toStringAsFixed(2)} | '
+        'θ=${_pantoscopicAngleNotifier.value.toStringAsFixed(1)}°',
+      );
     });
 
     _checkCameraPermission();

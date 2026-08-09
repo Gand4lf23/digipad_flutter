@@ -634,7 +634,7 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen>
                     ),
                   ),
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF6200EE),
+                    backgroundColor: const Color(0xFF6C63FF),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
@@ -645,7 +645,7 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen>
               ),
               appBar: AppBar(
                 title: Text(context.l10n.measureAdjustments),
-                backgroundColor: const Color(0xFF1C1C1E),
+                backgroundColor: const Color(0xFF0D0D1A),
                 actions: [
                   TextButton(
                     onPressed: _resetZoom,
@@ -677,12 +677,11 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen>
                   _buildTopControls(),
                   if (_showAjustePanel) _buildCalibrationPanel(),
                   Expanded(
-                    flex: 3,
                     child: Stack(
                       children: [_buildImageViewer(), _buildNudgeControls()],
                     ),
                   ),
-                  Expanded(flex: 2, child: _buildInfoPanel()),
+                  _buildInfoPanel(),
                 ],
               ),
             ), // Scaffold
@@ -796,6 +795,11 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen>
                 isBifocal: _controller.isBifocal,
                 bifocalOffset: _controller.bifocalLineOffset,
                 isDragging: _isDraggingPoint,
+                dnpRight: _controller.dnpRight,
+                dnpLeft: _controller.dnpLeft,
+                altRight: _controller.altRight,
+                altLeft: _controller.altLeft,
+                aroAnc: _controller.aroAnc,
               ),
             ),
           ),
@@ -808,7 +812,7 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen>
     final double ts = _textScale(context);
     return Container(
       height: 80 * ts,
-      color: Colors.grey[900],
+      color: const Color(0xFF0D0D1A),
       child: Consumer<OpticalController>(
         builder: (context, ctrl, _) => Column(
           children: [
@@ -925,7 +929,7 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen>
     final double ts = _textScale(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      color: Colors.grey[850],
+      color: const Color(0xFF111128),
       child: Consumer<OpticalController>(
         builder: (context, ctrl, _) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1083,33 +1087,26 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen>
               border: Border.all(color: Colors.white24),
             ),
             padding: const EdgeInsets.all(8),
-            child: Column(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                _arrowButton(Icons.keyboard_arrow_left, () {
+                  _controller.nudgeSelectedPoint(-1, 0);
+                  _resetNudgeDismissTimer();
+                }),
+                const SizedBox(width: 4),
                 _arrowButton(Icons.keyboard_arrow_up, () {
                   _controller.nudgeSelectedPoint(0, -1);
                   _resetNudgeDismissTimer();
                 }),
-                const SizedBox(height: 4),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _arrowButton(Icons.keyboard_arrow_left, () {
-                      _controller.nudgeSelectedPoint(-1, 0);
-                      _resetNudgeDismissTimer();
-                    }),
-                    const SizedBox(width: 4),
-                    const SizedBox(width: 42, height: 42),
-                    const SizedBox(width: 4),
-                    _arrowButton(Icons.keyboard_arrow_right, () {
-                      _controller.nudgeSelectedPoint(1, 0);
-                      _resetNudgeDismissTimer();
-                    }),
-                  ],
-                ),
-                const SizedBox(height: 4),
+                const SizedBox(width: 4),
                 _arrowButton(Icons.keyboard_arrow_down, () {
                   _controller.nudgeSelectedPoint(0, 1);
+                  _resetNudgeDismissTimer();
+                }),
+                const SizedBox(width: 4),
+                _arrowButton(Icons.keyboard_arrow_right, () {
+                  _controller.nudgeSelectedPoint(1, 0);
                   _resetNudgeDismissTimer();
                 }),
               ],
@@ -1147,135 +1144,100 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen>
   Widget _buildInfoPanel() {
     return Consumer<OpticalController>(
       builder: (context, ctrl, _) {
+        final s = MediaQuery.of(context).size;
+        final fs = (s.shortestSide * 0.028).clamp(10.0, 15.0);
         return Container(
-          color: const Color(0xFF121212),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _statItem(
-                    context,
-                    context.l10n.ipdDi,
-                    ctrl.di,
-                    isLarge: true,
-                  ),
-                  _statItem(context, context.l10n.bridge, ctrl.puente),
-                  _statItem(context, context.l10n.frameW, ctrl.aroAnc),
-                  _statItem(context, context.l10n.frameH, ctrl.aroAlt),
-                  if (ctrl.pantoscopicAngle != null)
-                    _statItem(
-                      context,
-                      context.l10n.pantoscopicAngleShort,
-                      ctrl.pantoscopicAngle!,
-                      unit: '°',
-                    ),
-                ],
-              ),
-              const Divider(color: Colors.white24),
-              Row(
-                children: [
-                  Expanded(
-                    child: _eyeStat(
-                      context,
-                      context.l10n.rightEyeP1,
-                      ctrl.dnpRight,
-                      ctrl.altRight,
-                      ctrl.referenceCircleDiameterRight,
-                    ),
-                  ),
-                  Container(width: 1, height: 60, color: Colors.white24),
-                  Expanded(
-                    child: _eyeStat(
-                      context,
-                      context.l10n.leftEyeP2,
-                      ctrl.dnpLeft,
-                      ctrl.altLeft,
-                      ctrl.referenceCircleDiameterLeft,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+          decoration: const BoxDecoration(
+            color: Color(0xFF0D0D1A),
+            border: Border(top: BorderSide(color: Colors.white12)),
+          ),
+          padding: EdgeInsets.symmetric(horizontal: s.width * 0.02, vertical: 4),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: _eyeColumn(context, ctrl, isRight: true, fs: fs)),
+                _vDivider(),
+                Expanded(flex: 2, child: _centerColumn(context, ctrl, fs: fs)),
+                _vDivider(),
+                Expanded(child: _eyeColumn(context, ctrl, isRight: false, fs: fs)),
+              ],
+            ),
           ),
         );
       },
     );
   }
 
+  Widget _eyeColumn(BuildContext context, OpticalController ctrl, {required bool isRight, required double fs}) {
+    final label = isRight ? context.l10n.rightEyeP1 : context.l10n.leftEyeP2;
+    final dnp = isRight ? ctrl.dnpRight : ctrl.dnpLeft;
+    final alt = isRight ? ctrl.altRight : ctrl.altLeft;
+    final diam = isRight ? ctrl.referenceCircleDiameterRight : ctrl.referenceCircleDiameterLeft;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            label,
+            style: TextStyle(color: const Color(0xFF00BFA6), fontSize: fs, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Text(context.l10n.dnpShort(dnp.toStringAsFixed(1)), style: TextStyle(color: Colors.white70, fontSize: fs - 1)),
+          Text(context.l10n.heightShort(alt.toStringAsFixed(1)), style: TextStyle(color: Colors.white70, fontSize: fs - 1)),
+          Text(context.l10n.diamShort(diam.toStringAsFixed(1)), style: TextStyle(color: Colors.white70, fontSize: fs - 1, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+  Widget _centerColumn(BuildContext context, OpticalController ctrl, {required double fs}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(context.l10n.ipdDi, style: TextStyle(color: Colors.white38, fontSize: fs - 2)),
+          Text(
+            ctrl.di.toStringAsFixed(1),
+            style: TextStyle(color: const Color(0xFFB5B0FF), fontSize: fs + 8, fontWeight: FontWeight.bold),
+          ),
+          Text(context.l10n.unitMm, style: TextStyle(color: Colors.white38, fontSize: fs - 3)),
+          const SizedBox(height: 4),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 8,
+            children: [
+              _miniStat(context.l10n.bridge, ctrl.puente, fs),
+              _miniStat(context.l10n.frameW, ctrl.aroAnc, fs),
+              _miniStat(context.l10n.frameH, ctrl.aroAlt, fs),
+              if (ctrl.pantoscopicAngle != null)
+                _miniStat(context.l10n.pantoscopicAngleShort, ctrl.pantoscopicAngle!, fs, unit: '°'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _miniStat(String label, double value, double fs, {String unit = 'mm'}) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(label, style: TextStyle(color: Colors.white38, fontSize: fs - 3)),
+        Text('${value.toStringAsFixed(1)}$unit', style: TextStyle(color: Colors.white70, fontSize: fs - 1, fontWeight: FontWeight.w600)),
+      ],
+    );
+  }
+
+  Widget _vDivider() => const VerticalDivider(color: Colors.white12, width: 1);
+
   double _textScale(BuildContext context) {
     return MediaQuery.of(context).size.shortestSide > 600 ? 1.3 : 1.0;
-  }
-
-  Widget _statItem(
-    BuildContext context,
-    String label,
-    double value, {
-    bool isLarge = false,
-    String unit = '',
-  }) {
-    final displayUnit = unit.isEmpty ? context.l10n.unitMm : unit;
-    final scale = _textScale(context);
-    return Column(
-      children: [
-        Text(label, style: TextStyle(color: Colors.grey, fontSize: 12 * scale)),
-        const SizedBox(height: 4),
-        Text(
-          value.toStringAsFixed(1),
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: (isLarge ? 28 : 22) * scale,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(
-          displayUnit,
-          style: TextStyle(color: Colors.grey, fontSize: 10 * scale),
-        ),
-      ],
-    );
-  }
-
-  Widget _eyeStat(
-    BuildContext context,
-    String side,
-    double dnp,
-    double height,
-    double diam,
-  ) {
-    final scale = _textScale(context);
-    final baseSize = 14.0 * scale;
-    return Column(
-      children: [
-        Text(
-          side,
-          style: TextStyle(
-            color: Colors.cyanAccent,
-            fontWeight: FontWeight.bold,
-            fontSize: baseSize,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          context.l10n.dnpShort(dnp.toStringAsFixed(1)),
-          style: TextStyle(color: Colors.white, fontSize: baseSize),
-        ),
-        Text(
-          context.l10n.heightShort(height.toStringAsFixed(1)),
-          style: TextStyle(color: Colors.white, fontSize: baseSize),
-        ),
-        Text(
-          context.l10n.diamShort(diam.toStringAsFixed(1)),
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: baseSize,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
   }
 
   void _showResultsSheet() {

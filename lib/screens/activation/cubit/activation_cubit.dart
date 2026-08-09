@@ -16,8 +16,7 @@ class ActivationCubit extends Cubit<ActivationState> {
 
   Future<void> init() async {
     await _subscription?.cancel();
-    // BYPASS ACTIVATION:
-    /*emit(state.copyWith(status: ActivationStatus.checking));
+    emit(state.copyWith(status: ActivationStatus.checking));
 
     final savedEmail = await _service.getSavedEmail();
     final hasInternet = await _service.checkInternetConnection();
@@ -40,16 +39,15 @@ class ActivationCubit extends Cubit<ActivationState> {
       } else {
         final isLocallyApproved = await _service.isLocallyApproved();
 
-        if (isLocallyApproved) {*/
-    emit(
-      state.copyWith(
-        status: ActivationStatus.approved,
-        email: 'bypassed@digipad.internal',
-        //email: savedEmail,
-      ),
-    );
-    return;
-    /* } else {
+        if (isLocallyApproved) {
+          emit(
+            state.copyWith(
+              status: ActivationStatus.approved,
+              email: savedEmail,
+            ),
+          );
+          return;
+        } else {
           emit(
             state.copyWith(
               status: ActivationStatus.error,
@@ -74,9 +72,6 @@ class ActivationCubit extends Cubit<ActivationState> {
       _subscription = stream.listen(
         (snapshot) async {
           if (snapshot == null || !snapshot.exists) {
-            // Only clear if we aren't currently in the middle of a check/registration
-            // this prevents a race condition where the first stream snapshot
-            // might return !exists before the document is fully propagated.
             if (state.status != ActivationStatus.checking &&
                 state.status != ActivationStatus.pendingApproval) {
               await _service.clearSavedEmail();
@@ -121,7 +116,7 @@ class ActivationCubit extends Cubit<ActivationState> {
           errorMessage: 'Failed to start activation listener: $e',
         ),
       );
-    }*/
+    }
   }
 
   Future<void> handleInteraction() async {

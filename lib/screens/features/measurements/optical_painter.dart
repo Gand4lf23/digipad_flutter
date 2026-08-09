@@ -26,6 +26,12 @@ class OpticalPainter extends CustomPainter {
   final double rotation; // Radians from parent
   final bool isDragging;
 
+  final double dnpRight;
+  final double dnpLeft;
+  final double altRight;
+  final double altLeft;
+  final double aroAnc;
+
   OpticalPainter({
     required this.points,
     required this.scale,
@@ -42,6 +48,11 @@ class OpticalPainter extends CustomPainter {
     required this.bifocalOffset,
     required this.rotation,
     this.isDragging = false,
+    this.dnpRight = 0,
+    this.dnpLeft = 0,
+    this.altRight = 0,
+    this.altLeft = 0,
+    this.aroAnc = 0,
   });
 
   @override
@@ -180,6 +191,29 @@ class OpticalPainter extends CustomPainter {
       canvas.restore(); // END UN-ROTATION BLOCK
     }
 
+    // --- CHIPS ---
+    for (var p in points) {
+      final String? chipText = _chipLabel(p.type);
+      if (chipText == null) continue;
+      canvas.save();
+      canvas.translate(p.position.dx, p.position.dy);
+      canvas.rotate(-rotation);
+      _drawChip(canvas, Offset.zero, chipText, _chipColor(p.type), scale);
+      canvas.restore();
+    }
+
+    // --- B-ROW REFERENCE CHIP (130mm) ---
+    final posB1 = _getPos(DetectionType.refBL);
+    final posB2 = _getPos(DetectionType.refBR);
+    if (posB1 != null && posB2 != null) {
+      final midpoint = (posB1 + posB2) / 2;
+      canvas.save();
+      canvas.translate(midpoint.dx, midpoint.dy);
+      canvas.rotate(-rotation);
+      _drawChip(canvas, Offset.zero, '130mm', Colors.orangeAccent, scale, yOffset: 20);
+      canvas.restore();
+    }
+
     // --- 3. BIFOCAL LINE ---
     if (isBifocal && pixelFactorY > 0) {
       Paint bifocalPaint = Paint()
@@ -227,6 +261,60 @@ class OpticalPainter extends CustomPainter {
     _drawFrameOutline(canvas);
 
     canvas.restore();
+  }
+
+  String? _chipLabel(DetectionType type) {
+    switch (type) {
+      case DetectionType.refTL:
+      case DetectionType.refTR:
+      case DetectionType.refBL:
+      case DetectionType.refBR:
+        return null; // drawn as inter-pair chip below
+      case DetectionType.pupilRight:
+        return '${dnpRight.toStringAsFixed(1)}mm';
+      case DetectionType.pupilLeft:
+        return '${dnpLeft.toStringAsFixed(1)}mm';
+      case DetectionType.lensRightTop:
+        return '${altRight.toStringAsFixed(1)}mm';
+      case DetectionType.lensRightBottom:
+        return '${aroAnc.toStringAsFixed(1)}mm';
+      case DetectionType.lensLeftTop:
+        return '${altLeft.toStringAsFixed(1)}mm';
+      case DetectionType.lensLeftBottom:
+        return '${aroAnc.toStringAsFixed(1)}mm';
+    }
+  }
+
+  Color _chipColor(DetectionType type) {
+    if (type == DetectionType.pupilRight) return Colors.cyanAccent;
+    if (type == DetectionType.pupilLeft) return Colors.greenAccent;
+    if (type == DetectionType.refTL ||
+        type == DetectionType.refTR ||
+        type == DetectionType.refBL ||
+        type == DetectionType.refBR) {
+      return Colors.orangeAccent;
+    }
+    return Colors.white70;
+  }
+
+  void _drawChip(Canvas canvas, Offset center, String text, Color color, double scale, {double yOffset = -20}) {
+    final tp = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: TextStyle(color: Colors.black, fontSize: 9 / scale, fontWeight: FontWeight.bold),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    final px = 4 / scale;
+    final py = 2 / scale;
+    final chipW = tp.width + px * 2;
+    final chipH = tp.height + py * 2;
+    final rect = RRect.fromRectAndRadius(
+      Rect.fromCenter(center: center + Offset(0, yOffset / scale), width: chipW, height: chipH),
+      Radius.circular(chipH / 2),
+    );
+    canvas.drawRRect(rect, Paint()..color = color.withValues(alpha: 0.85));
+    tp.paint(canvas, rect.outerRect.topLeft + Offset(px, py));
   }
 
   void _drawFrameOutline(Canvas canvas) {

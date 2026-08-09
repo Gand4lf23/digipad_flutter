@@ -59,7 +59,7 @@
         android:name="${applicationName}"
         android:label="DigiPad 3D Max Premium"
         android:icon="@mipmap/launcher_icon"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:hardwareAccelerated="true"
         android:usesCleartextTraffic="true"
         android:largeHeap="true">

@@ -624,12 +624,23 @@ class OpticalController extends ChangeNotifier {
     (P_2.dx - P_1.dx).abs();
 
     if (!_initialDiameterSynced && diametroRight > 0) {
-      referenceCircleDiameterRight = diametroRight.clamp(40.0, 80.0);
-      referenceCircleDiameterLeft = diametroLeft.clamp(40.0, 80.0);
+      // Auto-radius: average Euclidean distance from pupil to both L-corner vertices (mm)
+      final dr1 = _euclidMm(P_1, rTL);
+      final dr2 = _euclidMm(P_1, rBR);
+      final dl1 = _euclidMm(P_2, lTL);
+      final dl2 = _euclidMm(P_2, lBR);
+      referenceCircleDiameterRight = (dr1 + dr2).clamp(40.0, 80.0);
+      referenceCircleDiameterLeft = (dl1 + dl2).clamp(40.0, 80.0);
       _initialDiameterSynced = true;
     }
 
     notifyListeners();
+  }
+
+  double _euclidMm(Offset a, Offset b) {
+    final dx = (a.dx - b.dx) * pixelFactorX;
+    final dy = (a.dy - b.dy) * pixelFactorY;
+    return math.sqrt(dx * dx + dy * dy);
   }
 
 }
