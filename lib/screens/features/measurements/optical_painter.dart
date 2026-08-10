@@ -31,6 +31,7 @@ class OpticalPainter extends CustomPainter {
   final double altRight;
   final double altLeft;
   final double aroAnc;
+  final bool showChips;
 
   OpticalPainter({
     required this.points,
@@ -53,6 +54,7 @@ class OpticalPainter extends CustomPainter {
     this.altRight = 0,
     this.altLeft = 0,
     this.aroAnc = 0,
+    this.showChips = false,
   });
 
   @override
@@ -191,27 +193,31 @@ class OpticalPainter extends CustomPainter {
       canvas.restore(); // END UN-ROTATION BLOCK
     }
 
-    // --- CHIPS ---
-    for (var p in points) {
-      final String? chipText = _chipLabel(p.type);
-      if (chipText == null) continue;
-      canvas.save();
-      canvas.translate(p.position.dx, p.position.dy);
-      canvas.rotate(-rotation);
-      _drawChip(canvas, Offset.zero, chipText, _chipColor(p.type), scale);
-      canvas.restore();
-    }
+    // --- MEASUREMENT LINES + CHIPS (only when showChips is enabled) ---
+    if (showChips) {
+      _drawMeasurementLines(canvas, scale);
 
-    // --- B-ROW REFERENCE CHIP (130mm) ---
-    final posB1 = _getPos(DetectionType.refBL);
-    final posB2 = _getPos(DetectionType.refBR);
-    if (posB1 != null && posB2 != null) {
-      final midpoint = (posB1 + posB2) / 2;
-      canvas.save();
-      canvas.translate(midpoint.dx, midpoint.dy);
-      canvas.rotate(-rotation);
-      _drawChip(canvas, Offset.zero, '130mm', Colors.orangeAccent, scale, yOffset: 20);
-      canvas.restore();
+      for (var p in points) {
+        final String? chipText = _chipLabel(p.type);
+        if (chipText == null) continue;
+        canvas.save();
+        canvas.translate(p.position.dx, p.position.dy);
+        canvas.rotate(-rotation);
+        _drawChip(canvas, Offset.zero, chipText, _chipColor(p.type), scale);
+        canvas.restore();
+      }
+
+      // B-ROW REFERENCE CHIP (130mm)
+      final posB1 = _getPos(DetectionType.refBL);
+      final posB2 = _getPos(DetectionType.refBR);
+      if (posB1 != null && posB2 != null) {
+        final midpoint = (posB1 + posB2) / 2;
+        canvas.save();
+        canvas.translate(midpoint.dx, midpoint.dy);
+        canvas.rotate(-rotation);
+        _drawChip(canvas, Offset.zero, '130mm', Colors.orangeAccent, scale, yOffset: 20);
+        canvas.restore();
+      }
     }
 
     // --- 3. BIFOCAL LINE ---
@@ -315,6 +321,75 @@ class OpticalPainter extends CustomPainter {
     );
     canvas.drawRRect(rect, Paint()..color = color.withValues(alpha: 0.85));
     tp.paint(canvas, rect.outerRect.topLeft + Offset(px, py));
+  }
+
+  void _drawMeasurementLines(Canvas canvas, double scale) {
+    final Paint amberPaint = Paint()
+      ..color = Colors.amber.withValues(alpha: 0.75)
+      ..strokeWidth = 0.8 / scale
+      ..strokeCap = StrokeCap.round;
+
+    final Offset? p1 = _getPos(DetectionType.pupilRight);
+    final Offset? p2 = _getPos(DetectionType.pupilLeft);
+    final Offset? rBR = _getPos(DetectionType.lensRightBottom);
+    final Offset? lTL = _getPos(DetectionType.lensLeftTop);
+    final Offset? rTL = _getPos(DetectionType.lensRightTop);
+    final Offset? lBR = _getPos(DetectionType.lensLeftBottom);
+    final Offset? b1 = _getPos(DetectionType.refBL);
+    final Offset? b2 = _getPos(DetectionType.refBR);
+
+    final double cr = math.cos(rotation), sr = math.sin(rotation);
+    final Offset eh = Offset(cr, -sr);
+    final Offset ev = Offset(sr, cr);
+
+    double dotP(Offset a, Offset b) => a.dx * b.dx + a.dy * b.dy;
+
+    // B-row (130mm): direct line
+    if (b1 != null && b2 != null) {
+      canvas.drawLine(b1, b2, amberPaint);
+    }
+
+    // DNP: horizontal from each pupil to bridge midpoint (projected along eh)
+    if (p1 != null && rBR != null && lTL != null) {
+      final Offset bridge = (rBR + lTL) / 2;
+      final double dh = dotP(bridge - p1, eh);
+      canvas.drawLine(p1, p1 + Offset(eh.dx * dh, eh.dy * dh), amberPaint);
+    }
+    if (p2 != null && rBR != null && lTL != null) {
+      final Offset bridge = (rBR + lTL) / 2;
+      final double dh = dotP(bridge - p2, eh);
+      canvas.drawLine(p2, p2 + Offset(eh.dx * dh, eh.dy * dh), amberPaint);
+    }
+
+    // AltRight: vertical from pupilRight to lensRightBottom (projected along ev)
+    if (p1 != null && rBR != null) {
+      final double dv = dotP(rBR - p1, ev);
+      canvas.drawLine(p1, p1 + Offset(ev.dx * dv, ev.dy * dv), amberPaint);
+    }
+    // AltLeft: same for left
+    if (p2 != null && lBR != null) {
+      final double dv = dotP(lBR - p2, ev);
+      canvas.drawLine(p2, p2 + Offset(ev.dx * dv, ev.dy * dv), amberPaint);
+    }
+
+    // AroAnc right: horizontal at mid-height of right frame
+    if (rTL != null && rBR != null) {
+      final double vTL = dotP(rTL, ev);
+      final double vBR = dotP(rBR, ev);
+      final double midV = (vTL + vBR) / 2;
+      final Offset leftPt = rTL + Offset(ev.dx * (midV - vTL), ev.dy * (midV - vTL));
+      final Offset rightPt = rBR + Offset(ev.dx * (midV - vBR), ev.dy * (midV - vBR));
+      canvas.drawLine(leftPt, rightPt, amberPaint);
+    }
+    // AroAnc left: same for left frame
+    if (lTL != null && lBR != null) {
+      final double vTL = dotP(lTL, ev);
+      final double vBR = dotP(lBR, ev);
+      final double midV = (vTL + vBR) / 2;
+      final Offset leftPt = lTL + Offset(ev.dx * (midV - vTL), ev.dy * (midV - vTL));
+      final Offset rightPt = lBR + Offset(ev.dx * (midV - vBR), ev.dy * (midV - vBR));
+      canvas.drawLine(leftPt, rightPt, amberPaint);
+    }
   }
 
   void _drawFrameOutline(Canvas canvas) {

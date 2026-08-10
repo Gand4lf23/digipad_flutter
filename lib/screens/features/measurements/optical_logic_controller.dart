@@ -39,6 +39,7 @@ class OpticalController extends ChangeNotifier {
   bool _initialDiameterSynced = false;
 
   bool showCircles = true;
+  bool showChips = false;
   bool isBifocal = false;
   double bifocalLineOffset = 0.0;
 
@@ -448,6 +449,11 @@ class OpticalController extends ChangeNotifier {
 
   void toggleCircles(bool val) {
     showCircles = val;
+    notifyListeners();
+  }
+
+  void toggleChips(bool val) {
+    showChips = val;
     notifyListeners();
   }
 

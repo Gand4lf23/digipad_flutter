@@ -800,6 +800,7 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen>
                 altRight: _controller.altRight,
                 altLeft: _controller.altLeft,
                 aroAnc: _controller.aroAnc,
+                showChips: _controller.showChips,
               ),
             ),
           ),
@@ -828,6 +829,15 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen>
                   style: TextStyle(color: Colors.white, fontSize: 12 * ts),
                 ),
                 const Spacer(),
+                IconButton(
+                  icon: Icon(
+                    ctrl.showChips ? Icons.label : Icons.label_outline,
+                    color: ctrl.showChips ? Colors.amber : Colors.white38,
+                    size: 20,
+                  ),
+                  tooltip: 'Medidas',
+                  onPressed: () => ctrl.toggleChips(!ctrl.showChips),
+                ),
                 Switch(
                   value: ctrl.isBifocal,
                   activeThumbColor: Colors.orangeAccent,
