@@ -54,6 +54,10 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
   double _smoothedAngle = 0.0;
   static const double _kAngleAlpha = 0.15;
 
+  double _zoomLevel = 3.0;
+  static const double _kZoomMin = 1.0;
+  static const double _kZoomMax = 10.0;
+
   static const Color _backgroundColor = Color(0xFF121212);
   static const Color _accentColor = Colors.deepPurpleAccent;
 
@@ -276,6 +280,7 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
                 ),
                 _buildBackButton(context),
                 _buildInclinometerOverlay(),
+                _buildZoomSlider(),
                 if (_isCapturing)
                   Container(
                     color: Colors.black54,
@@ -375,6 +380,35 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
     );
   }
 
+  Widget _buildZoomSlider() {
+    return Positioned(
+      top: 170.0,
+      right: 0.0,
+      child: RotatedBox(
+        quarterTurns: 3,
+        child: SizedBox(
+          width: 280,
+          child: SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: Colors.amber,
+              inactiveTrackColor: Colors.white24,
+              thumbColor: Colors.amber,
+              overlayColor: Colors.amber.withValues(alpha: 0.2),
+              trackHeight: 3,
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+            ),
+            child: Slider(
+              value: _zoomLevel,
+              min: _kZoomMin,
+              max: _kZoomMax,
+              onChanged: _applyZoom,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildBackButton(BuildContext context) {
     return Positioned(
       top: 16.0,
@@ -415,7 +449,13 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
     await Future.wait([
       _channel!.invokeMethod('setTorch', {'enabled': _torchEnabled}),
       _channel!.invokeMethod('setFrontCamera', {'front': _frontCamera}),
+      _channel!.invokeMethod('setZoom', {'ratio': _zoomLevel}),
     ]);
+  }
+
+  void _applyZoom(double ratio) {
+    setState(() => _zoomLevel = ratio.clamp(_kZoomMin, _kZoomMax));
+    _channel?.invokeMethod('setZoom', {'ratio': _zoomLevel});
   }
 
   List<Map<String, double>> _inflateDetections(dynamic rawList) {
@@ -673,11 +713,7 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
         ? _pantoscopicAngleNotifier.value
         : null;
     try {
-      final XFile? image = await _picker.pickImage(
-        source: source,
-        maxWidth: 1920,
-        maxHeight: 1920,
-      );
+      final XFile? image = await _picker.pickImage(source: source);
       if (image == null) return;
       // Show loading overlay immediately before detection starts
       if (mounted) setState(() => _isCapturing = true);

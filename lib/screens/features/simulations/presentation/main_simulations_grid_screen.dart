@@ -48,6 +48,7 @@ class _SimulationsGridView extends StatelessWidget {
 
   Widget _buildAppBar(BuildContext context, SimulationsState state) {
     final theme = Theme.of(context);
+    final isPhone = MediaQuery.of(context).size.width < 600;
 
     final title = state.selectedCategory == null
         ? context.l10n.lensSimulatorTitle
@@ -64,21 +65,18 @@ class _SimulationsGridView extends StatelessWidget {
       pinned: true,
       elevation: 0,
       backgroundColor: theme.primaryColor,
-
-      // 👇 THIS is key
-      toolbarHeight: 64, // bigger than default (56)
-      expandedHeight: description != null ? 120 : 100,
-
-      leadingWidth: 72, // 👈 gives breathing room (tablet friendly)
+      toolbarHeight: isPhone ? 48 : 64,
+      expandedHeight: description != null ? (isPhone ? 88 : 120) : (isPhone ? 68 : 100),
+      leadingWidth: isPhone ? 52 : 72,
       leading: Center(
         child: SizedBox(
-          width: 48,
-          height: 24,
+          width: isPhone ? 36 : 48,
+          height: isPhone ? 20 : 24,
           child: IconButton(
             padding: EdgeInsets.zero,
-            icon: const Icon(
+            icon: Icon(
               Icons.arrow_back_ios_new,
-              size: 48,
+              size: isPhone ? 20 : 28,
               color: Colors.white,
             ),
             onPressed: () {
@@ -107,18 +105,16 @@ class _SimulationsGridView extends StatelessWidget {
 
         child: SafeArea(
           child: Padding(
-            // 👇 aligns with back button
-            padding: const EdgeInsets.fromLTRB(72, 0, 32, 12),
-
+            padding: EdgeInsets.fromLTRB(isPhone ? 52 : 72, 0, isPhone ? 16 : 32, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 36, // 👈 bigger
+                    fontSize: isPhone ? 20 : 32,
                     color: Colors.white,
                   ),
                 ),
@@ -128,8 +124,8 @@ class _SimulationsGridView extends StatelessWidget {
                     description,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 24, // 👈 bigger
+                    style: TextStyle(
+                      fontSize: isPhone ? 13 : 20,
                       color: Colors.white70,
                     ),
                   ),
@@ -440,10 +436,10 @@ class _ScenarioCard extends StatelessWidget {
                       SimulationStrings.scenarioName(context, scenario),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: isPhone ? 18 : 36,
+                        fontSize: isPhone ? 14 : 28,
                       ),
                       maxLines: 1,
-                      minFontSize: 12,
+                      minFontSize: 10,
                     ),
                     const SizedBox(height: 6),
                     Text(

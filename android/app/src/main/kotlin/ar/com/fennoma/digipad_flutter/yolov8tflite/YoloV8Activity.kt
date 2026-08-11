@@ -54,6 +54,7 @@ class YoloV8View @JvmOverloads constructor(
     private val isDisposed = AtomicBoolean(false)
     private val isCameraBound = AtomicBoolean(false)
     private val isBinding = AtomicBoolean(false)
+    private var pendingZoomRatio: Float? = null
 
     private val lifecycleObserver = object : DefaultLifecycleObserver {
         override fun onStart(owner: LifecycleOwner) {
@@ -189,7 +190,8 @@ class YoloV8View @JvmOverloads constructor(
                 setSurfaceProvider(previewView.surfaceProvider)
             }
             imageCapture = ImageCapture.Builder()
-                .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
+                .setJpegQuality(97)
                 .setTargetRotation(display.rotation)
                 .build()
 
@@ -197,6 +199,14 @@ class YoloV8View @JvmOverloads constructor(
             camera = provider.bindToLifecycle(activity, selector, preview, imageCapture)
             isCameraBound.set(true)
             Log.d("YoloV8View", "Camera use cases bound successfully.")
+            pendingZoomRatio?.let { ratio ->
+                try {
+                    val zs = camera?.cameraInfo?.zoomState?.value
+                    val clamped = if (zs != null) ratio.coerceIn(zs.minZoomRatio, zs.maxZoomRatio) else ratio
+                    camera?.cameraControl?.setZoomRatio(clamped)
+                } catch (_: Exception) {}
+                pendingZoomRatio = null
+            }
         } catch (e: Exception) {
             Log.e("YoloV8View", "Failed to bind camera use cases", e)
         } finally {
@@ -274,6 +284,18 @@ class YoloV8View @JvmOverloads constructor(
         cameraSelector = if (front) CameraSelector.DEFAULT_FRONT_CAMERA else CameraSelector.DEFAULT_BACK_CAMERA
         unbindCamera()
         bindCameraUseCases()
+    }
+
+    fun setZoomRatio(ratio: Float) {
+        try {
+            val cam = camera
+            if (cam == null) { pendingZoomRatio = ratio; return }
+            val zoomState = cam.cameraInfo.zoomState.value
+            val clamped = if (zoomState != null) {
+                ratio.coerceIn(zoomState.minZoomRatio, zoomState.maxZoomRatio)
+            } else ratio
+            cam.cameraControl.setZoomRatio(clamped)
+        } catch (_: Exception) {}
     }
 
     fun capturePhoto(callback: (path: String?, error: String?) -> Unit) {

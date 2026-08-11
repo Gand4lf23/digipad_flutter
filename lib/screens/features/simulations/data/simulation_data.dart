@@ -196,84 +196,210 @@ class SimulationData {
           ),
         ],
       ),
-      // Market
+      // Manejando (new)
       SimulationScenario(
-        id: 'multifocal_market',
-        sceneName: 'market',
-        displayName: 'Market',
-        problemImagePath: '$_basePath/multifocal/market.webp',
+        id: 'multifocal_manejando',
+        sceneName: 'manejando',
+        displayName: 'Manejando',
+        problemImagePath:
+            '$_basePath/multifocal/MultifocalManejandoEconomico.jpg',
         correctionLenses: [
           CorrectionLens(
-            id: 'multifocal_market_economic',
+            id: 'multifocal_manejando_economico',
             name: 'economic',
-            displayName: 'Economy',
+            displayName: 'Económico',
             correctedImagePath:
-                '$_basePath/multifocal/multifocal_economic_market.webp',
+                '$_basePath/multifocal/MultifocalManejandoEconomico.jpg',
             quality: LensQuality.economy,
           ),
           CorrectionLens(
-            id: 'multifocal_market_standard',
+            id: 'multifocal_manejando_estandar',
             name: 'standard',
-            displayName: 'Standard',
+            displayName: 'Estándar',
             correctedImagePath:
-                '$_basePath/multifocal/multifocal_standard_market.webp',
+                '$_basePath/multifocal/MultifocalManejandoEstandar.jpg',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
-            id: 'multifocal_market_good',
+            id: 'multifocal_manejando_bueno',
             name: 'good',
-            displayName: 'Good',
+            displayName: 'Bueno',
             correctedImagePath:
-                '$_basePath/multifocal/multifocal_good_market.webp',
+                '$_basePath/multifocal/MultifocalManejandoBueno.jpg',
             quality: LensQuality.good,
           ),
           CorrectionLens(
-            id: 'multifocal_market_premium',
+            id: 'multifocal_manejando_premium',
             name: 'premium',
             displayName: 'Premium',
             correctedImagePath:
-                '$_basePath/multifocal/multifocal_premium_market.webp',
+                '$_basePath/multifocal/MultifocalManejandoPremium.jpg',
             quality: LensQuality.premium,
           ),
         ],
       ),
-      // Clothing
+      // Moto (new)
       SimulationScenario(
-        id: 'multifocal_clothing',
-        sceneName: 'clothing',
-        displayName: 'Clothing',
-        problemImagePath: '$_basePath/multifocal/clothing.webp',
+        id: 'multifocal_moto',
+        sceneName: 'moto',
+        displayName: 'Moto',
+        problemImagePath: '$_basePath/multifocal/MultifocalMotoEconomico.jpg',
         correctionLenses: [
           CorrectionLens(
-            id: 'multifocal_clothing_economic',
+            id: 'multifocal_moto_economico',
             name: 'economic',
-            displayName: 'Economy',
+            displayName: 'Económico',
             correctedImagePath:
-                '$_basePath/multifocal/multifocal_economic_clothing.webp',
+                '$_basePath/multifocal/MultifocalMotoEconomico.jpg',
             quality: LensQuality.economy,
           ),
           CorrectionLens(
-            id: 'multifocal_clothing_standard',
+            id: 'multifocal_moto_estandar',
             name: 'standard',
-            displayName: 'Standard',
+            displayName: 'Estándar',
             correctedImagePath:
-                '$_basePath/multifocal/multifocal_standard_clothing.webp',
+                '$_basePath/multifocal/MultifocalMotoEstandar.jpg',
             quality: LensQuality.standard,
           ),
           CorrectionLens(
-            id: 'multifocal_clothing_good',
+            id: 'multifocal_moto_bueno',
             name: 'good',
-            displayName: 'Good',
+            displayName: 'Bueno',
             correctedImagePath:
-                '$_basePath/multifocal/multifocal_good_clothing.webp',
+                '$_basePath/multifocal/MultifocalMotoBueno.jpg',
             quality: LensQuality.good,
           ),
           CorrectionLens(
-            id: 'multifocal_clothing_premium',
+            id: 'multifocal_moto_premium',
             name: 'premium',
             displayName: 'Premium',
             correctedImagePath:
-                '$_basePath/multifocal/multifocal_premium_clothing.webp',
+                '$_basePath/multifocal/MultifocalMotoPremium.jpg',
+            quality: LensQuality.premium,
+          ),
+        ],
+      ),
+      // Oficina (new)
+      SimulationScenario(
+        id: 'multifocal_oficina',
+        sceneName: 'oficina',
+        displayName: 'Oficina',
+        problemImagePath:
+            '$_basePath/multifocal/MultifocalOficinaEconomico.jpg',
+        correctionLenses: [
+          CorrectionLens(
+            id: 'multifocal_oficina_economico',
+            name: 'economic',
+            displayName: 'Económico',
+            correctedImagePath:
+                '$_basePath/multifocal/MultifocalOficinaEconomico.jpg',
+            quality: LensQuality.economy,
+          ),
+          CorrectionLens(
+            id: 'multifocal_oficina_estandar',
+            name: 'standard',
+            displayName: 'Estándar',
+            correctedImagePath:
+                '$_basePath/multifocal/MultifocalOficinaEstandar.jpg',
+            quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'multifocal_oficina_bueno',
+            name: 'good',
+            displayName: 'Bueno',
+            correctedImagePath:
+                '$_basePath/multifocal/MultifocalOficinaBueno.jpg',
+            quality: LensQuality.good,
+          ),
+          CorrectionLens(
+            id: 'multifocal_oficina_premium',
+            name: 'premium',
+            displayName: 'Premium',
+            correctedImagePath:
+                '$_basePath/multifocal/MultifocalOficinaPremium.jpg',
+            quality: LensQuality.premium,
+          ),
+        ],
+      ),
+      // Super (new)
+      SimulationScenario(
+        id: 'multifocal_super',
+        sceneName: 'super',
+        displayName: 'Supermercado',
+        problemImagePath: '$_basePath/multifocal/MultifocalSuperEconomico.jpg',
+        correctionLenses: [
+          CorrectionLens(
+            id: 'multifocal_super_economico',
+            name: 'economic',
+            displayName: 'Económico',
+            correctedImagePath:
+                '$_basePath/multifocal/MultifocalSuperEconomico.jpg',
+            quality: LensQuality.economy,
+          ),
+          CorrectionLens(
+            id: 'multifocal_super_estandar',
+            name: 'standard',
+            displayName: 'Estándar',
+            correctedImagePath:
+                '$_basePath/multifocal/MultifocalSuperEstandar.jpg',
+            quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'multifocal_super_bueno',
+            name: 'good',
+            displayName: 'Bueno',
+            correctedImagePath:
+                '$_basePath/multifocal/MultifocalSuperBueno.jpg',
+            quality: LensQuality.good,
+          ),
+          CorrectionLens(
+            id: 'multifocal_super_premium',
+            name: 'premium',
+            displayName: 'Premium',
+            correctedImagePath:
+                '$_basePath/multifocal/MultifocalSuperPremium.jpg',
+            quality: LensQuality.premium,
+          ),
+        ],
+      ),
+      // Tienda (new)
+      SimulationScenario(
+        id: 'multifocal_tienda',
+        sceneName: 'tienda',
+        displayName: 'Tienda',
+        problemImagePath:
+            '$_basePath/multifocal/MultifocalTiendaEconomico.jpg',
+        correctionLenses: [
+          CorrectionLens(
+            id: 'multifocal_tienda_economico',
+            name: 'economic',
+            displayName: 'Económico',
+            correctedImagePath:
+                '$_basePath/multifocal/MultifocalTiendaEconomico.jpg',
+            quality: LensQuality.economy,
+          ),
+          CorrectionLens(
+            id: 'multifocal_tienda_estandar',
+            name: 'standard',
+            displayName: 'Estándar',
+            correctedImagePath:
+                '$_basePath/multifocal/MultifocalTiendaEstandar.jpg',
+            quality: LensQuality.standard,
+          ),
+          CorrectionLens(
+            id: 'multifocal_tienda_bueno',
+            name: 'good',
+            displayName: 'Bueno',
+            correctedImagePath:
+                '$_basePath/multifocal/MultifocalTiendaBueno.jpg',
+            quality: LensQuality.good,
+          ),
+          CorrectionLens(
+            id: 'multifocal_tienda_premium',
+            name: 'premium',
+            displayName: 'Premium',
+            correctedImagePath:
+                '$_basePath/multifocal/MultifocalTiendaPremium.jpg',
             quality: LensQuality.premium,
           ),
         ],

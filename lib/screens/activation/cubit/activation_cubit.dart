@@ -12,9 +12,20 @@ class ActivationCubit extends Cubit<ActivationState> {
   DateTime? _lastOnlineAccessUpdate;
   static const int _accessUpdateThrottleMinutes = 5;
 
+  // ─── DEV FLAG ────────────────────────────────────────────────────────────
+  // Set to true to skip all activation checks (local testing only).
+  static const bool kBypassActivation = false;
+  // ─────────────────────────────────────────────────────────────────────────
+
   ActivationCubit(this._service) : super(const ActivationState());
 
   Future<void> init() async {
+    if (kBypassActivation) {
+      emit(
+        state.copyWith(status: ActivationStatus.approved, email: 'dev@bypass'),
+      );
+      return;
+    }
     await _subscription?.cancel();
     emit(state.copyWith(status: ActivationStatus.checking));
 

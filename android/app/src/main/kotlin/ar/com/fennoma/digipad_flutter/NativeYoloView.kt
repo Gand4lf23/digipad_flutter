@@ -78,6 +78,11 @@ class NativeYoloView(
                 yoloV8View.switchCamera(front)
                 result.success(null)
             }
+            "setZoom" -> {
+                val ratio = (call.argument<Number>("ratio") ?: 1.0).toFloat()
+                yoloV8View.setZoomRatio(ratio)
+                result.success(null)
+            }
             else -> result.notImplemented()
         }
     }

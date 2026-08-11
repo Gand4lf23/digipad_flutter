@@ -183,9 +183,9 @@ class _HomeScreenState extends State<HomeScreen>
                             value: e,
                             child: Text(
                               label,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 18,
+                                fontSize: MediaQuery.of(context).size.shortestSide >= 550 ? 16.0 : 11.0,
                               ),
                             ),
                           );
@@ -231,8 +231,12 @@ class _HomeScreenState extends State<HomeScreen>
     required _ModuleDef def,
     required VoidCallback onTap,
   }) {
-    final buttonWidth = MediaQuery.of(context).size.width * 0.4;
-    final buttonHeight = MediaQuery.of(context).size.height * 0.06;
+    final size = MediaQuery.of(context).size;
+    final buttonWidth = size.width * 0.4;
+    final buttonHeight = size.height * 0.06;
+    final isTablet = size.shortestSide >= 550;
+    final iconSize = isTablet ? 30.0 : 16.0;
+    final labelFontSize = isTablet ? 20.0 : 12.0;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(50),
@@ -265,11 +269,11 @@ class _HomeScreenState extends State<HomeScreen>
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Container(
-                  width: 36,
-                  height: 36,
+                  width: iconSize,
+                  height: iconSize,
                   alignment: Alignment.center,
                   decoration: const BoxDecoration(shape: BoxShape.circle),
-                  child: Icon(def.icon, color: def.color, size: 36),
+                  child: Icon(def.icon, color: def.color, size: iconSize),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -277,7 +281,7 @@ class _HomeScreenState extends State<HomeScreen>
                     def.title,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.95),
-                      fontSize: 24,
+                      fontSize: labelFontSize,
                       fontWeight: FontWeight.w500,
                       shadows: const [
                         Shadow(
