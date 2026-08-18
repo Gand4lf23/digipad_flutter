@@ -6,9 +6,8 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
-import android.graphics.ImageDecoder
-import android.graphics.Matrix
 import android.net.Uri
 import android.util.AttributeSet
 import android.util.Log
@@ -319,35 +318,58 @@ class YoloV8View @JvmOverloads constructor(
     }
 
     fun detectFromFile(path: String): Map<String, Any> {
-        var originalBitmap: Bitmap? = null
-        var rotatedBitmap: Bitmap? = null
+        var bitmap: Bitmap? = null
         try {
             val reqSize = 1600
-            val source = if (path.startsWith("content://")) {
-                ImageDecoder.createSource(context.contentResolver, Uri.parse(path))
+
+            // Step 1: decode bounds only to compute inSampleSize
+            val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            if (path.startsWith("content://")) {
+                context.contentResolver.openInputStream(Uri.parse(path))?.use { s ->
+                    BitmapFactory.decodeStream(s, null, opts)
+                }
             } else {
                 val file = File(path)
                 if (!file.exists()) return emptyMap()
-                ImageDecoder.createSource(file)
+                BitmapFactory.decodeFile(path, opts)
             }
-            originalBitmap = ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
-                val w = info.size.width
-                val h = info.size.height
-                if (w > reqSize || h > reqSize) {
-                    val scale = reqSize.toFloat() / maxOf(w, h)
-                    decoder.setTargetSize(
-                        (w * scale).toInt().coerceAtLeast(1),
-                        (h * scale).toInt().coerceAtLeast(1)
-                    )
+
+            // Power-of-2 sample size so we land within 2× of reqSize
+            var sample = 1
+            if (opts.outWidth > reqSize || opts.outHeight > reqSize) {
+                while (maxOf(opts.outWidth, opts.outHeight) / (sample * 2) >= reqSize) sample *= 2
+            }
+
+            // Step 2: decode at sample size with ARGB_8888 (required by TFLite)
+            opts.inJustDecodeBounds = false
+            opts.inSampleSize = sample
+            opts.inPreferredConfig = Bitmap.Config.ARGB_8888
+            bitmap = if (path.startsWith("content://")) {
+                context.contentResolver.openInputStream(Uri.parse(path))?.use { s ->
+                    BitmapFactory.decodeStream(s, null, opts)
                 }
-                decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+            } else {
+                BitmapFactory.decodeFile(path, opts)
             }
-            if (originalBitmap.config != Bitmap.Config.ARGB_8888) {
-                val converted = originalBitmap.copy(Bitmap.Config.ARGB_8888, false)
-                if (converted != null) { originalBitmap.recycle(); originalBitmap = converted }
+            if (bitmap == null) return emptyMap()
+
+            // Step 3: fine-scale to reqSize if still over target
+            val bw = bitmap.width; val bh = bitmap.height
+            if (bw > reqSize || bh > reqSize) {
+                val sc = reqSize.toFloat() / maxOf(bw, bh)
+                val scaled = Bitmap.createScaledBitmap(
+                    bitmap, (bw * sc).toInt().coerceAtLeast(1), (bh * sc).toInt().coerceAtLeast(1), true
+                )
+                if (scaled != bitmap) { bitmap.recycle(); bitmap = scaled }
             }
-            rotatedBitmap = originalBitmap
-            val boxes = detector.detectSync(rotatedBitmap)
+
+            // Step 4: ensure ARGB_8888 after any format conversion
+            if (bitmap.config != Bitmap.Config.ARGB_8888) {
+                val converted = bitmap.copy(Bitmap.Config.ARGB_8888, false)
+                if (converted != null) { bitmap.recycle(); bitmap = converted }
+            }
+
+            val boxes = detector.detectSync(bitmap)
             val circlesList = boxes.filter { it.clsName.contains("circle", ignoreCase = true) }
                 .sortedByDescending { it.cnf }.take(4)
                 .flatMap { listOf(it.cx.toDouble(), it.cy.toDouble()) }
@@ -363,10 +385,7 @@ class YoloV8View @JvmOverloads constructor(
             Log.e("YoloV8View", "detectFromFile error", e)
             return emptyMap()
         } finally {
-            try {
-                if (originalBitmap != rotatedBitmap) originalBitmap?.recycle()
-                rotatedBitmap?.recycle()
-            } catch (e: Throwable) {
+            try { bitmap?.recycle() } catch (e: Throwable) {
                 Log.e("YoloV8View", "Bitmap cleanup error", e)
             }
         }

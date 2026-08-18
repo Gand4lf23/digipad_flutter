@@ -33,6 +33,12 @@ class VirtualMirrorCubit extends Cubit<VirtualMirrorState> {
     }
   }
 
+  Future<void> saveCapture(File file) async {
+    final persisted = await _persistFile(file, 'image');
+    await storage.saveImage(persisted);
+    // stream fires → galleryImages auto-updates
+  }
+
   Future<void> captureVideo() async {
     final video = await _picker.pickVideo(source: ImageSource.camera);
     if (video != null) {

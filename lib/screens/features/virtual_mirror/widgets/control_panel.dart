@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:digipad_flutter/common/utils/responsive_utils.dart';
 import 'package:digipad_flutter/screens/features/virtual_mirror/cubit/virtual_mirror_cubit.dart';
+import 'package:digipad_flutter/screens/features/virtual_mirror/widgets/vm_camera_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -51,7 +54,13 @@ class ControlPanel extends StatelessWidget {
                   // TAKE PHOTO (bigger)
                   _CircleIconButton(
                     icon: Icons.camera_alt,
-                    onPressed: () => cubit.capturePhoto(),
+                    onPressed: () async {
+                      final nav = Navigator.of(context);
+                      final file = await nav.push<File?>(
+                        MaterialPageRoute(builder: (_) => const VmCameraScreen()),
+                      );
+                      if (file != null) cubit.saveCapture(file);
+                    },
                     size: responsive.controlPanelIconSize(60),
                     containerSize: responsive.controlPanelContainerSize(96),
                   ),

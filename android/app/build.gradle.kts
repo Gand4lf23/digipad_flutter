@@ -35,7 +35,7 @@ android {
 
     defaultConfig {
         applicationId = "ar.com.digipad"
-        minSdk = 28 // Android 9 — ImageDecoder, HEIC support, scoped storage baseline
+        minSdk = 26 // Android 8.0+
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

@@ -72,6 +72,10 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
       if (mounted) {
         setState(() {
           _angleCalibrationOffset = prefs.getDouble('angleCalibrationOffset') ?? 0.0;
+          final savedZoom = prefs.getDouble('measurementZoomLevel');
+          if (savedZoom != null) {
+            _zoomLevel = savedZoom.clamp(_kZoomMin, _kZoomMax);
+          }
         });
       }
     });
@@ -456,6 +460,7 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
   void _applyZoom(double ratio) {
     setState(() => _zoomLevel = ratio.clamp(_kZoomMin, _kZoomMax));
     _channel?.invokeMethod('setZoom', {'ratio': _zoomLevel});
+    SharedPreferences.getInstance().then((p) => p.setDouble('measurementZoomLevel', _zoomLevel));
   }
 
   List<Map<String, double>> _inflateDetections(dynamic rawList) {
