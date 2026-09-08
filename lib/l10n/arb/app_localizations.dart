@@ -1695,6 +1695,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Analyzing...'**
   String get hubAnalyzing;
+
+  /// No description provided for @heightTopShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Alt.sup: {value}'**
+  String heightTopShort(String value);
+
+  /// No description provided for @frameOuterW.
+  ///
+  /// In en, this message translates to:
+  /// **'Outer W'**
+  String get frameOuterW;
+
+  /// No description provided for @frameWidthField.
+  ///
+  /// In en, this message translates to:
+  /// **'Frame width'**
+  String get frameWidthField;
+
+  /// No description provided for @frameWidthHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 119'**
+  String get frameWidthHint;
+
+  /// No description provided for @hubNoAccessory.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote Measurement'**
+  String get hubNoAccessory;
+
+  /// No description provided for @frameWidthMissingWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter frame width to calculate'**
+  String get frameWidthMissingWarning;
+
+  /// No description provided for @cleanView.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean view'**
+  String get cleanView;
+
+  /// No description provided for @simAdaptLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Adaptation'**
+  String get simAdaptLabel;
+
+  /// No description provided for @simAdaptStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard'**
+  String get simAdaptStandard;
+
+  /// No description provided for @simAdaptGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Good'**
+  String get simAdaptGood;
+
+  /// No description provided for @simAdaptPremium.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium'**
+  String get simAdaptPremium;
+
+  /// No description provided for @simReplay.
+  ///
+  /// In en, this message translates to:
+  /// **'Replay'**
+  String get simReplay;
 }
 
 class _AppLocalizationsDelegate

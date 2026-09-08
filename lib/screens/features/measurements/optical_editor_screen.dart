@@ -21,6 +21,8 @@ class OpticalEditorScreen extends StatefulWidget {
   final MeasurementRecord? savedRecord;
   final bool isFrontCamera;
   final double? pantoscopicAngle;
+  final MeasurementMode mode;
+  final String? debugInfo;
 
   const OpticalEditorScreen({
     super.key,
@@ -29,6 +31,8 @@ class OpticalEditorScreen extends StatefulWidget {
     this.savedRecord,
     this.isFrontCamera = false,
     this.pantoscopicAngle,
+    this.mode = MeasurementMode.conAccesorio,
+    this.debugInfo,
   });
 
   @override
@@ -217,18 +221,75 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen>
           if (widget.savedRecord != null) {
             _controller.restoreFromStateJson(widget.savedRecord!.stateJson);
           } else {
-            _controller.initialize(widget.detections ?? {}, _imageSize!);
+            _controller.initialize(widget.detections ?? {}, _imageSize!, mode: widget.mode);
           }
         });
 
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          _applyAutoRotation();
+          if (_controller.mode == MeasurementMode.conAccesorio) _applyAutoRotation();
           _applyAutoZoom();
         });
       }
     } catch (e) {
       debugPrint("Error: $e");
     }
+  }
+
+  void _showDebugSheet() {
+    final ctrl = _controller;
+    final lines = <String>[
+      '=== KOTLIN ===',
+      widget.debugInfo ?? '(sin info nativa — galería o guardado)',
+      '',
+      '=== FLUTTER ===',
+      'imageSize: ${_imageSize?.width.toInt()}×${_imageSize?.height.toInt()}',
+      'imageRotation: ${(_imageRotation * 180 / math.pi).toStringAsFixed(2)}°',
+      'mode: ${ctrl.mode.name}',
+      'milimetrosPorPixel: ${ctrl.milimetrosPorPixel.toStringAsFixed(5)}',
+      'pixelFactorX: ${ctrl.pixelFactorX.toStringAsFixed(5)}',
+      'pixelFactorY: ${ctrl.pixelFactorY.toStringAsFixed(5)}',
+      '',
+      '=== PUNTOS (px) ===',
+      for (final p in ctrl.points)
+        '${p.type.name}: (${p.position.dx.toStringAsFixed(1)}, ${p.position.dy.toStringAsFixed(1)})',
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF0D0D1A),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.55,
+        minChildSize: 0.3,
+        maxChildSize: 0.9,
+        builder: (_, sc) => ListView(
+          controller: sc,
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          children: [
+            Center(
+              child: Container(
+                width: 36, height: 4,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const Text('DEBUG', style: TextStyle(color: Colors.yellowAccent, fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 1)),
+            const SizedBox(height: 8),
+            SelectableText(
+              lines.join('\n'),
+              style: const TextStyle(color: Colors.white70, fontSize: 11.5, fontFamily: 'monospace'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _applyAutoRotation() {
@@ -670,6 +731,11 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen>
                         setState(() => _showAjustePanel = !_showAjustePanel),
                     tooltip: context.l10n.calibration,
                   ),
+                  IconButton(
+                    icon: const Icon(Icons.bug_report_outlined, color: Colors.yellowAccent),
+                    onPressed: _showDebugSheet,
+                    tooltip: 'Debug',
+                  ),
                 ],
               ),
               body: Column(
@@ -801,11 +867,15 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen>
                 altLeft: _controller.altLeft,
                 aroAnc: _controller.aroAnc,
                 aroAlt: _controller.aroAlt,
+                anchoExtArmazon: _controller.anchoExtArmazon,
                 di: _controller.di,
                 puente: _controller.puente,
                 diametroRight: _controller.diametroRight,
                 diametroLeft: _controller.diametroLeft,
+                altSupRight: _controller.altSupRight,
+                altSupLeft: _controller.altSupLeft,
                 showChips: _controller.showChips,
+                isSinAccesorio: _controller.mode == MeasurementMode.sinAccesorio,
               ),
             ),
           ),
@@ -836,11 +906,11 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen>
                 const Spacer(),
                 IconButton(
                   icon: Icon(
-                    ctrl.showChips ? Icons.label : Icons.label_outline,
+                    ctrl.showChips ? Icons.straighten : Icons.straighten_outlined,
                     color: ctrl.showChips ? Colors.amber : Colors.white38,
                     size: 20,
                   ),
-                  tooltip: 'Medidas',
+                  tooltip: context.l10n.cleanView,
                   onPressed: () => ctrl.toggleChips(!ctrl.showChips),
                 ),
                 Switch(
@@ -863,7 +933,7 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen>
                 ],
               ],
             ),
-            if (ctrl.showCircles)
+            if (ctrl.showCircles && !ctrl.showChips)
               Expanded(
                 child: Row(
                   children: [
@@ -1161,26 +1231,58 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen>
       builder: (context, ctrl, _) {
         final s = MediaQuery.of(context).size;
         final fs = (s.shortestSide * 0.028).clamp(10.0, 15.0);
-        return Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFF0D0D1A),
-            border: Border(top: BorderSide(color: Colors.white12)),
-          ),
-          padding: EdgeInsets.symmetric(horizontal: s.width * 0.02, vertical: 4),
-          child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(child: _eyeColumn(context, ctrl, isRight: true, fs: fs)),
-                _vDivider(),
-                Expanded(flex: 2, child: _centerColumn(context, ctrl, fs: fs)),
-                _vDivider(),
-                Expanded(child: _eyeColumn(context, ctrl, isRight: false, fs: fs)),
-              ],
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (ctrl.mode == MeasurementMode.sinAccesorio)
+              _buildFrameWidthField(),
+            Container(
+              decoration: const BoxDecoration(
+                color: Color(0xFF0D0D1A),
+                border: Border(top: BorderSide(color: Colors.white12)),
+              ),
+              padding: EdgeInsets.symmetric(horizontal: s.width * 0.02, vertical: 4),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(child: _eyeColumn(context, ctrl, isRight: true, fs: fs)),
+                    _vDivider(),
+                    Expanded(flex: 2, child: _centerColumn(context, ctrl, fs: fs)),
+                    _vDivider(),
+                    Expanded(child: _eyeColumn(context, ctrl, isRight: false, fs: fs)),
+                  ],
+                ),
+              ),
             ),
-          ),
+          ],
         );
       },
+    );
+  }
+
+  Widget _buildFrameWidthField() {
+    return Container(
+      color: const Color(0xFF1A1A2E),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: TextField(
+        decoration: InputDecoration(
+          labelText: context.l10n.frameWidthField,
+          hintText: context.l10n.frameWidthHint,
+          suffixText: 'mm',
+          isDense: true,
+          labelStyle: const TextStyle(color: Colors.white54),
+          hintStyle: const TextStyle(color: Colors.white24),
+          border: const UnderlineInputBorder(),
+        ),
+        style: const TextStyle(color: Colors.white),
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
+        onChanged: (val) {
+          final normalized = val.replaceAll(',', '.');
+          _controller.setFrameWidthMm(double.tryParse(normalized));
+        },
+      ),
     );
   }
 
@@ -1188,6 +1290,7 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen>
     final label = isRight ? context.l10n.rightEyeP1 : context.l10n.leftEyeP2;
     final dnp = isRight ? ctrl.dnpRight : ctrl.dnpLeft;
     final alt = isRight ? ctrl.altRight : ctrl.altLeft;
+    final altSup = isRight ? ctrl.altSupRight : ctrl.altSupLeft;
     final diam = isRight ? ctrl.referenceCircleDiameterRight : ctrl.referenceCircleDiameterLeft;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
@@ -1204,6 +1307,7 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen>
           const SizedBox(height: 2),
           Text(context.l10n.dnpShort(dnp.toStringAsFixed(1)), style: TextStyle(color: Colors.white70, fontSize: fs - 1)),
           Text(context.l10n.heightShort(alt.toStringAsFixed(1)), style: TextStyle(color: Colors.white70, fontSize: fs - 1)),
+          Text(context.l10n.heightTopShort(altSup.toStringAsFixed(1)), style: TextStyle(color: Colors.white38, fontSize: fs - 2)),
           Text(context.l10n.diamShort(diam.toStringAsFixed(1)), style: TextStyle(color: Colors.white70, fontSize: fs - 1, fontWeight: FontWeight.bold)),
         ],
       ),
@@ -1230,10 +1334,20 @@ class _OpticalEditorScreenState extends State<OpticalEditorScreen>
               _miniStat(context.l10n.bridge, ctrl.puente, fs),
               _miniStat(context.l10n.frameW, ctrl.aroAnc, fs),
               _miniStat(context.l10n.frameH, ctrl.aroAlt, fs),
+              _miniStat(context.l10n.frameOuterW, ctrl.anchoExtArmazon, fs),
               if (ctrl.pantoscopicAngle != null)
                 _miniStat(context.l10n.pantoscopicAngleShort, ctrl.pantoscopicAngle!, fs, unit: '°'),
             ],
           ),
+          if (ctrl.mode == MeasurementMode.sinAccesorio && ctrl.frameWidthMm == null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                context.l10n.frameWidthMissingWarning,
+                style: TextStyle(color: Colors.orangeAccent, fontSize: fs - 3),
+                textAlign: TextAlign.center,
+              ),
+            ),
         ],
       ),
     );
@@ -1345,6 +1459,7 @@ class _ResultsSheet extends StatelessWidget {
                 context.l10n.rightEye,
                 controller.dnpRight,
                 controller.altRight,
+                controller.altSupRight,
                 controller.referenceCircleDiameterRight,
               ),
               const SizedBox(width: 12),
@@ -1353,6 +1468,7 @@ class _ResultsSheet extends StatelessWidget {
                 context.l10n.leftEye,
                 controller.dnpLeft,
                 controller.altLeft,
+                controller.altSupLeft,
                 controller.referenceCircleDiameterLeft,
               ),
             ],
@@ -1398,6 +1514,7 @@ class _ResultsSheet extends StatelessWidget {
     String label,
     double dnp,
     double alt,
+    double altSup,
     double diam,
   ) {
     return Expanded(
@@ -1429,6 +1546,12 @@ class _ResultsSheet extends StatelessWidget {
               context,
               context.l10n.heightShort(alt.toStringAsFixed(1)),
               alt,
+              compact: true,
+            ),
+            _resultRow(
+              context,
+              context.l10n.heightTopShort(altSup.toStringAsFixed(1)),
+              altSup,
               compact: true,
             ),
             _resultRow(
@@ -1499,6 +1622,9 @@ class _ResultsSheet extends StatelessWidget {
       ..writeln(
         "${context.l10n.frameH}: ${controller.aroAlt.toStringAsFixed(1)} ${context.l10n.unitMm}",
       )
+      ..writeln(
+        "${context.l10n.frameOuterW}: ${controller.anchoExtArmazon.toStringAsFixed(1)} ${context.l10n.unitMm}",
+      )
       ..writeln()
       ..writeln("${context.l10n.rightEye}:")
       ..writeln(
@@ -1506,6 +1632,9 @@ class _ResultsSheet extends StatelessWidget {
       )
       ..writeln(
         "${context.l10n.heightShort(controller.altRight.toStringAsFixed(1))} ${context.l10n.unitMm}",
+      )
+      ..writeln(
+        "${context.l10n.heightTopShort(controller.altSupRight.toStringAsFixed(1))} ${context.l10n.unitMm}",
       )
       ..writeln(
         "${context.l10n.diamShort(controller.referenceCircleDiameterRight.toStringAsFixed(1))} ${context.l10n.unitMm}",
@@ -1517,6 +1646,9 @@ class _ResultsSheet extends StatelessWidget {
       )
       ..writeln(
         "${context.l10n.heightShort(controller.altLeft.toStringAsFixed(1))} ${context.l10n.unitMm}",
+      )
+      ..writeln(
+        "${context.l10n.heightTopShort(controller.altSupLeft.toStringAsFixed(1))} ${context.l10n.unitMm}",
       )
       ..writeln(
         "${context.l10n.diamShort(controller.referenceCircleDiameterLeft.toStringAsFixed(1))} ${context.l10n.unitMm}",

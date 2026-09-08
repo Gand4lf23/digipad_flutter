@@ -860,4 +860,43 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get hubAnalyzing => 'Analisando...';
+
+  @override
+  String heightTopShort(String value) {
+    return 'Alt.sup: $value';
+  }
+
+  @override
+  String get frameOuterW => 'Largura ext.';
+
+  @override
+  String get frameWidthField => 'Largura da armação';
+
+  @override
+  String get frameWidthHint => 'ex. 119';
+
+  @override
+  String get hubNoAccessory => 'Medição remota';
+
+  @override
+  String get frameWidthMissingWarning =>
+      'Informe a largura da armação para calcular';
+
+  @override
+  String get cleanView => 'Vista limpa';
+
+  @override
+  String get simAdaptLabel => 'Adaptação';
+
+  @override
+  String get simAdaptStandard => 'Padrão';
+
+  @override
+  String get simAdaptGood => 'Boa';
+
+  @override
+  String get simAdaptPremium => 'Premium';
+
+  @override
+  String get simReplay => 'Reproduzir';
 }

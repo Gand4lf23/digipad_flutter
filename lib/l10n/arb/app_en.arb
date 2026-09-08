@@ -372,5 +372,24 @@
   "save": "Save",
   "hubNewMeasurement": "New Measurement",
   "hubDetectorNotReady": "Detector not ready yet. Try again.",
-  "hubAnalyzing": "Analyzing..."
+  "hubAnalyzing": "Analyzing...",
+  "heightTopShort": "Alt.sup: {value}",
+  "@heightTopShort": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "frameOuterW": "Outer W",
+  "frameWidthField": "Frame width",
+  "frameWidthHint": "e.g. 119",
+  "hubNoAccessory": "Remote Measurement",
+  "frameWidthMissingWarning": "Enter frame width to calculate",
+  "cleanView": "Clean view",
+  "simAdaptLabel": "Adaptation",
+  "simAdaptStandard": "Standard",
+  "simAdaptGood": "Good",
+  "simAdaptPremium": "Premium",
+  "simReplay": "Replay"
 }

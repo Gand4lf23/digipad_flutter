@@ -14,6 +14,11 @@ class SimulationControlPanel extends StatelessWidget {
   final CorrectionLens? selectedLens;
   final ValueChanged<CorrectionLens> onLensSelected;
 
+  /// Photochromic-only: adaptation-speed tier and its callbacks.
+  final PhotoAdaptSpeed adaptSpeed;
+  final ValueChanged<PhotoAdaptSpeed>? onAdaptSpeedChanged;
+  final VoidCallback? onReplayAdaptation;
+
   const SimulationControlPanel({
     super.key,
     required this.state,
@@ -21,6 +26,9 @@ class SimulationControlPanel extends StatelessWidget {
     required this.scenario,
     required this.selectedLens,
     required this.onLensSelected,
+    this.adaptSpeed = PhotoAdaptSpeed.buena,
+    this.onAdaptSpeedChanged,
+    this.onReplayAdaptation,
   });
 
   @override
@@ -106,6 +114,16 @@ class SimulationControlPanel extends StatelessWidget {
                   ],
                 ],
               ),
+
+              // Photochromic adaptation-speed tier (Estándar / Buena / Premium)
+              if (isPhotochromic) ...[
+                const SizedBox(height: 18),
+                _PhotoAdaptSpeedRow(
+                  selected: adaptSpeed,
+                  onChanged: onAdaptSpeedChanged,
+                  onReplay: onReplayAdaptation,
+                ),
+              ],
             ],
           ),
         ),
@@ -379,5 +397,95 @@ class _PhotochromicColorPicker extends StatelessWidget {
       default:
         return lens.displayName;
     }
+  }
+}
+
+/// Photochromic adaptation-speed tier picker: Estándar / Buena / Premium.
+/// The premium tier fades the activated lens image in noticeably faster.
+class _PhotoAdaptSpeedRow extends StatelessWidget {
+  final PhotoAdaptSpeed selected;
+  final ValueChanged<PhotoAdaptSpeed>? onChanged;
+  final VoidCallback? onReplay;
+
+  const _PhotoAdaptSpeedRow({
+    required this.selected,
+    required this.onChanged,
+    required this.onReplay,
+  });
+
+  String _label(BuildContext context, PhotoAdaptSpeed s) {
+    switch (s) {
+      case PhotoAdaptSpeed.estandar:
+        return context.l10n.simAdaptStandard;
+      case PhotoAdaptSpeed.buena:
+        return context.l10n.simAdaptGood;
+      case PhotoAdaptSpeed.premium:
+        return context.l10n.simAdaptPremium;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(
+          context.l10n.simAdaptLabel,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.7),
+            fontSize: 16,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: PhotoAdaptSpeed.values.map((s) {
+                final bool isSelected = s == selected;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: GestureDetector(
+                    onTap: onChanged == null ? null : () => onChanged!(s),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 9,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? Colors.amber.withValues(alpha: 0.22)
+                            : Colors.white.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: isSelected
+                              ? Colors.amber
+                              : Colors.white.withValues(alpha: 0.3),
+                          width: isSelected ? 2 : 1,
+                        ),
+                      ),
+                      child: Text(
+                        _label(context, s),
+                        style: TextStyle(
+                          color: isSelected ? Colors.white : Colors.white70,
+                          fontSize: 15,
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+        IconButton(
+          onPressed: onReplay,
+          tooltip: context.l10n.simReplay,
+          icon: const Icon(Icons.replay, color: Colors.white),
+        ),
+      ],
+    );
   }
 }

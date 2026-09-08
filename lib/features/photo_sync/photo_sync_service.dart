@@ -205,10 +205,12 @@ class PhotoSyncService {
   ///
   /// Sends a tiny BYTES payload with the original filename first so the
   /// receiver can use a meaningful name when saving to storage.
-  Future<bool> sendPhoto(String endpointId, String filePath) async {
+  Future<bool> sendPhoto(String endpointId, String filePath, {double? frameWidthMm}) async {
     try {
       final name = filePath.replaceAll('\\', '/').split('/').last;
-      final meta = Uint8List.fromList(utf8.encode(jsonEncode({'name': name})));
+      final metaMap = <String, dynamic>{'name': name};
+      if (frameWidthMm != null) metaMap['frame_width_mm'] = frameWidthMm;
+      final meta = Uint8List.fromList(utf8.encode(jsonEncode(metaMap)));
       await Nearby().sendBytesPayload(endpointId, meta);
       await Nearby().sendFilePayload(endpointId, filePath);
       debugPrint('[PhotoSync] Sent "$name" to $endpointId');

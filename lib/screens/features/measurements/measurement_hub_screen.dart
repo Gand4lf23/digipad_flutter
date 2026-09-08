@@ -8,6 +8,7 @@ import 'package:digipad_flutter/l10n/l10n.dart';
 import 'package:digipad_flutter/screens/features/measurements/measurement_capture_screen.dart';
 import 'package:digipad_flutter/screens/features/measurements/measurements_list_screen.dart';
 import 'package:digipad_flutter/screens/features/measurements/optical_editor_screen.dart';
+import 'package:digipad_flutter/screens/features/measurements/optical_logic_controller.dart';
 
 class MeasurementHubScreen extends StatefulWidget {
   const MeasurementHubScreen({super.key});
@@ -236,6 +237,19 @@ class _MeasurementHubScreenState extends State<MeasurementHubScreen> {
                             context,
                             MaterialPageRoute(
                               builder: (_) => const MeasurementsListScreen(),
+                            ),
+                          ),
+                        ),
+                        _HubTile(
+                          icon: Icons.person_search_outlined,
+                          label: context.l10n.hubNoAccessory,
+                          color: Colors.orangeAccent,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const MeasurementCaptureScreen(
+                                mode: MeasurementMode.sinAccesorio,
+                              ),
                             ),
                           ),
                         ),

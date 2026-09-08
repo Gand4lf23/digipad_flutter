@@ -28,7 +28,7 @@ class SimulationViewerScreen extends StatefulWidget {
 }
 
 class _SimulationViewerScreenState extends State<SimulationViewerScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   ui.Image? _problemImage;
   ui.Image? _correctedImage;
   String? _errorMessage;
@@ -36,6 +36,12 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
 
   late AnimationController _pulseController;
   late Animation<double> pulseAnimation;
+
+  /// Drives the photochromic activation fade (0 = clear, 1 = fully activated).
+  late AnimationController _adaptController;
+  PhotoAdaptSpeed _adaptSpeed = PhotoAdaptSpeed.buena;
+
+  bool get _isPhotochromic => widget.category.id == 'photochromic';
 
   CorrectionLens? _currentLens;
 
@@ -51,6 +57,12 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
+    _adaptController = AnimationController(
+      vsync: this,
+      duration: _adaptSpeed.duration,
+      value: 1.0,
+    );
+
     // Set initial lens
     if (widget.scenario.correctionLenses.isNotEmpty) {
       _currentLens = widget.scenario.correctionLenses.first;
@@ -62,7 +74,23 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
   @override
   void dispose() {
     _pulseController.dispose();
+    _adaptController.dispose();
     super.dispose();
+  }
+
+  void _playAdaptation() {
+    _adaptController
+      ..duration = _adaptSpeed.duration
+      ..forward(from: 0.0);
+  }
+
+  void _onAdaptSpeedChanged(PhotoAdaptSpeed speed) {
+    setState(() => _adaptSpeed = speed);
+    if (_isPhotochromic &&
+        _currentLens != null &&
+        _currentLens!.name != 'sin_lente') {
+      _playAdaptation();
+    }
   }
 
   Future<void> _loadImages() async {
@@ -99,7 +127,11 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
   }
 
   Future<void> _onLensChanged(CorrectionLens lens) async {
-    if (_currentLens?.id == lens.id) return;
+    // Re-tapping the active photochromic lens simply replays the fade.
+    if (_currentLens?.id == lens.id) {
+      if (_isPhotochromic && lens.name != 'sin_lente') _playAdaptation();
+      return;
+    }
 
     setState(() {
       _currentLens = lens;
@@ -110,8 +142,14 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
       // 'sin_lente' shows only the problem image (no correction overlay)
       if (lens.name == 'sin_lente') {
         _correctedImage = null;
+        _adaptController.value = 1.0;
       } else {
         _correctedImage = await _loadImage(lens.correctedImagePath);
+        if (_isPhotochromic) {
+          _playAdaptation();
+        } else {
+          _adaptController.value = 1.0;
+        }
       }
       if (mounted) {
         setState(() => _isLoading = false);
@@ -201,15 +239,20 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
           fit: StackFit.expand,
           children: [
             // Main simulation canvas
-            SimulationCanvas(
-              state: state,
-              category: widget.category,
-              problemImage: _problemImage!,
-              correctedImage: _correctedImage,
-              currentLens: _currentLens,
-              onLensDragStart: (pos) => _onLensDragStart(pos, context),
-              onLensDragUpdate: (pos) => _onLensDragUpdate(pos, context),
-              onLensDragEnd: () => _onLensDragEnd(context),
+            AnimatedBuilder(
+              animation: _adaptController,
+              builder: (context, _) => SimulationCanvas(
+                state: state,
+                category: widget.category,
+                problemImage: _problemImage!,
+                correctedImage: _correctedImage,
+                currentLens: _currentLens,
+                onLensDragStart: (pos) => _onLensDragStart(pos, context),
+                onLensDragUpdate: (pos) => _onLensDragUpdate(pos, context),
+                onLensDragEnd: () => _onLensDragEnd(context),
+                adaptationProgress:
+                    _isPhotochromic ? _adaptController.value : 1.0,
+              ),
             ),
 
             // Top gradient and back button
@@ -238,6 +281,9 @@ class _SimulationViewerScreenState extends State<SimulationViewerScreen>
                 scenario: widget.scenario,
                 selectedLens: _currentLens,
                 onLensSelected: _onLensChanged,
+                adaptSpeed: _adaptSpeed,
+                onAdaptSpeedChanged: _onAdaptSpeedChanged,
+                onReplayAdaptation: _playAdaptation,
               ),
             ),
           ],

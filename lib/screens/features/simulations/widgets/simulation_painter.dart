@@ -20,6 +20,10 @@ class SimulationPainter extends CustomPainter {
   /// NEW: velocity input to simulate drag reaction
   final Offset dragVelocity;
 
+  /// 0 = clear, 1 = fully activated. In full-image mode the corrected ("on")
+  /// image is faded in over the problem ("off") image by this amount.
+  final double adaptationProgress;
+
   SimulationPainter({
     required this.problemImage,
     this.correctedImage,
@@ -34,6 +38,7 @@ class SimulationPainter extends CustomPainter {
     required this.lensRadius,
     required this.fontSize,
     this.dragVelocity = Offset.zero, // 👈 default safe
+    this.adaptationProgress = 1.0,
   });
 
   @override
@@ -42,7 +47,20 @@ class SimulationPainter extends CustomPainter {
     /// Decides which rendering mode to use
 
     if (showFullCorrection && correctedImage != null) {
-      _drawImage(canvas, size, correctedImage!, applyTint: true);
+      final double t = adaptationProgress.clamp(0.0, 1.0);
+      if (t >= 1.0) {
+        _drawImage(canvas, size, correctedImage!, applyTint: true);
+      } else {
+        // Fade the activated image in over the clear one.
+        _drawImage(canvas, size, problemImage);
+        final int alpha = (t * 255).round();
+        canvas.saveLayer(
+          Offset.zero & size,
+          Paint()..color = Color.fromARGB(alpha, 255, 255, 255),
+        );
+        _drawImage(canvas, size, correctedImage!, applyTint: true);
+        canvas.restore();
+      }
       return;
     }
 
@@ -268,6 +286,7 @@ class SimulationPainter extends CustomPainter {
         oldDelegate.lensPosition != lensPosition ||
         oldDelegate.lensRadius != lensRadius ||
         oldDelegate.dragVelocity != dragVelocity || // 👈 NEW
+        oldDelegate.adaptationProgress != adaptationProgress ||
         oldDelegate.correctedImage != correctedImage;
   }
 }

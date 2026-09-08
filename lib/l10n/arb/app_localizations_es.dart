@@ -865,4 +865,43 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get hubAnalyzing => 'Analizando...';
+
+  @override
+  String heightTopShort(String value) {
+    return 'Alt.sup: $value';
+  }
+
+  @override
+  String get frameOuterW => 'Ancho ext.';
+
+  @override
+  String get frameWidthField => 'Ancho del armazón';
+
+  @override
+  String get frameWidthHint => 'ej. 119';
+
+  @override
+  String get hubNoAccessory => 'Medición remota';
+
+  @override
+  String get frameWidthMissingWarning =>
+      'Ingresá el ancho del armazón para calcular';
+
+  @override
+  String get cleanView => 'Vista limpia';
+
+  @override
+  String get simAdaptLabel => 'Adaptación';
+
+  @override
+  String get simAdaptStandard => 'Estándar';
+
+  @override
+  String get simAdaptGood => 'Buena';
+
+  @override
+  String get simAdaptPremium => 'Premium';
+
+  @override
+  String get simReplay => 'Reproducir';
 }

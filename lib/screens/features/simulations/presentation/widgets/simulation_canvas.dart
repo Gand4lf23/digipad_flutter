@@ -18,6 +18,10 @@ class SimulationCanvas extends StatelessWidget {
   final Function(Offset)? onLensDragUpdate;
   final Function()? onLensDragEnd;
 
+  /// 0 = clear lens, 1 = fully activated. Only used in full-image mode
+  /// (photochromic) to fade the "on" image in. Non-photochromic passes 1.
+  final double adaptationProgress;
+
   const SimulationCanvas({
     super.key,
     required this.state,
@@ -28,6 +32,7 @@ class SimulationCanvas extends StatelessWidget {
     this.onLensDragStart,
     this.onLensDragUpdate,
     this.onLensDragEnd,
+    this.adaptationProgress = 1.0,
   });
 
   @override
@@ -97,6 +102,7 @@ class SimulationCanvas extends StatelessWidget {
                     lensRadius: state.lensRadius,
                     // Responsive text size
                     fontSize: responsive.fontSize(18),
+                    adaptationProgress: adaptationProgress,
                   ),
                 ),
               ),

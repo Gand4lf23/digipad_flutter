@@ -8,6 +8,8 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.graphics.Matrix
+import android.media.ExifInterface
 import android.net.Uri
 import android.util.AttributeSet
 import android.util.Log
@@ -369,6 +371,40 @@ class YoloV8View @JvmOverloads constructor(
                 if (converted != null) { bitmap.recycle(); bitmap = converted }
             }
 
+            // Apply EXIF rotation so detection coordinates match display orientation.
+            // BitmapFactory.decodeFile ignores EXIF — camera JPEGs land in raw sensor
+            // orientation (landscape) with rotation stored only in EXIF metadata. Without
+            // this correction, TFLite detection coordinates are in landscape space while
+            // Flutter displays the image in portrait space → markers appear in wrong positions.
+            var debugStr = "file: ${bitmap!!.width}x${bitmap!!.height} | EXIF: N/A (content://)"
+            if (!path.startsWith("content://")) {
+                try {
+                    val exif = ExifInterface(path)
+                    val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+                    val beforeW = bitmap!!.width; val beforeH = bitmap!!.height
+                    Log.d("YoloV8View", "detectFromFile: bitmap=${beforeW}x${beforeH} EXIF orientation=$orientation path=$path")
+                    val matrix = Matrix()
+                    when (orientation) {
+                        ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+                        ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+                        ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+                    }
+                    if (!matrix.isIdentity) {
+                        val bmp = bitmap!!
+                        val rotated = Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, matrix, true)
+                        Log.d("YoloV8View", "detectFromFile: rotated to ${rotated.width}x${rotated.height}")
+                        debugStr = "EXIF=$orientation | ${beforeW}x${beforeH} → ${rotated.width}x${rotated.height}"
+                        if (rotated != bmp) { bmp.recycle(); bitmap = rotated }
+                    } else {
+                        Log.d("YoloV8View", "detectFromFile: no rotation needed (orientation=$orientation)")
+                        debugStr = "EXIF=$orientation (sin rotación) | ${beforeW}x${beforeH}"
+                    }
+                } catch (e: Exception) {
+                    Log.e("YoloV8View", "detectFromFile: EXIF read failed", e)
+                    debugStr = "EXIF error: ${e.message}"
+                }
+            }
+
             val boxes = detector.detectSync(bitmap)
             val circlesList = boxes.filter { it.clsName.contains("circle", ignoreCase = true) }
                 .sortedByDescending { it.cnf }.take(4)
@@ -380,7 +416,7 @@ class YoloV8View @JvmOverloads constructor(
                 .flatMap { listOf(it.cx.toDouble(), it.cy.toDouble()) }
                 .toMutableList()
             while (eyesList.size < 4) eyesList.add(0.0)
-            return mapOf("circles" to circlesList, "eyes" to eyesList)
+            return mapOf("circles" to circlesList, "eyes" to eyesList, "_debug" to debugStr)
         } catch (e: Throwable) {
             Log.e("YoloV8View", "detectFromFile error", e)
             return emptyMap()

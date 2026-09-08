@@ -372,5 +372,24 @@
   "save": "Guardar",
   "hubNewMeasurement": "Nueva Medición",
   "hubDetectorNotReady": "El detector aún no está listo. Intenta de nuevo.",
-  "hubAnalyzing": "Analizando..."
+  "hubAnalyzing": "Analizando...",
+  "heightTopShort": "Alt.sup: {value}",
+  "@heightTopShort": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "frameOuterW": "Ancho ext.",
+  "frameWidthField": "Ancho del armazón",
+  "frameWidthHint": "ej. 119",
+  "hubNoAccessory": "Medición remota",
+  "frameWidthMissingWarning": "Ingresá el ancho del armazón para calcular",
+  "cleanView": "Vista limpia",
+  "simAdaptLabel": "Adaptación",
+  "simAdaptStandard": "Estándar",
+  "simAdaptGood": "Buena",
+  "simAdaptPremium": "Premium",
+  "simReplay": "Reproducir"
 }

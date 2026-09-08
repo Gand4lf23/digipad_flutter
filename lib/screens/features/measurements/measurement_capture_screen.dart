@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:digipad_flutter/screens/features/measurements/optical_editor_screen.dart';
+import 'package:digipad_flutter/screens/features/measurements/optical_logic_controller.dart';
 import 'package:digipad_flutter/data/local/gallery_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -19,10 +20,12 @@ class MeasurementCaptureScreen extends StatefulWidget {
     super.key,
     this.initialAction = CaptureInitialAction.none,
     this.onPhotoCaptured,
+    this.mode = MeasurementMode.conAccesorio,
   });
 
   final CaptureInitialAction initialAction;
   final void Function(String path)? onPhotoCaptured;
+  final MeasurementMode mode;
 
   @override
   State<MeasurementCaptureScreen> createState() =>
@@ -607,6 +610,7 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
               imagePath: _lastPhotoPath!,
               detections: _lastPhotoDetections!,
               isFrontCamera: _lastPhotoWasFront,
+              mode: widget.mode,
             ),
           ),
         );
@@ -654,6 +658,7 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
       if (result != null) {
         final Map<String, dynamic> rawMap = Map<String, dynamic>.from(result);
 
+        final String? nativeDebug = rawMap['_debug'] as String?;
         final Map<String, dynamic> detections = {
           'circles': _inflateDetections(rawMap['circles']),
           'eyes': _inflateDetections(rawMap['eyes']),
@@ -672,7 +677,7 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
 
           // Avisar si la detección fue parcial, pero siempre abrir el editor.
           // El controlador coloca puntos genéricos (tipo anteojos) para los no detectados.
-          if (found < 4) {
+          if (found < 4 && widget.mode == MeasurementMode.conAccesorio) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(context.l10n.detectionIncomplete(found)),
@@ -689,6 +694,8 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
                 detections: detections,
                 isFrontCamera: false,
                 pantoscopicAngle: angle,
+                mode: widget.mode,
+                debugInfo: nativeDebug,
               ),
             ),
           );
@@ -754,11 +761,13 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
             'circles': <Map<String, double>>[],
             'eyes': <Map<String, double>>[],
           };
+          String? captureDebug;
           try {
             final detectResult = await _channel!
                 .invokeMethod('detectFromImage', {'path': nativePath});
             if (detectResult != null) {
               final rawMap = Map<String, dynamic>.from(detectResult as Map);
+              captureDebug = rawMap['_debug'] as String?;
               detectionsSnapshot = {
                 'circles': _inflateDetections(rawMap['circles']),
                 'eyes': _inflateDetections(rawMap['eyes']),
@@ -778,7 +787,7 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
             _lastPhotoDetections = detectionsSnapshot;
           });
 
-          if (found < 4) {
+          if (found < 4 && widget.mode == MeasurementMode.conAccesorio) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(context.l10n.captureFailed(found)),
@@ -795,6 +804,8 @@ class _MeasurementCaptureScreenState extends State<MeasurementCaptureScreen>
                 detections: detectionsSnapshot,
                 isFrontCamera: wasFront,
                 pantoscopicAngle: angleAtCapture,
+                mode: widget.mode,
+                debugInfo: captureDebug,
               ),
             ),
           );

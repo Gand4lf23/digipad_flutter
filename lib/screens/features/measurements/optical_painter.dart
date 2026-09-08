@@ -30,13 +30,17 @@ class OpticalPainter extends CustomPainter {
   final double dnpLeft;
   final double altRight;
   final double altLeft;
+  final double altSupRight;
+  final double altSupLeft;
   final double aroAnc;
   final double aroAlt;
+  final double anchoExtArmazon;
   final double di;
   final double puente;
   final double diametroRight;
   final double diametroLeft;
   final bool showChips;
+  final bool isSinAccesorio;
 
   OpticalPainter({
     required this.points,
@@ -58,13 +62,17 @@ class OpticalPainter extends CustomPainter {
     this.dnpLeft = 0,
     this.altRight = 0,
     this.altLeft = 0,
+    this.altSupRight = 0,
+    this.altSupLeft = 0,
     this.aroAnc = 0,
     this.aroAlt = 0,
+    this.anchoExtArmazon = 0,
     this.di = 0,
     this.puente = 0,
     this.diametroRight = 0,
     this.diametroLeft = 0,
     this.showChips = false,
+    this.isSinAccesorio = false,
   });
 
   @override
@@ -75,6 +83,15 @@ class OpticalPainter extends CustomPainter {
 
     Offset? p1 = _getPos(DetectionType.pupilRight);
     Offset? p2 = _getPos(DetectionType.pupilLeft);
+
+    // ── PRESENTATION MODE ("vista limpia") ─────────────────────────────
+    // Hide every editing marker (crosses, L-corners, reference circles,
+    // frame outline) and show ONLY the curated yellow guides + chips.
+    if (showChips) {
+      _drawPresentationOverlay(canvas);
+      canvas.restore();
+      return;
+    }
 
     // --- 1. CIRCLES ---
     if (showCircles && pixelFactorX > 0) {
@@ -203,11 +220,6 @@ class OpticalPainter extends CustomPainter {
       canvas.restore(); // END UN-ROTATION BLOCK
     }
 
-    // --- MEASUREMENT LINES + CHIPS (only when showChips is enabled) ---
-    if (showChips) {
-      _drawMeasurementLines(canvas, scale);
-    }
-
     // --- 3. BIFOCAL LINE ---
     if (isBifocal && pixelFactorY > 0) {
       Paint bifocalPaint = Paint()
@@ -288,188 +300,121 @@ class OpticalPainter extends CustomPainter {
     canvas.restore();
   }
 
-  void _drawMeasurementLines(Canvas canvas, double scale) {
-    final Paint amberPaint = Paint()
-      ..color = Colors.amber.withValues(alpha: 0.75)
-      ..strokeWidth = 0.8 / scale
-      ..strokeCap = StrokeCap.round;
-
+  /// Curated "clean view" overlay: yellow guide lines + white chips only.
+  /// Shown when [showChips] is on; every editing marker is hidden by the
+  /// caller. Layout mirrors the reference: ancho total, DIP, DNP, alturas
+  /// (base y superior), puente y diametro.
+  void _drawPresentationOverlay(Canvas canvas) {
     final Offset? p1 = _getPos(DetectionType.pupilRight);
     final Offset? p2 = _getPos(DetectionType.pupilLeft);
+    final Offset? rTL = _getPos(DetectionType.lensRightTop);
     final Offset? rBR = _getPos(DetectionType.lensRightBottom);
     final Offset? lTL = _getPos(DetectionType.lensLeftTop);
-    final Offset? rTL = _getPos(DetectionType.lensRightTop);
     final Offset? lBR = _getPos(DetectionType.lensLeftBottom);
-    final Offset? b1 = _getPos(DetectionType.refBL);
-    final Offset? b2 = _getPos(DetectionType.refBR);
+    if (p1 == null || p2 == null || rTL == null || rBR == null ||
+        lTL == null || lBR == null) {
+      return;
+    }
 
     final double cr = math.cos(rotation), sr = math.sin(rotation);
-    final Offset eh = Offset(cr, -sr);
-    final Offset ev = Offset(sr, cr);
+    final Offset eh = Offset(cr, -sr); // screen-horizontal, image space
+    final Offset ev = Offset(sr, cr); // screen-vertical, image space
 
-    double dotP(Offset a, Offset b) => a.dx * b.dx + a.dy * b.dy;
+    final Paint guide = Paint()
+      ..color = const Color(0xFFFFE100)
+      ..strokeWidth = 1.3 / scale
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
 
-    // B-row (130mm): direct line
-    if (b1 != null && b2 != null) {
-      canvas.drawLine(b1, b2, amberPaint);
+    Offset shift(Offset p, double h, double v) =>
+        p + Offset(eh.dx * h + ev.dx * v, eh.dy * h + ev.dy * v);
+    double alongH(Offset from, Offset to) =>
+        (to - from).dx * eh.dx + (to - from).dy * eh.dy;
+    double alongV(Offset from, Offset to) =>
+        (to - from).dx * ev.dx + (to - from).dy * ev.dy;
+    // Point on the screen-horizontal line through [anchor], level with [q].
+    Offset onHLine(Offset anchor, Offset q) => shift(anchor, alongH(anchor, q), 0);
+    // Point on the screen-vertical line through [anchor], level with [q].
+    Offset onVLine(Offset anchor, Offset q) => shift(anchor, 0, alongV(anchor, q));
+
+    String mm(double v) => v.toStringAsFixed(2);
+    final double tick = 5.0 / scale;
+
+    void hSpan(Offset a, Offset b, String label, {double chipV = -11}) {
+      canvas.drawLine(a, b, guide);
+      canvas.drawLine(shift(a, 0, -tick), shift(a, 0, tick), guide);
+      canvas.drawLine(shift(b, 0, -tick), shift(b, 0, tick), guide);
+      _drawChipAt(canvas, Offset((a.dx + b.dx) / 2, (a.dy + b.dy) / 2),
+          label, Colors.white, scale, yOff: chipV);
     }
 
-    // DNP right: horizontal from pupilRight to bridge midpoint
-    Offset? dnpRightEnd;
-    if (p1 != null && rBR != null && lTL != null) {
-      final Offset bridge = (rBR + lTL) / 2;
-      final double dh = dotP(bridge - p1, eh);
-      dnpRightEnd = p1 + Offset(eh.dx * dh, eh.dy * dh);
-      canvas.drawLine(p1, dnpRightEnd, amberPaint);
+    void vSpan(Offset a, Offset b, String label, {double chipH = 16}) {
+      canvas.drawLine(a, b, guide);
+      canvas.drawLine(shift(a, -tick, 0), shift(a, tick, 0), guide);
+      canvas.drawLine(shift(b, -tick, 0), shift(b, tick, 0), guide);
+      _drawChipAt(canvas, Offset((a.dx + b.dx) / 2, (a.dy + b.dy) / 2),
+          label, Colors.white, scale, xOff: chipH, yOff: 0);
     }
 
-    // DNP left: horizontal from pupilLeft to bridge midpoint
-    Offset? dnpLeftEnd;
-    if (p2 != null && rBR != null && lTL != null) {
-      final Offset bridge = (rBR + lTL) / 2;
-      final double dh = dotP(bridge - p2, eh);
-      dnpLeftEnd = p2 + Offset(eh.dx * dh, eh.dy * dh);
-      canvas.drawLine(p2, dnpLeftEnd, amberPaint);
+    final Offset bridgeMid = (rBR + lTL) / 2;
+
+    // 1. Ancho total del armazon: bracket above, spanning the outer edges.
+    if (anchoExtArmazon > 0) {
+      final Offset outerL = onHLine(rTL, lBR);
+      final Offset topR = shift(rTL, 0, -70 / scale);
+      final Offset topL = shift(outerL, 0, -70 / scale);
+      canvas.drawLine(shift(topR, 0, 5 / scale), rTL, guide);
+      canvas.drawLine(shift(topL, 0, 5 / scale), outerL, guide);
+      hSpan(topR, topL, mm(anchoExtArmazon));
     }
 
-    // DI: direct line between pupils
-    if (p1 != null && p2 != null) {
-      canvas.drawLine(p1, p2, amberPaint);
+    // 2. DIP (interpupilar).
+    if (di > 0) {
+      hSpan(shift(p1, 0, -44 / scale), shift(onHLine(p1, p2), 0, -44 / scale),
+          mm(di));
     }
 
-    // AltRight: vertical from pupilRight to lensRightBottom (projected along ev)
-    Offset? altRightEnd;
-    if (p1 != null && rBR != null) {
-      final double dv = dotP(rBR - p1, ev);
-      altRightEnd = p1 + Offset(ev.dx * dv, ev.dy * dv);
-      canvas.drawLine(p1, altRightEnd, amberPaint);
+    // 3. DNP derecha / izquierda (pupila -> centro del puente).
+    if (dnpRight > 0) {
+      hSpan(shift(p1, 0, -18 / scale),
+          shift(onHLine(p1, bridgeMid), 0, -18 / scale), mm(dnpRight));
+    }
+    if (dnpLeft > 0) {
+      hSpan(shift(p2, 0, -18 / scale),
+          shift(onHLine(p2, bridgeMid), 0, -18 / scale), mm(dnpLeft));
     }
 
-    // AltLeft: vertical from pupilLeft to lensLeftBottom
-    Offset? altLeftEnd;
-    if (p2 != null && lBR != null) {
-      final double dv = dotP(lBR - p2, ev);
-      altLeftEnd = p2 + Offset(ev.dx * dv, ev.dy * dv);
-      canvas.drawLine(p2, altLeftEnd, amberPaint);
+    // 4. Altura a la parte superior del aro (pupila -> borde superior).
+    if (altSupRight > 0) {
+      vSpan(p1, onVLine(p1, rTL), mm(altSupRight), chipH: -20);
+    }
+    if (altSupLeft > 0) {
+      vSpan(p2, onVLine(p2, lTL), mm(altSupLeft), chipH: 20);
     }
 
-    // AroAnc right: horizontal at mid-height of right frame
-    Offset? aroAncRightLeft, aroAncRightRight;
-    if (rTL != null && rBR != null) {
-      final double vTL = dotP(rTL, ev);
-      final double vBR = dotP(rBR, ev);
-      final double midV = (vTL + vBR) / 2;
-      aroAncRightLeft = rTL + Offset(ev.dx * (midV - vTL), ev.dy * (midV - vTL));
-      aroAncRightRight = rBR + Offset(ev.dx * (midV - vBR), ev.dy * (midV - vBR));
-      canvas.drawLine(aroAncRightLeft, aroAncRightRight, amberPaint);
+    // 5. Altura a la base del aro (pupila -> borde inferior).
+    if (altRight > 0) {
+      vSpan(p1, onVLine(p1, rBR), mm(altRight), chipH: -20);
+    }
+    if (altLeft > 0) {
+      vSpan(p2, onVLine(p2, lBR), mm(altLeft), chipH: 20);
     }
 
-    // AroAnc left: horizontal at mid-height of left frame
-    Offset? aroAncLeftLeft, aroAncLeftRight;
-    if (lTL != null && lBR != null) {
-      final double vTL = dotP(lTL, ev);
-      final double vBR = dotP(lBR, ev);
-      final double midV = (vTL + vBR) / 2;
-      aroAncLeftLeft = lTL + Offset(ev.dx * (midV - vTL), ev.dy * (midV - vTL));
-      aroAncLeftRight = lBR + Offset(ev.dx * (midV - vBR), ev.dy * (midV - vBR));
-      canvas.drawLine(aroAncLeftLeft, aroAncLeftRight, amberPaint);
+    // 6. Puente (entre bordes internos de los aros); chip hacia la nariz.
+    if (puente > 0) {
+      final Offset innerL = onHLine(rBR, lTL);
+      final Offset a = shift(rBR, 0, 16 / scale);
+      final Offset b = shift(innerL, 0, 16 / scale);
+      canvas.drawLine(rBR, a, guide);
+      canvas.drawLine(innerL, b, guide);
+      hSpan(a, b, mm(puente), chipV: 13);
     }
 
-    // AroAlt right: vertical line at inner edge of right frame (rTL → rBR level)
-    Offset? aroAltRightBot;
-    if (rTL != null && rBR != null) {
-      final double vBR = dotP(rBR, ev);
-      final double vTL = dotP(rTL, ev);
-      aroAltRightBot = rTL + Offset(ev.dx * (vBR - vTL), ev.dy * (vBR - vTL));
-      canvas.drawLine(rTL, aroAltRightBot, amberPaint);
-    }
-
-    // AroAlt left: vertical line at inner edge of left frame (lTL → lBR level)
-    Offset? aroAltLeftBot;
-    if (lTL != null && lBR != null) {
-      final double vBR = dotP(lBR, ev);
-      final double vTL = dotP(lTL, ev);
-      aroAltLeftBot = lTL + Offset(ev.dx * (vBR - vTL), ev.dy * (vBR - vTL));
-      canvas.drawLine(lTL, aroAltLeftBot, amberPaint);
-    }
-
-    // ── CHIPS ───────────────────────────────────────────────────────────────
-
-    // B-ROW reference 130mm
-    if (b1 != null && b2 != null) {
-      _drawChipAt(canvas, (b1 + b2) / 2, '130mm', Colors.orangeAccent, scale, yOff: 20);
-    }
-
-    // DNP right
-    if (p1 != null && dnpRightEnd != null && dnpRight > 0) {
-      _drawChipAt(canvas, (p1 + dnpRightEnd) / 2, '${dnpRight.toStringAsFixed(1)}mm',
-          Colors.cyanAccent, scale, yOff: -18);
-    }
-
-    // DNP left
-    if (p2 != null && dnpLeftEnd != null && dnpLeft > 0) {
-      _drawChipAt(canvas, (p2 + dnpLeftEnd) / 2, '${dnpLeft.toStringAsFixed(1)}mm',
-          Colors.greenAccent, scale, yOff: -18);
-    }
-
-    // DI
-    if (p1 != null && p2 != null && di > 0) {
-      _drawChipAt(canvas, (p1 + p2) / 2, '${di.toStringAsFixed(1)}mm',
-          Colors.amber, scale, yOff: 22);
-    }
-
-    // Alt right (chip to outer side of the vertical line)
-    if (p1 != null && altRightEnd != null && altRight > 0) {
-      _drawChipAt(canvas, (p1 + altRightEnd) / 2, '${altRight.toStringAsFixed(1)}mm',
-          Colors.cyanAccent, scale, xOff: 18, yOff: 0);
-    }
-
-    // Alt left (chip to outer side)
-    if (p2 != null && altLeftEnd != null && altLeft > 0) {
-      _drawChipAt(canvas, (p2 + altLeftEnd) / 2, '${altLeft.toStringAsFixed(1)}mm',
-          Colors.greenAccent, scale, xOff: -18, yOff: 0);
-    }
-
-    // AroAnc right
-    if (aroAncRightLeft != null && aroAncRightRight != null && aroAnc > 0) {
-      _drawChipAt(canvas, (aroAncRightLeft + aroAncRightRight) / 2,
-          '${aroAnc.toStringAsFixed(1)}mm', Colors.white70, scale, yOff: -18);
-    }
-
-    // AroAnc left
-    if (aroAncLeftLeft != null && aroAncLeftRight != null && aroAnc > 0) {
-      _drawChipAt(canvas, (aroAncLeftLeft + aroAncLeftRight) / 2,
-          '${aroAnc.toStringAsFixed(1)}mm', Colors.white70, scale, yOff: -18);
-    }
-
-    // AroAlt right (chip to inner side: xOff negative = toward nose)
-    if (rTL != null && aroAltRightBot != null && aroAlt > 0) {
-      _drawChipAt(canvas, (rTL + aroAltRightBot) / 2, '${aroAlt.toStringAsFixed(1)}mm',
-          Colors.white70, scale, xOff: -18, yOff: 0);
-    }
-
-    // AroAlt left (chip to inner side: xOff positive = toward nose)
-    if (lTL != null && aroAltLeftBot != null && aroAlt > 0) {
-      _drawChipAt(canvas, (lTL + aroAltLeftBot) / 2, '${aroAlt.toStringAsFixed(1)}mm',
-          Colors.white70, scale, xOff: 18, yOff: 0);
-    }
-
-    // Puente (bridge center between frames)
-    if (rBR != null && lTL != null && puente > 0) {
-      _drawChipAt(canvas, (rBR + lTL) / 2, '${puente.toStringAsFixed(1)}mm',
-          Colors.amberAccent, scale, yOff: -18);
-    }
-
-    // Diametro right (below pupil)
-    if (p1 != null && diametroRight > 0) {
-      _drawChipAt(canvas, p1, 'Ø${diametroRight.toStringAsFixed(1)}mm',
-          Colors.cyanAccent.withValues(alpha: 0.9), scale, yOff: 32);
-    }
-
-    // Diametro left (below pupil)
-    if (p2 != null && diametroLeft > 0) {
-      _drawChipAt(canvas, p2, 'Ø${diametroLeft.toStringAsFixed(1)}mm',
-          Colors.greenAccent.withValues(alpha: 0.9), scale, yOff: 32);
+    // 7. Diametro (diagonal pupila -> esquina externa del aro derecho).
+    if (diametroRight > 0) {
+      canvas.drawLine(p1, rTL, guide);
+      _drawChipAt(canvas, Offset((p1.dx + rTL.dx) / 2, (p1.dy + rTL.dy) / 2),
+          'D ${mm(diametroRight)}', Colors.white, scale, yOff: 0);
     }
   }
 

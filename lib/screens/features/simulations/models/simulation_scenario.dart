@@ -69,3 +69,15 @@ enum LensQuality {
 
   const LensQuality(this.displayName, this.order);
 }
+
+/// Adaptation-speed tier for photochromic lenses. Drives how fast the
+/// activated ("on") image fades in over the clear ("off") image — a premium
+/// lens reacts to sunlight noticeably faster than a standard one.
+enum PhotoAdaptSpeed {
+  estandar(Duration(milliseconds: 3400)),
+  buena(Duration(milliseconds: 1700)),
+  premium(Duration(milliseconds: 550));
+
+  final Duration duration;
+  const PhotoAdaptSpeed(this.duration);
+}

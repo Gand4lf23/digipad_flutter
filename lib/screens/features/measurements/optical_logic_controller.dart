@@ -15,6 +15,8 @@ enum DetectionType {
   lensLeftBottom,
 }
 
+enum MeasurementMode { conAccesorio, sinAccesorio }
+
 class DetectionPoint {
   String id;
   DetectionType type;
@@ -43,6 +45,7 @@ class OpticalController extends ChangeNotifier {
   bool isBifocal = false;
   double bifocalLineOffset = 0.0;
 
+  double milimetrosPorPixel = 0;
   double pixelFactorX = 0;
   double pixelFactorY = 0;
   double di = 0;
@@ -57,7 +60,13 @@ class OpticalController extends ChangeNotifier {
   double diametroLeft = 0;
   double calcRadiusPxRight = 0;
   double calcRadiusPxLeft = 0;
-  
+  double altSupRight = 0;
+  double altSupLeft = 0;
+  double anchoExtArmazon = 0;
+
+  MeasurementMode mode = MeasurementMode.conAccesorio;
+  double? frameWidthMm;
+
   double? pantoscopicAngle;
 
   DetectionPoint? selectedPoint;
@@ -102,13 +111,69 @@ class OpticalController extends ChangeNotifier {
     }
   }
 
-  void initialize(Map<String, dynamic> detections, Size imageSize) {
+  void initialize(
+    Map<String, dynamic> detections,
+    Size imageSize, {
+    MeasurementMode mode = MeasurementMode.conAccesorio,
+  }) {
     points.clear();
+    this.mode = mode;
 
     Offset toPixel(dynamic item) {
       double nx = (item['x'] as num).toDouble();
       double ny = (item['y'] as num).toDouble();
       return Offset(nx * imageSize.width, ny * imageSize.height);
+    }
+
+    if (mode == MeasurementMode.sinAccesorio) {
+      // No circles/ref-bar needed. Detect eyes and seed L-markers from image size.
+      List<dynamic> rawEyes = detections['eyes'] ?? [];
+      bool eyesAdded = false;
+      if (rawEyes.length >= 2) {
+        List<Offset> eyes = rawEyes.map((e) => toPixel(e)).toList()
+          ..sort((a, b) => a.dx.compareTo(b.dx));
+        final double minDim = math.min(imageSize.width, imageSize.height);
+        final bool valid = eyes.every((e) =>
+            e.dx > minDim * 0.05 &&
+            e.dy > minDim * 0.05 &&
+            e.dx < imageSize.width - minDim * 0.05 &&
+            e.dy < imageSize.height - minDim * 0.05);
+        if (valid) {
+          _addPoint(eyes[0], DetectionType.pupilRight, "P_1");
+          _addPoint(eyes[1], DetectionType.pupilLeft, "P_2");
+          eyesAdded = true;
+        }
+      }
+      if (!eyesAdded) {
+        _addPoint(Offset(imageSize.width / 3.0, imageSize.height / 2.0),
+            DetectionType.pupilRight, "P_1");
+        _addPoint(Offset(imageSize.width * 2.0 / 3.0, imageSize.height / 2.0),
+            DetectionType.pupilLeft, "P_2");
+      }
+      // Seed L-markers around each pupil.
+      final Offset p1 = getPoint(DetectionType.pupilRight);
+      final Offset p2 = getPoint(DetectionType.pupilLeft);
+      final double xOff = imageSize.width * 0.15;
+      final double yOff = imageSize.height * 0.10;
+      _addPoint(
+        Offset((p1.dx - xOff).clamp(0, imageSize.width),
+            (p1.dy - yOff).clamp(0, imageSize.height)),
+        DetectionType.lensRightTop, "R_TL");
+      _addPoint(
+        Offset((p1.dx + xOff).clamp(0, imageSize.width),
+            (p1.dy + yOff).clamp(0, imageSize.height)),
+        DetectionType.lensRightBottom, "R_BR");
+      _addPoint(
+        Offset((p2.dx - xOff).clamp(0, imageSize.width),
+            (p2.dy - yOff).clamp(0, imageSize.height)),
+        DetectionType.lensLeftTop, "L_TL");
+      _addPoint(
+        Offset((p2.dx + xOff).clamp(0, imageSize.width),
+            (p2.dy + yOff).clamp(0, imageSize.height)),
+        DetectionType.lensLeftBottom, "L_BR");
+      _initialDiameterSynced = false;
+      calculateFormulas();
+      return;
     }
 
     List<dynamic> rawCircles = detections['circles'] ?? [];
@@ -186,12 +251,12 @@ class OpticalController extends ChangeNotifier {
         ..sort((a, b) => a.dx.compareTo(b.dx));
 
       // Reject positions that are stuck at (≈0,≈0) — TFLite undetected default
-      final minDim = math.min(imageSize.width, imageSize.height);
+      final minDim2 = math.min(imageSize.width, imageSize.height);
       final bool valid = eyes.every((e) =>
-          e.dx > minDim * 0.05 &&
-          e.dy > minDim * 0.05 &&
-          e.dx < imageSize.width - minDim * 0.05 &&
-          e.dy < imageSize.height - minDim * 0.05);
+          e.dx > minDim2 * 0.05 &&
+          e.dy > minDim2 * 0.05 &&
+          e.dx < imageSize.width - minDim2 * 0.05 &&
+          e.dy < imageSize.height - minDim2 * 0.05);
 
       if (valid) {
         _addPoint(eyes[0], DetectionType.pupilRight, "P_1");
@@ -442,6 +507,12 @@ class OpticalController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setFrameWidthMm(double? v) {
+    frameWidthMm = v;
+    calculateFormulas();
+    notifyListeners();
+  }
+
   void setPantoscopicAngle(double val) {
     pantoscopicAngle = val;
     notifyListeners();
@@ -493,8 +564,11 @@ class OpticalController extends ChangeNotifier {
         'dnpLeft': dnpLeft,
         'altRight': altRight,
         'altLeft': altLeft,
+        'altSupRight': altSupRight,
+        'altSupLeft': altSupLeft,
         'aroAnc': aroAnc,
         'aroAlt': aroAlt,
+        'anchoExtArmazon': anchoExtArmazon,
         'pixelFactorX': pixelFactorX,
         'pixelFactorY': pixelFactorY,
         'diametroRight': diametroRight,
@@ -507,6 +581,8 @@ class OpticalController extends ChangeNotifier {
       'bifocalLineOffset': bifocalLineOffset,
       'ajusteHorizontal': ajusteHorizontal,
       'ajusteVertical': ajusteVertical,
+      'mode': mode.name,
+      'frameWidthMm': frameWidthMm,
     };
   }
 
@@ -520,6 +596,11 @@ class OpticalController extends ChangeNotifier {
         (json['referenceCircleDiameterLeft'] as num?)?.toDouble() ?? 40.0;
     isBifocal = json['isBifocal'] as bool? ?? false;
     bifocalLineOffset = (json['bifocalLineOffset'] as num?)?.toDouble() ?? 0.0;
+    mode = MeasurementMode.values.firstWhere(
+      (e) => e.name == (json['mode'] as String? ?? 'conAccesorio'),
+      orElse: () => MeasurementMode.conAccesorio,
+    );
+    frameWidthMm = (json['frameWidthMm'] as num?)?.toDouble();
 
     points.clear();
     selectedPoint = null;
@@ -553,10 +634,6 @@ class OpticalController extends ChangeNotifier {
   }
 
   void calculateFormulas() {
-    final Offset A1 = getPoint(DetectionType.refTL);
-    final Offset A2 = getPoint(DetectionType.refTR);
-    final Offset B1 = getPoint(DetectionType.refBL);
-    final Offset B2 = getPoint(DetectionType.refBR);
     final Offset P_1 = getPoint(DetectionType.pupilRight);
     final Offset P_2 = getPoint(DetectionType.pupilLeft);
     final Offset rTL = getPoint(DetectionType.lensRightTop);
@@ -564,33 +641,48 @@ class OpticalController extends ChangeNotifier {
     final Offset lTL = getPoint(DetectionType.lensLeftTop);
     final Offset lBR = getPoint(DetectionType.lensLeftBottom);
 
-    Offset barVec = B2 - B1;
-    if (barVec.dx < 0) barVec = Offset(-barVec.dx, -barVec.dy);
-    final double barLen = barVec.distance;
-    final Offset hUnit = barLen > 1
-        ? Offset(barVec.dx / barLen, barVec.dy / barLen)
-        : const Offset(1, 0);
-    Offset vUnit = Offset(-hUnit.dy, hUnit.dx);
-    if (vUnit.dy < 0) vUnit = Offset(hUnit.dy, -hUnit.dx);
+    late double Function(Offset) h;
+    late double Function(Offset) v;
 
-    // Calibrate from B-row (bottom crosses): they span 130 mm and define the measurement axis.
-    // Using distA (top row X-only) was inconsistent with h() which projects along hUnit.
-    double milimetrosPorPixel = barLen > 1 ? (130.0 / barLen) : 1.0;
+    if (mode == MeasurementMode.sinAccesorio) {
+      // Scale derived from user-provided frame width (outer span of L-markers).
+      final double outerSpanPx = (lBR.dx - rTL.dx).abs();
+      milimetrosPorPixel = (frameWidthMm != null && frameWidthMm! > 0 && outerSpanPx > 1)
+          ? frameWidthMm! / outerSpanPx
+          : 1.0;
+      h = (Offset p) => p.dx;
+      v = (Offset p) => p.dy;
+    } else {
+      final Offset A1 = getPoint(DetectionType.refTL);
+      final Offset A2 = getPoint(DetectionType.refTR);
+      final Offset B1 = getPoint(DetectionType.refBL);
+      final Offset B2 = getPoint(DetectionType.refBR);
+
+      Offset barVec = B2 - B1;
+      if (barVec.dx < 0) barVec = Offset(-barVec.dx, -barVec.dy);
+      final double barLen = barVec.distance;
+      final Offset hUnit = barLen > 1
+          ? Offset(barVec.dx / barLen, barVec.dy / barLen)
+          : const Offset(1, 0);
+      Offset vUnit = Offset(-hUnit.dy, hUnit.dx);
+      if (vUnit.dy < 0) vUnit = Offset(hUnit.dy, -hUnit.dx);
+
+      milimetrosPorPixel = barLen > 1 ? (130.0 / barLen) : 1.0;
+
+      final Offset midTop = Offset((A1.dx + A2.dx) / 2, (A1.dy + A2.dy) / 2);
+
+      h = (Offset p) {
+        final d = p - B1;
+        return d.dx * hUnit.dx + d.dy * hUnit.dy;
+      };
+      v = (Offset p) {
+        final d = p - midTop;
+        return d.dx * vUnit.dx + d.dy * vUnit.dy;
+      };
+    }
 
     pixelFactorX = milimetrosPorPixel * ajusteHorizontal;
     pixelFactorY = milimetrosPorPixel * ajusteVertical;
-
-    final Offset midTop = Offset((A1.dx + A2.dx) / 2, (A1.dy + A2.dy) / 2);
-
-    double h(Offset p) {
-      final d = p - B1;
-      return d.dx * hUnit.dx + d.dy * hUnit.dy;
-    }
-
-    double v(Offset p) {
-      final d = p - midTop;
-      return d.dx * vUnit.dx + d.dy * vUnit.dy;
-    }
 
     final double hP1 = h(P_1);
     final double hP2 = h(P_2);
@@ -607,27 +699,39 @@ class OpticalController extends ChangeNotifier {
     final double RI_2 = v(lBR);
 
     di = (hP2 - hP1).abs() * pixelFactorX;
-    puente = (RC_2 - RC_1).abs() * pixelFactorX;
+
+    // Frame dimensions use milimetrosPorPixel (not ajuste) — physical, not calibrated.
+    puente = (RC_2 - RC_1).abs() * milimetrosPorPixel;
+    aroAnc = (((RC_1 - RE_1).abs() + (RE_2 - RC_2).abs()) / 2.0) * milimetrosPorPixel;
+    aroAlt = (((RI_1 - RS_1).abs() + (RI_2 - RS_2).abs()) / 2.0) * milimetrosPorPixel;
 
     final double centroPx = (RC_1 + RC_2) / 2.0;
     dnpRight = (centroPx - hP1).abs() * pixelFactorX;
     dnpLeft = (hP2 - centroPx).abs() * pixelFactorX;
 
-    aroAnc = (((RC_1 - RE_1).abs() + (RE_2 - RC_2).abs()) / 2.0) * pixelFactorX;
-
     final double radPxR = (hP1 - RE_1).abs();
-    diametroRight = (radPxR * 2.0 * pixelFactorX) + 1.0;
+    diametroRight = (radPxR * 2.0 * milimetrosPorPixel) + 1.0;
     calcRadiusPxRight = radPxR;
 
     final double radPxL = (RE_2 - hP2).abs();
-    diametroLeft = (radPxL * 2.0 * pixelFactorX) + 1.0;
+    diametroLeft = (radPxL * 2.0 * milimetrosPorPixel) + 1.0;
     calcRadiusPxLeft = radPxL;
 
     altRight = (RI_1 - vP1).abs() * pixelFactorY;
     altLeft = (RI_2 - vP2).abs() * pixelFactorY;
-    aroAlt = (((RI_1 - RS_1).abs() + (RI_2 - RS_2).abs()) / 2.0) * pixelFactorY;
+    altSupRight = (vP1 - RS_1).abs() * pixelFactorY;
+    altSupLeft = (vP2 - RS_2).abs() * pixelFactorY;
 
-    (P_2.dx - P_1.dx).abs();
+    if (mode == MeasurementMode.sinAccesorio) {
+      anchoExtArmazon = frameWidthMm ?? 0;
+    } else {
+      // Ancho del armazón = aro derecho + puente + aro izquierdo ("incluyendo la
+      // nariz"), sin calibración. Se calcula como suma, no de punta a punta.
+      final double aroDerPx = (RC_1 - RE_1).abs();
+      final double aroIzqPx = (RE_2 - RC_2).abs();
+      final double puentePx = (RC_2 - RC_1).abs();
+      anchoExtArmazon = (aroDerPx + puentePx + aroIzqPx) * milimetrosPorPixel;
+    }
 
     if (!_initialDiameterSynced && diametroRight > 0) {
       // Auto-radius: average Euclidean distance from pupil to both L-corner vertices (mm)
